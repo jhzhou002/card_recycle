@@ -1,0 +1,175 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}管理所有提交记录 - 卡券回收平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2><i class="fas fa-tasks"></i> 管理所有提交记录</h2>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回仪表板
+            </a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <select name="status" class="form-select">
+                            <option value="">所有状态</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">筛选</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>编号</th>
+                                <th>用户</th>
+                                <th>类别</th>
+                                <th>套餐</th>
+                                <th>卡号</th>
+                                <th>佣金</th>
+                                <th>状态</th>
+                                <th>提交时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission in page_obj %}
+                            <tr>
+                                <td>{{ submission.id }}</td>
+                                <td>{{ submission.user.username }}</td>
+                                <td>{{ submission.category.name }}</td>
+                                <td>{{ submission.package.name }}</td>
+                                <td>{{ submission.card_number|truncatechars:10 }}</td>
+                                <td>￥{{ submission.commission }}</td>
+                                <td>
+                                    {% if submission.status == 'pending' %}
+                                    <span class="badge bg-warning">{{ submission.get_status_display }}</span>
+                                    {% elif submission.status == 'approved' %}
+                                    <span class="badge bg-success">{{ submission.get_status_display }}</span>
+                                    {% elif submission.status == 'rejected' %}
+                                    <span class="badge bg-danger">{{ submission.get_status_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ submission.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ submission.submitted_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'admin_submission_detail' submission.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> 查看
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-success" onclick="updateStatus({{ submission.id }}, 'approved')">
+                                        <i class="fas fa-check"></i> 通过
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="updateStatus({{ submission.id }}, 'rejected')">
+                                        <i class="fas fa-times"></i> 拒绝
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 分页 -->
+                {% if page_obj.has_other_pages %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">上一页</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">下一页</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>暂无记录</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 状态更新模态框 -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">更新状态</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="statusForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="status" id="statusInput">
+                    <div class="mb-3">
+                        <label for="admin_remark" class="form-label">管理员备注</label>
+                        <textarea class="form-control" name="admin_remark" id="admin_remark" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">确认更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateStatus(submissionId, status) {
+    $('#statusInput').val(status);
+    $('#statusForm').attr('action', '/admin-submissions/' + submissionId + '/update/');
+    $('#statusModal').modal('show');
+}
+</script>
+{% endblock %}

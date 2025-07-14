@@ -1,0 +1,166 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}提交详情 - 卡券回收平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2><i class="fas fa-info-circle"></i> 提交详情 #{{ submission.id }}</h2>
+            <a href="{% url 'admin_submissions' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回列表
+            </a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-credit-card"></i> 卡券信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>用户：</strong>
+                        <p>{{ submission.user.username }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>类别：</strong>
+                        <p>{{ submission.category.name }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>套餐：</strong>
+                        <p>{{ submission.package.name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>佣金：</strong>
+                        <p class="text-success">￥{{ submission.commission }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>卡号：</strong>
+                        <p>{{ submission.card_number }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>密码：</strong>
+                        <p>{{ submission.card_secret }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>过期时间：</strong>
+                        <p>{{ submission.expire_date|date:"Y-m-d" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>联系电话：</strong>
+                        <p>{{ submission.telephone }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <strong>核销码图片：</strong>
+                        {% if submission.image %}
+                        <div class="mt-2">
+                            <img src="{{ submission.image }}" class="img-fluid rounded" style="max-width: 300px;">
+                        </div>
+                        {% else %}
+                        <p class="text-muted">无图片</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cog"></i> 状态管理</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>当前状态：</strong>
+                    {% if submission.status == 'pending' %}
+                    <span class="badge bg-warning">{{ submission.get_status_display }}</span>
+                    {% elif submission.status == 'approved' %}
+                    <span class="badge bg-success">{{ submission.get_status_display }}</span>
+                    {% elif submission.status == 'rejected' %}
+                    <span class="badge bg-danger">{{ submission.get_status_display }}</span>
+                    {% else %}
+                    <span class="badge bg-info">{{ submission.get_status_display }}</span>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <strong>提交时间：</strong>
+                    <p>{{ submission.submitted_at|date:"Y-m-d H:i:s" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>更新时间：</strong>
+                    <p>{{ submission.updated_at|date:"Y-m-d H:i:s" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>管理员备注：</strong>
+                    <p>{{ submission.admin_remark|default:"暂无备注" }}</p>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="updateStatus({{ submission.id }}, 'approved')">
+                        <i class="fas fa-check"></i> 通过
+                    </button>
+                    <button class="btn btn-danger" onclick="updateStatus({{ submission.id }}, 'rejected')">
+                        <i class="fas fa-times"></i> 拒绝
+                    </button>
+                    <button class="btn btn-info" onclick="updateStatus({{ submission.id }}, 'settled')">
+                        <i class="fas fa-dollar-sign"></i> 已结算
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 状态更新模态框 -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">更新状态</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="statusForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="status" id="statusInput">
+                    <div class="mb-3">
+                        <label for="admin_remark" class="form-label">管理员备注</label>
+                        <textarea class="form-control" name="admin_remark" id="admin_remark" rows="3">{{ submission.admin_remark }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">确认更新</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateStatus(submissionId, status) {
+    $('#statusInput').val(status);
+    $('#statusForm').attr('action', '/admin-submissions/' + submissionId + '/update/');
+    $('#statusModal').modal('show');
+}
+</script>
+{% endblock %}

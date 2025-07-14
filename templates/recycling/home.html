@@ -1,0 +1,64 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}首页 - 卡券回收平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="jumbotron bg-primary text-white p-5 rounded">
+            <h1 class="display-4">欢迎来到卡券回收平台</h1>
+            <p class="lead">快速、安全、便捷的卡券回收服务</p>
+            {% if not user.is_authenticated %}
+            <a class="btn btn-light btn-lg" href="{% url 'register' %}" role="button">立即注册</a>
+            {% else %}
+            <a class="btn btn-light btn-lg" href="{% url 'submit_card' %}" role="button">提交卡券</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> 平台说明</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> 支持多种卡券类型</li>
+                    <li><i class="fas fa-check text-success"></i> 快速审核处理</li>
+                    <li><i class="fas fa-check text-success"></i> 安全可靠的交易</li>
+                    <li><i class="fas fa-check text-success"></i> 实时状态跟踪</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                <h5>提交卡券</h5>
+                <p class="text-muted">上传您的闲置卡券信息，包括卡号、密码和核销码图片</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-search fa-3x text-success mb-3"></i>
+                <h5>审核处理</h5>
+                <p class="text-muted">我们的专业团队会快速审核您的提交内容</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-money-bill-wave fa-3x text-warning mb-3"></i>
+                <h5>获得收益</h5>
+                <p class="text-muted">审核通过后，您将获得相应的佣金收益</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

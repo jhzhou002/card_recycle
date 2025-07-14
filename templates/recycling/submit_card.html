@@ -1,0 +1,161 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}提交卡券 - 卡券回收平台{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-plus-circle"></i> 提交卡券回收</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="submitForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
+                                {{ form.category }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
+                                {{ form.package }}
+                                <div class="form-text">
+                                    <span id="commissionInfo" class="text-muted">请先选择类别</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.card_number.id_for_label }}" class="form-label">卡号</label>
+                                {{ form.card_number }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.card_secret.id_for_label }}" class="form-label">密码</label>
+                                {{ form.card_secret }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">核销码图片</label>
+                        <div class="border rounded p-3 text-center" id="imageUpload">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">点击或拖拽上传图片</p>
+                            <input type="file" class="d-none" id="imageFile" accept="image/*">
+                        </div>
+                        <div id="imagePreview" class="mt-2 d-none">
+                            <img id="previewImg" class="img-fluid rounded" style="max-height: 200px;">
+                        </div>
+                        {{ form.image }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
+                                {{ form.expire_date }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.telephone.id_for_label }}" class="form-label">联系电话</label>
+                                {{ form.telephone }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">提交卡券</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 类别选择变化时更新套餐
+    $('#category').change(function() {
+        var categoryId = $(this).val();
+        if (categoryId) {
+            $.get('/api/packages/', {category_id: categoryId}, function(data) {
+                var packageSelect = $('#package');
+                packageSelect.empty();
+                packageSelect.append('<option value="">请选择套餐</option>');
+                
+                $.each(data, function(index, package) {
+                    packageSelect.append('<option value="' + package.id + '">' + package.name + '</option>');
+                });
+            });
+        } else {
+            $('#package').empty().append('<option value="">请先选择类别</option>');
+        }
+    });
+    
+    // 套餐选择变化时显示佣金
+    $('#package').change(function() {
+        var packageId = $(this).val();
+        if (packageId) {
+            var categoryId = $('#category').val();
+            $.get('/api/packages/', {category_id: categoryId}, function(data) {
+                var selectedPackage = data.find(p => p.id == packageId);
+                if (selectedPackage) {
+                    $('#commissionInfo').text('佣金：￥' + selectedPackage.commission);
+                }
+            });
+        } else {
+            $('#commissionInfo').text('请先选择套餐');
+        }
+    });
+    
+    // 图片上传
+    $('#imageUpload').click(function() {
+        $('#imageFile').click();
+    });
+    
+    $('#imageFile').change(function(e) {
+        var file = e.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#previewImg').attr('src', e.target.result);
+                $('#imagePreview').removeClass('d-none');
+                
+                // 上传到七牛云
+                uploadToQiniu(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    function uploadToQiniu(imageData) {
+        $.ajax({
+            url: '/api/upload-image/',
+            type: 'POST',
+            data: JSON.stringify({image: imageData}),
+            contentType: 'application/json',
+            success: function(response) {
+                if (response.url) {
+                    $('#id_image').val(response.url);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('图片上传失败，请重试');
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
