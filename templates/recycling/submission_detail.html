@@ -34,11 +34,15 @@
                 </div>
                 
                 <div class="row mb-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <strong>适用门店：</strong>
+                        <p class="mb-0">{{ submission.store }}</p>
+                    </div>
+                    <div class="col-md-4">
                         <strong>佣金：</strong>
                         <p class="mb-0 text-success">￥{{ submission.commission }}</p>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <strong>过期时间：</strong>
                         <p class="mb-0">{{ submission.expire_date|date:"Y-m-d" }}</p>
                     </div>

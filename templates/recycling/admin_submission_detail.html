@@ -33,11 +33,15 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <strong>套餐：</strong>
                         <p>{{ submission.package.name }}</p>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <strong>适用门店：</strong>
+                        <p>{{ submission.store }}</p>
+                    </div>
+                    <div class="col-md-4">
                         <strong>佣金：</strong>
                         <p class="text-success">￥{{ submission.commission }}</p>
                     </div>

@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.core.paginator import Paginator
-from .models import Category, Package, Submission
+from .models import Category, Package, Submission, Store
 from .forms import SubmissionForm
 from utils.qiniu_util import generate_qiniu_token, upload_data_to_qiniu
 import json
@@ -132,6 +132,27 @@ def get_packages(request):
     category_id = request.GET.get('category_id')
     packages = Package.objects.filter(category_id=category_id)
     data = [{'id': pkg.id, 'name': pkg.name, 'commission': float(pkg.commission)} for pkg in packages]
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+def get_stores(request):
+    """获取门店列表"""
+    package_id = request.GET.get('package_id')
+    if package_id:
+        try:
+            package = Package.objects.get(id=package_id)
+            if package.applicable_stores.exists():
+                stores = package.applicable_stores.filter(is_active=True)
+            else:
+                # 如果套餐没有指定门店，显示所有活跃门店
+                stores = Store.objects.filter(is_active=True)
+        except Package.DoesNotExist:
+            stores = Store.objects.none()
+    else:
+        stores = Store.objects.filter(is_active=True)
+    
+    data = [{'id': store.id, 'name': str(store), 'store_number': store.store_number} for store in stores]
     return JsonResponse(data, safe=False)
 
 

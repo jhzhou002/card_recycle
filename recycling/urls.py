@@ -10,6 +10,7 @@ urlpatterns = [
     path('my-submissions/', views.my_submissions, name='my_submissions'),
     path('submission/<int:submission_id>/', views.submission_detail, name='submission_detail'),
     path('api/packages/', views.get_packages, name='get_packages'),
+    path('api/stores/', views.get_stores, name='get_stores'),
     path('api/qiniu-token/', views.get_qiniu_token, name='get_qiniu_token'),
     path('api/refresh-captcha/', views.refresh_captcha, name='refresh_captcha'),
     
