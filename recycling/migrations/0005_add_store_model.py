@@ -4,6 +4,25 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def create_default_store(apps, schema_editor):
+    """创建默认门店"""
+    Store = apps.get_model('recycling', 'Store')
+    Store.objects.get_or_create(
+        id=1,
+        defaults={
+            'name': '默认门店',
+            'store_number': '1',
+            'is_active': True
+        }
+    )
+
+
+def reverse_create_default_store(apps, schema_editor):
+    """删除默认门店"""
+    Store = apps.get_model('recycling', 'Store')
+    Store.objects.filter(id=1).delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -11,7 +30,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # 创建Store表
+        # 1. 创建Store表
         migrations.CreateModel(
             name='Store',
             fields=[
@@ -28,18 +47,20 @@ class Migration(migrations.Migration):
             },
         ),
         
-        # 为Package表添加applicable_stores字段
+        # 2. 创建默认门店数据
+        migrations.RunPython(create_default_store, reverse_create_default_store),
+        
+        # 3. 为Package表添加applicable_stores字段
         migrations.AddField(
             model_name='package',
             name='applicable_stores',
             field=models.ManyToManyField(blank=True, to='recycling.Store', verbose_name='适用门店'),
         ),
         
-        # 为Submission表添加store字段
+        # 4. 为Submission表添加store字段，允许为空
         migrations.AddField(
             model_name='submission',
             name='store',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, to='recycling.store', verbose_name='适用门店'),
-            preserve_default=False,
+            field=models.ForeignKey(null=True, blank=True, on_delete=django.db.models.deletion.CASCADE, to='recycling.store', verbose_name='适用门店'),
         ),
     ]
