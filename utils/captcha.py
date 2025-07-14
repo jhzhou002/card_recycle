@@ -13,80 +13,102 @@ def generate_captcha_text(length=4):
     return ''.join(random.choice(chars) for _ in range(length))
 
 
-def generate_captcha_image(text, width=160, height=60):
-    """生成验证码图片"""
-    # 创建图片
-    image = Image.new('RGB', (width, height), color=(255, 255, 255))
-    draw = ImageDraw.Draw(image)
-    
-    # 添加背景噪点
-    for _ in range(150):
-        x = random.randint(0, width)
-        y = random.randint(0, height)
-        draw.point((x, y), fill=(random.randint(200, 255), random.randint(200, 255), random.randint(200, 255)))
-    
-    # 添加干扰线
-    for _ in range(4):
-        x1 = random.randint(0, width)
-        y1 = random.randint(0, height)
-        x2 = random.randint(0, width)
-        y2 = random.randint(0, height)
-        draw.line([(x1, y1), (x2, y2)], fill=(random.randint(100, 150), random.randint(100, 150), random.randint(100, 150)), width=2)
-    
-    # 绘制文字
+def create_big_font():
+    """创建一个大字体对象"""
     try:
-        # 尝试使用更大的字体
-        from PIL import ImageFont
         import os
-        
-        # 尝试使用系统中的字体文件
+        # 常见字体路径
         font_paths = [
-            '/System/Library/Fonts/Arial.ttf',  # macOS
-            '/Windows/Fonts/arial.ttf',         # Windows
-            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',  # Linux
-            '/usr/share/fonts/TTF/arial.ttf',   # Linux
+            '/System/Library/Fonts/Helvetica.ttc',  # macOS
+            '/System/Library/Fonts/Arial.ttf',      # macOS
+            'C:/Windows/Fonts/arial.ttf',           # Windows
+            'C:/Windows/Fonts/calibri.ttf',         # Windows  
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',  # Linux
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',  # Linux
+            '/usr/share/fonts/TTF/arial.ttf',       # Linux
         ]
         
-        font = None
-        font_size = 36  # 增大字体大小
+        # 尝试多个字体大小，从大到小
+        for font_size in [48, 42, 38, 34, 30]:
+            for font_path in font_paths:
+                if os.path.exists(font_path):
+                    try:
+                        return ImageFont.truetype(font_path, font_size)
+                    except:
+                        continue
         
-        for font_path in font_paths:
-            if os.path.exists(font_path):
-                try:
-                    font = ImageFont.truetype(font_path, font_size)
-                    break
-                except:
-                    continue
-        
-        # 如果没有找到字体文件，使用默认字体
-        if font is None:
-            font = ImageFont.load_default()
+        # 如果都失败了，尝试使用默认字体
+        return ImageFont.load_default()
     except:
-        font = ImageFont.load_default()
+        return ImageFont.load_default()
+
+
+def draw_large_character(draw, char, x, y, color, font):
+    """绘制一个大字符，使用多重描边增强效果"""
+    # 主字符
+    draw.text((x, y), char, fill=color, font=font)
     
-    # 计算文字位置 - 增大字符宽度以适应更大的字体
-    char_width = 35
-    total_text_width = len(text) * char_width
-    start_x = (width - total_text_width) // 2
+    # 创建粗体效果 - 多方向描边
+    offsets = [
+        # 基础8方向
+        (-2, -2), (-2, 0), (-2, 2),
+        (0, -2),           (0, 2),
+        (2, -2),  (2, 0),  (2, 2),
+        # 扩展描边
+        (-1, -1), (-1, 1), (1, -1), (1, 1),
+        (-3, 0), (3, 0), (0, -3), (0, 3)
+    ]
     
-    # 绘制每个字符，添加随机偏移和颜色
+    # 绘制描边
+    for dx, dy in offsets:
+        stroke_color = tuple(min(255, max(0, c + 30)) for c in color)
+        draw.text((x + dx, y + dy), char, fill=stroke_color, font=font)
+
+
+def generate_captcha_image(text, width=160, height=60):
+    """生成验证码图片 - 重新设计版本"""
+    # 创建白色背景图片
+    image = Image.new('RGB', (width, height), color=(250, 250, 250))
+    draw = ImageDraw.Draw(image)
+    
+    # 添加淡色背景噪点
+    for _ in range(80):
+        x = random.randint(0, width-1)
+        y = random.randint(0, height-1)
+        color = (random.randint(220, 240), random.randint(220, 240), random.randint(220, 240))
+        draw.point((x, y), fill=color)
+    
+    # 添加淡色干扰线
+    for _ in range(3):
+        x1, y1 = random.randint(0, width), random.randint(0, height)
+        x2, y2 = random.randint(0, width), random.randint(0, height)
+        color = (random.randint(180, 200), random.randint(180, 200), random.randint(180, 200))
+        draw.line([(x1, y1), (x2, y2)], fill=color, width=1)
+    
+    # 创建大字体
+    font = create_big_font()
+    
+    # 计算字符位置
+    char_count = len(text)
+    char_width = width // char_count
+    
+    # 绘制每个字符
     for i, char in enumerate(text):
-        char_x = start_x + i * char_width + random.randint(-3, 3)
-        char_y = 8 + random.randint(-5, 5)  # 调整垂直位置以适应更大的字体
-        color = (random.randint(0, 60), random.randint(0, 60), random.randint(0, 60))
+        # 计算字符位置
+        char_x = i * char_width + char_width // 4 + random.randint(-5, 5)
+        char_y = 5 + random.randint(-3, 3)
         
-        # 绘制字符主体 - 使用更粗的字体效果
-        draw.text((char_x, char_y), char, fill=color, font=font)
+        # 随机字符颜色 - 使用更深的颜色确保可见性
+        color = (
+            random.randint(20, 80),   # 红色分量
+            random.randint(20, 80),   # 绿色分量  
+            random.randint(20, 80)    # 蓝色分量
+        )
         
-        # 增强字体粗细效果
-        for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1)]:
-            shadow_x = char_x + dx
-            shadow_y = char_y + dy
-            if 0 <= shadow_x < width - 30 and 0 <= shadow_y < height - 30:
-                shadow_color = tuple(min(255, c + 20) for c in color)
-                draw.text((shadow_x, shadow_y), char, fill=shadow_color, font=font)
+        # 绘制大字符
+        draw_large_character(draw, char, char_x, char_y, color, font)
     
-    # 转换为base64字符串
+    # 转换为base64
     buffer = io.BytesIO()
     image.save(buffer, format='PNG')
     img_str = base64.b64encode(buffer.getvalue()).decode()
