@@ -11,6 +11,7 @@ urlpatterns = [
     path('submission/<int:submission_id>/', views.submission_detail, name='submission_detail'),
     path('api/packages/', views.get_packages, name='get_packages'),
     path('api/qiniu-token/', views.get_qiniu_token, name='get_qiniu_token'),
+    path('api/refresh-captcha/', views.refresh_captcha, name='refresh_captcha'),
     
     # 管理员路由
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),

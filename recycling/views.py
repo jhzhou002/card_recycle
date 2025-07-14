@@ -26,13 +26,35 @@ def user_login(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user:
-            login(request, user)
-            return redirect('home')
+        captcha_input = request.POST.get('captcha', '').strip().upper()
+        captcha_session = request.session.get('captcha', '').upper()
+        
+        # 验证验证码
+        if not captcha_input or captcha_input != captcha_session:
+            messages.error(request, '验证码错误')
+            # 清除session中的验证码
+            if 'captcha' in request.session:
+                del request.session['captcha']
         else:
-            messages.error(request, '用户名或密码错误')
-    return render(request, 'recycling/login.html')
+            user = authenticate(request, username=username, password=password)
+            if user:
+                login(request, user)
+                # 清除session中的验证码
+                if 'captcha' in request.session:
+                    del request.session['captcha']
+                return redirect('home')
+            else:
+                messages.error(request, '用户名或密码错误')
+                # 清除session中的验证码
+                if 'captcha' in request.session:
+                    del request.session['captcha']
+    
+    # 生成新的验证码
+    from utils.captcha import generate_captcha
+    captcha_text, captcha_image = generate_captcha()
+    request.session['captcha'] = captcha_text
+    
+    return render(request, 'recycling/login.html', {'captcha_image': captcha_image})
 
 
 def user_logout(request):
@@ -123,6 +145,16 @@ def get_qiniu_token(request):
             return JsonResponse({'token': token})
         else:
             return JsonResponse({'error': '获取上传凭证失败'}, status=500)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+def refresh_captcha(request):
+    """刷新验证码"""
+    if request.method == 'GET':
+        from utils.captcha import generate_captcha
+        captcha_text, captcha_image = generate_captcha()
+        request.session['captcha'] = captcha_text
+        return JsonResponse({'captcha_image': captcha_image})
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 

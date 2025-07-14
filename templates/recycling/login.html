@@ -3,32 +3,197 @@
 {% block title %}登录 - 卡券回收平台{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h4 class="text-center"><i class="fas fa-sign-in-alt"></i> 用户登录</h4>
+<style>
+.login-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.login-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    border: none;
+}
+
+.login-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.login-body {
+    padding: 2.5rem;
+    background: white;
+}
+
+.form-control {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 12px 15px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-login {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+.captcha-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.captcha-image {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.captcha-image:hover {
+    border-color: #007bff;
+}
+
+.refresh-captcha {
+    background: none;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #6c757d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.refresh-captcha:hover {
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.register-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.register-link:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+</style>
+
+<div class="login-container">
+    <div class="col-11 col-sm-8 col-md-5 col-lg-4">
+        <div class="card login-card">
+            <div class="card-header login-header">
+                <h4><i class="fas fa-sign-in-alt me-2"></i>用户登录</h4>
+                <p class="mb-0 mt-2 opacity-75">欢迎回到卡券回收平台</p>
             </div>
-            <div class="card-body">
-                <form method="post">
+            <div class="card-body login-body">
+                <form method="post" id="loginForm">
                     {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="username" class="form-label">用户名</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
+                    <div class="mb-4">
+                        <label for="username" class="form-label fw-bold">
+                            <i class="fas fa-user me-1"></i>用户名
+                        </label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               placeholder="请输入用户名" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">密码</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                    
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-bold">
+                            <i class="fas fa-lock me-1"></i>密码
+                        </label>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="请输入密码" required>
                     </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">登录</button>
+                    
+                    <div class="mb-4">
+                        <label for="captcha" class="form-label fw-bold">
+                            <i class="fas fa-shield-alt me-1"></i>验证码
+                        </label>
+                        <div class="captcha-container">
+                            <input type="text" class="form-control" id="captcha" name="captcha" 
+                                   placeholder="验证码" maxlength="4" style="flex: 1;" required>
+                            <img id="captchaImage" src="{{ captcha_image }}" alt="验证码" 
+                                 class="captcha-image" width="120" height="40" 
+                                 onclick="refreshCaptcha()" title="点击刷新验证码">
+                            <button type="button" class="refresh-captcha" onclick="refreshCaptcha()" 
+                                    title="刷新验证码">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">点击图片或刷新按钮更换验证码</small>
+                    </div>
+                    
+                    <div class="d-grid mb-4">
+                        <button type="submit" class="btn btn-primary btn-login">
+                            <i class="fas fa-sign-in-alt me-2"></i>登录
+                        </button>
                     </div>
                 </form>
-                <div class="text-center mt-3">
-                    <p>还没有账号？<a href="{% url 'register' %}">立即注册</a></p>
+                
+                <div class="text-center">
+                    <p class="mb-0">还没有账号？
+                        <a href="{% url 'register' %}" class="register-link">立即注册</a>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function refreshCaptcha() {
+    fetch('/api/refresh-captcha/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.captcha_image) {
+                document.getElementById('captchaImage').src = data.captcha_image;
+                document.getElementById('captcha').value = '';
+            }
+        })
+        .catch(error => {
+            console.error('刷新验证码失败:', error);
+        });
+}
+
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    const captcha = document.getElementById('captcha').value.trim();
+    if (!captcha) {
+        alert('请输入验证码');
+        e.preventDefault();
+        return false;
+    }
+});
+</script>
 {% endblock %}
