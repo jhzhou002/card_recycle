@@ -4,10 +4,69 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}卡券回收平台{% endblock %}</title>
-    {% load static %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="{% static 'css/custom.css' %}" rel="stylesheet">
+    <style>
+        /* 自定义样式 */
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .jumbotron {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+        }
+
+        .alerts-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1050;
+            width: 300px;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            border-top: none;
+        }
+
+        .badge {
+            font-size: 0.75em;
+        }
+
+        footer {
+            margin-top: auto;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .jumbotron {
+                padding: 2rem 1rem;
+            }
+            
+            .jumbotron h1 {
+                font-size: 2rem;
+            }
+            
+            .alerts-container {
+                width: 90%;
+                right: 5%;
+            }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">

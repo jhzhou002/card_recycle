@@ -10,7 +10,7 @@
                 <h4><i class="fas fa-plus-circle"></i> 提交卡券回收</h4>
             </div>
             <div class="card-body">
-                <form method="post" id="submitForm">
+                <form method="post" id="submitForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="row">
                         <div class="col-md-6">
@@ -46,19 +46,14 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
+                        <label for="{{ form.image.id_for_label }}" class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
                         <div class="form-text mb-2">
                             <small class="text-info">注意：卡号密码和核销码图片至少需要提供一项</small>
                         </div>
-                        <div class="border rounded p-3 text-center" id="imageUpload">
-                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-                            <p class="text-muted">点击或拖拽上传图片</p>
-                            <input type="file" class="d-none" id="imageFile" accept="image/*">
-                        </div>
-                        <div id="imagePreview" class="mt-2 d-none">
-                            <img id="previewImg" class="img-fluid rounded" style="max-height: 200px;">
-                        </div>
                         {{ form.image }}
+                        <div class="form-text">
+                            <small class="text-muted">支持JPG、PNG格式，最大10MB</small>
+                        </div>
                     </div>
                     
                     <div class="row">
@@ -88,33 +83,9 @@
 
 {% block extra_js %}
 <script>
-// 防止重复绑定事件
-var eventsBound = false;
-
 $(document).ready(function() {
-    if (eventsBound) return;
-    eventsBound = true;
-    
-    // 获取CSRF token
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-    
-    const csrftoken = getCookie('csrftoken');
-    
     // 类别选择变化时更新套餐
-    $('#category').off('change.cardRecycle').on('change.cardRecycle', function() {
+    $('#category').change(function() {
         var categoryId = $(this).val();
         if (categoryId) {
             $.get('/api/packages/', {category_id: categoryId})
@@ -137,7 +108,7 @@ $(document).ready(function() {
     });
     
     // 套餐选择变化时显示佣金
-    $('#package').off('change.cardRecycle').on('change.cardRecycle', function() {
+    $('#package').change(function() {
         var packageId = $(this).val();
         if (packageId) {
             var categoryId = $('#category').val();
@@ -156,136 +127,8 @@ $(document).ready(function() {
         }
     });
     
-    // 图片上传相关变量
-    var isUploading = false;
-    
-    // 图片上传点击事件
-    $('#imageUpload').off('click.cardRecycle').on('click.cardRecycle', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!isUploading) {
-            $('#imageFile').trigger('click');
-        }
-    });
-    
-    // 拖放上传事件
-    var uploadArea = document.getElementById('imageUpload');
-    if (uploadArea) {
-        uploadArea.addEventListener('dragover', handleDragOver, false);
-        uploadArea.addEventListener('dragleave', handleDragLeave, false);
-        uploadArea.addEventListener('drop', handleDrop, false);
-    }
-    
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $('#imageUpload').addClass('dragover');
-    }
-    
-    function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $('#imageUpload').removeClass('dragover');
-    }
-    
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $('#imageUpload').removeClass('dragover');
-        
-        var files = e.dataTransfer.files;
-        if (files.length > 0 && !isUploading) {
-            handleFile(files[0]);
-        }
-    }
-    
-    // 文件选择事件
-    $('#imageFile').off('change.cardRecycle').on('change.cardRecycle', function(e) {
-        var file = e.target.files[0];
-        if (file && !isUploading) {
-            handleFile(file);
-        }
-    });
-    
-    function handleFile(file) {
-        // 验证文件类型
-        if (!file.type.startsWith('image/')) {
-            alert('请选择图片文件');
-            return;
-        }
-        
-        // 验证文件大小 (最大10MB)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('图片大小不能超过10MB');
-            return;
-        }
-        
-        isUploading = true;
-        
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            $('#previewImg').attr('src', e.target.result);
-            $('#imagePreview').removeClass('d-none');
-            
-            // 上传到服务器
-            uploadImage(e.target.result);
-        };
-        
-        reader.onerror = function() {
-            alert('文件读取失败');
-            isUploading = false;
-        };
-        
-        reader.readAsDataURL(file);
-    }
-    
-    function uploadImage(imageData) {
-        // 显示上传进度
-        $('#imageUpload').html('<i class="fas fa-spinner fa-spin fa-2x"></i><p>上传中...</p>');
-        
-        $.ajax({
-            url: '/api/upload-image/',
-            type: 'POST',
-            data: JSON.stringify({image: imageData}),
-            contentType: 'application/json',
-            headers: {
-                'X-CSRFToken': csrftoken
-            },
-            timeout: 30000, // 30秒超时
-            success: function(response) {
-                if (response && response.url) {
-                    $('#id_image').val(response.url);
-                    $('#imageUpload').html('<i class="fas fa-check fa-2x text-success"></i><p>上传成功</p>');
-                } else {
-                    resetUploadArea();
-                    alert('图片上传失败：' + (response.error || '未知错误'));
-                }
-                isUploading = false;
-            },
-            error: function(xhr, status, error) {
-                resetUploadArea();
-                var errorMsg = '图片上传失败';
-                try {
-                    if (xhr.responseJSON && xhr.responseJSON.error) {
-                        errorMsg += '：' + xhr.responseJSON.error;
-                    } else if (status === 'timeout') {
-                        errorMsg += '：上传超时';
-                    }
-                } catch(e) {
-                    // 忽略JSON解析错误
-                }
-                alert(errorMsg);
-                isUploading = false;
-            }
-        });
-    }
-    
-    function resetUploadArea() {
-        $('#imageUpload').html('<i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i><p class="text-muted">点击或拖拽上传图片</p>');
-    }
-    
     // 表单提交验证
-    $('#submitForm').off('submit.cardRecycle').on('submit.cardRecycle', function(e) {
+    $('#submitForm').submit(function(e) {
         // 验证必填字段
         if (!$('#category').val()) {
             alert('请选择卡券类别');
@@ -299,17 +142,6 @@ $(document).ready(function() {
             return false;
         }
         
-        // 卡号、密码、图片不是必填的，至少要有一个
-        var hasCardNumber = $('#id_card_number').val().trim();
-        var hasCardSecret = $('#id_card_secret').val().trim();
-        var hasImage = $('#id_image').val().trim();
-        
-        if (!hasCardNumber && !hasCardSecret && !hasImage) {
-            alert('请至少填写卡号密码或上传核销码图片');
-            e.preventDefault();
-            return false;
-        }
-        
         if (!$('#id_expire_date').val()) {
             alert('请选择过期时间');
             e.preventDefault();
@@ -318,13 +150,6 @@ $(document).ready(function() {
         
         if (!$('#id_telephone').val().trim()) {
             alert('请输入联系电话');
-            e.preventDefault();
-            return false;
-        }
-        
-        // 防止重复提交
-        if (isUploading) {
-            alert('图片正在上传中，请稍候...');
             e.preventDefault();
             return false;
         }
