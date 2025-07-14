@@ -43,7 +43,7 @@ class Submission(models.Model):
     commission = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='佣金')
     card_number = models.CharField(max_length=200, blank=True, verbose_name='卡号')
     card_secret = models.CharField(max_length=200, blank=True, verbose_name='密码')
-    image = models.ImageField(upload_to='card_images/', blank=True, null=True, verbose_name='核销码图片')
+    image = models.URLField(blank=True, verbose_name='核销码图片')
     expire_date = models.DateField(verbose_name='过期时间')
     telephone = models.CharField(max_length=20, verbose_name='联系电话')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='状态')

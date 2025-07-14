@@ -74,7 +74,10 @@
                     <div class="col-md-12">
                         <strong>核销码图片：</strong>
                         <div class="mt-2">
-                            <img src="{{ submission.image.url }}" class="img-fluid rounded" style="max-width: 400px; max-height: 300px;">
+                            <img src="{{ submission.image }}" class="img-fluid rounded" style="max-width: 400px; max-height: 300px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i> 图片加载失败
+                            </div>
                         </div>
                     </div>
                 </div>

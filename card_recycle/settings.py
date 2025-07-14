@@ -147,8 +147,6 @@ QINIU_BUCKET_DOMAIN = 'https://guangpan.lingjing235.cn'  # 绑定的自定义域
 QINIU_SECURE_URL = True  # 使用HTTPS
 QINIU_UPLOAD_MAX_SIZE = 10 * 1024 * 1024  # 最大10MB
 
-# 使用七牛云作为默认文件存储
-DEFAULT_FILE_STORAGE = 'utils.qiniu_storage.QiniuStorage'
 
 # REST Framework配置
 REST_FRAMEWORK = {

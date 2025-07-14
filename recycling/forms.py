@@ -13,7 +13,7 @@ class SubmissionForm(forms.ModelForm):
             'package': forms.Select(attrs={'class': 'form-control', 'id': 'package'}),
             'card_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入卡号（可选）'}),
             'card_secret': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入密码（可选）'}),
-            'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'image': forms.HiddenInput(),
             'expire_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'telephone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入联系电话'}),
         }

@@ -46,13 +46,29 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.image.id_for_label }}" class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
+                        <label for="imageFile" class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
                         <div class="form-text mb-2">
                             <small class="text-info">注意：卡号密码和核销码图片至少需要提供一项</small>
                         </div>
                         {{ form.image }}
-                        <div class="form-text">
+                        <input type="file" class="form-control" id="imageFile" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+                        <div class="upload-area border rounded p-3 text-center" style="cursor: pointer; border: 2px dashed #ccc;">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
+                            <p class="mt-2 mb-0">点击选择图片或拖拽文件到此处</p>
                             <small class="text-muted">支持JPG、PNG格式，最大10MB</small>
+                        </div>
+                        <div id="uploadProgress" class="mt-2" style="display: none;">
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted">正在上传...</small>
+                        </div>
+                        <div id="imagePreview" class="mt-2" style="display: none;">
+                            <img id="previewImg" src="" alt="图片预览" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                            <div class="mt-1">
+                                <small class="text-success">上传成功</small>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeImage">删除</button>
+                            </div>
                         </div>
                     </div>
                     
@@ -82,6 +98,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.staticfile.org/qiniu-js/3.4.1/qiniu.min.js"></script>
 <script>
 $(document).ready(function() {
     // 类别选择变化时更新套餐
@@ -127,6 +144,139 @@ $(document).ready(function() {
         }
     });
     
+    // 图片上传功能
+    var uploadedImageUrl = '';
+    
+    // 点击上传区域
+    $('.upload-area').click(function() {
+        $('#imageFile').click();
+    });
+    
+    // 文件选择处理
+    $('#imageFile').change(function() {
+        var file = this.files[0];
+        if (file) {
+            uploadToQiniu(file);
+        }
+    });
+    
+    // 拖拽上传
+    $('.upload-area').on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('border-primary');
+    });
+    
+    $('.upload-area').on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('border-primary');
+    });
+    
+    $('.upload-area').on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('border-primary');
+        var files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            uploadToQiniu(files[0]);
+        }
+    });
+    
+    // 删除图片
+    $('#removeImage').click(function() {
+        uploadedImageUrl = '';
+        $('#id_image').val('');
+        $('#imagePreview').hide();
+        $('.upload-area').show();
+        $('#imageFile').val('');
+    });
+    
+    // 上传到七牛云
+    function uploadToQiniu(file) {
+        // 验证文件
+        if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
+            alert('请选择JPG或PNG格式的图片');
+            return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+            alert('图片大小不能超过10MB');
+            return;
+        }
+        
+        // 显示上传进度
+        $('.upload-area').hide();
+        $('#uploadProgress').show();
+        var progressBar = $('#uploadProgress .progress-bar');
+        
+        // 获取上传token
+        $.get('/api/qiniu-token/')
+            .done(function(data) {
+                if (data.token) {
+                    // 生成唯一文件名
+                    var filename = 'card_recycle/' + generateUUID() + '.' + file.name.split('.').pop();
+                    
+                    // 配置七牛云上传
+                    var config = {
+                        useCdnDomain: true,
+                        region: qiniu.region.z0  // 华东区域
+                    };
+                    
+                    var putExtra = {
+                        fname: filename,
+                        params: {},
+                        mimeType: ["image/png", "image/jpeg", "image/jpg"]
+                    };
+                    
+                    // 创建上传任务
+                    var observable = qiniu.upload(file, filename, data.token, putExtra, config);
+                    
+                    // 监听上传进度
+                    var subscription = observable.subscribe({
+                        next: function(res) {
+                            var percent = Math.floor(res.total.percent);
+                            progressBar.css('width', percent + '%');
+                        },
+                        error: function(err) {
+                            console.error('上传失败:', err);
+                            alert('图片上传失败，请重试');
+                            resetUploadArea();
+                        },
+                        complete: function(res) {
+                            // 上传成功
+                            uploadedImageUrl = 'https://guangpan.lingjing235.cn/' + res.key;
+                            $('#id_image').val(uploadedImageUrl);
+                            
+                            // 显示预览
+                            $('#previewImg').attr('src', uploadedImageUrl);
+                            $('#uploadProgress').hide();
+                            $('#imagePreview').show();
+                        }
+                    });
+                } else {
+                    alert('获取上传凭证失败');
+                    resetUploadArea();
+                }
+            })
+            .fail(function() {
+                alert('获取上传凭证失败');
+                resetUploadArea();
+            });
+    }
+    
+    // 重置上传区域
+    function resetUploadArea() {
+        $('#uploadProgress').hide();
+        $('.upload-area').show();
+        $('#uploadProgress .progress-bar').css('width', '0%');
+    }
+    
+    // 生成UUID
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+    
     // 表单提交验证
     $('#submitForm').submit(function(e) {
         // 验证必填字段
@@ -150,6 +300,16 @@ $(document).ready(function() {
         
         if (!$('#id_telephone').val().trim()) {
             alert('请输入联系电话');
+            e.preventDefault();
+            return false;
+        }
+        
+        // 验证卡号密码和图片至少一项
+        var hasCardInfo = $('#id_card_number').val().trim() || $('#id_card_secret').val().trim();
+        var hasImage = uploadedImageUrl || $('#id_image').val();
+        
+        if (!hasCardInfo && !hasImage) {
+            alert('请至少填写卡号密码或上传核销码图片');
             e.preventDefault();
             return false;
         }

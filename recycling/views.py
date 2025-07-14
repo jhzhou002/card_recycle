@@ -60,7 +60,7 @@ def submit_card(request):
     """提交卡券"""
     categories = Category.objects.all()
     if request.method == 'POST':
-        form = SubmissionForm(request.POST, request.FILES)
+        form = SubmissionForm(request.POST)
         if form.is_valid():
             try:
                 submission = form.save(commit=False)
@@ -111,6 +111,19 @@ def get_packages(request):
     packages = Package.objects.filter(category_id=category_id)
     data = [{'id': pkg.id, 'name': pkg.name, 'commission': float(pkg.commission)} for pkg in packages]
     return JsonResponse(data, safe=False)
+
+
+@login_required
+def get_qiniu_token(request):
+    """获取七牛云上传token"""
+    if request.method == 'GET':
+        from utils.qiniu_util import generate_qiniu_token
+        token = generate_qiniu_token()
+        if token:
+            return JsonResponse({'token': token})
+        else:
+            return JsonResponse({'error': '获取上传凭证失败'}, status=500)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
 

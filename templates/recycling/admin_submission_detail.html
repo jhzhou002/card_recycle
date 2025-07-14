@@ -67,10 +67,13 @@
                         <strong>核销码图片：</strong>
                         {% if submission.image %}
                         <div class="mt-2">
-                            <img src="{{ submission.image.url }}" class="img-fluid rounded" style="max-width: 300px;" alt="核销码图片">
+                            <img src="{{ submission.image }}" class="img-fluid rounded" style="max-width: 300px;" alt="核销码图片" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i> 图片加载失败
+                            </div>
                             <div class="mt-1">
                                 <small class="text-muted">
-                                    <a href="{{ submission.image.url }}" target="_blank" class="text-decoration-none">
+                                    <a href="{{ submission.image }}" target="_blank" class="text-decoration-none">
                                         <i class="fas fa-external-link-alt"></i> 在新窗口查看原图
                                     </a>
                                 </small>
