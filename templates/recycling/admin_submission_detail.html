@@ -67,7 +67,14 @@
                         <strong>核销码图片：</strong>
                         {% if submission.image %}
                         <div class="mt-2">
-                            <img src="{{ submission.image }}" class="img-fluid rounded" style="max-width: 300px;">
+                            <img src="{{ submission.image.url }}" class="img-fluid rounded" style="max-width: 300px;" alt="核销码图片">
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    <a href="{{ submission.image.url }}" target="_blank" class="text-decoration-none">
+                                        <i class="fas fa-external-link-alt"></i> 在新窗口查看原图
+                                    </a>
+                                </small>
+                            </div>
                         </div>
                         {% else %}
                         <p class="text-muted">无图片</p>

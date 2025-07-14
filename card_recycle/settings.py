@@ -139,13 +139,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# 七牛云配置
+# 七牛云配置(华东)（上传到card_recycle文件夹下）
 QINIU_ACCESS_KEY = 'nfxmZVGEHjkd8Rsn44S-JSynTBUUguTScil9dDvC'
 QINIU_SECRET_KEY = '9lZjiRtRLL0U_MuYkcUZBAL16TlIJ8_dDSbTqqU2'
 QINIU_BUCKET_NAME = 'youxuan-images'
-QINIU_BUCKET_DOMAIN = 'https://guangpan.lingjing235.cn'
-QINIU_SECURE_URL = True
-QINIU_UPLOAD_MAX_SIZE = 10 * 1024 * 1024
+QINIU_BUCKET_DOMAIN = 'https://guangpan.lingjing235.cn'  # 绑定的自定义域名
+QINIU_SECURE_URL = True  # 使用HTTPS
+QINIU_UPLOAD_MAX_SIZE = 10 * 1024 * 1024  # 最大10MB
+
+# 使用七牛云作为默认文件存储
+DEFAULT_FILE_STORAGE = 'utils.qiniu_storage.QiniuStorage'
 
 # REST Framework配置
 REST_FRAMEWORK = {

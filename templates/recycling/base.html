@@ -10,6 +10,7 @@
         /* 自定义样式 */
         body {
             background-color: #f8f9fa;
+            font-size: 14px;
         }
 
         .jumbotron {
@@ -20,6 +21,7 @@
             border: none;
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
             transition: all 0.3s ease;
+            margin-bottom: 1rem;
         }
 
         .card:hover {
@@ -51,19 +53,161 @@
             margin-top: auto;
         }
 
-        /* 响应式设计 */
+        /* 移动端优化 */
         @media (max-width: 768px) {
+            /* 导航栏优化 */
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+            
+            .navbar-nav .nav-link {
+                padding: 0.5rem 1rem;
+            }
+            
+            /* 主要内容区域 */
             .jumbotron {
-                padding: 2rem 1rem;
+                padding: 1.5rem 1rem;
+                margin-bottom: 1rem;
             }
             
             .jumbotron h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
+            .jumbotron .lead {
+                font-size: 1rem;
+            }
+            
+            /* 卡片布局 */
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .card-header h4,
+            .card-header h5 {
+                font-size: 1.1rem;
+            }
+            
+            /* 表格优化 */
+            .table-responsive {
+                border: none;
+            }
+            
+            .table td,
+            .table th {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.9rem;
+            }
+            
+            /* 按钮优化 */
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.8rem;
+            }
+            
+            /* 表单优化 */
+            .form-control {
+                font-size: 16px; /* 防止iOS缩放 */
+            }
+            
+            .form-label {
+                font-size: 0.9rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            /* 通知优化 */
             .alerts-container {
-                width: 90%;
-                right: 5%;
+                width: 95%;
+                right: 2.5%;
+                top: 70px;
+            }
+            
+            /* 分页优化 */
+            .pagination {
+                margin-bottom: 1rem;
+            }
+            
+            .page-link {
+                padding: 0.375rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            /* 状态徽章优化 */
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.25em 0.5em;
+            }
+            
+            /* 图片优化 */
+            img {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+
+        /* 小屏幕设备 */
+        @media (max-width: 576px) {
+            .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            .jumbotron h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card-body {
+                padding: 0.75rem;
+            }
+            
+            .btn {
+                font-size: 0.9rem;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            .table td,
+            .table th {
+                padding: 0.375rem 0.25rem;
+                font-size: 0.8rem;
+            }
+            
+            /* 隐藏不重要的列 */
+            .table .d-none-mobile {
+                display: none !important;
+            }
+        }
+
+        /* 平板设备 */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .card-columns {
+                column-count: 2;
+            }
+        }
+
+        /* 横屏手机 */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .jumbotron {
+                padding: 1rem;
+            }
+            
+            .jumbotron h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .nav-link,
+            .page-link {
+                min-height: 44px; /* 触摸目标最小尺寸 */
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .table-responsive {
+                -webkit-overflow-scrolling: touch;
             }
         }
     </style>

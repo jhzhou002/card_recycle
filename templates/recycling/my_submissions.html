@@ -15,11 +15,11 @@
                     <tr>
                         <th>编号</th>
                         <th>类别</th>
-                        <th>套餐</th>
-                        <th>卡号</th>
-                        <th>佣金</th>
+                        <th class="d-none-mobile">套餐</th>
+                        <th class="d-none-mobile">卡号</th>
+                        <th class="d-none-mobile">佣金</th>
                         <th>状态</th>
-                        <th>提交时间</th>
+                        <th class="d-none-mobile">提交时间</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -27,10 +27,16 @@
                     {% for submission in page_obj %}
                     <tr>
                         <td>{{ submission.id }}</td>
-                        <td>{{ submission.category.name }}</td>
-                        <td>{{ submission.package.name }}</td>
-                        <td>{{ submission.card_number|truncatechars:10 }}</td>
-                        <td>￥{{ submission.commission }}</td>
+                        <td>
+                            {{ submission.category.name }}
+                            <div class="d-block d-sm-none">
+                                <small class="text-muted">{{ submission.package.name }}</small><br>
+                                <small class="text-success">￥{{ submission.commission }}</small>
+                            </div>
+                        </td>
+                        <td class="d-none-mobile">{{ submission.package.name }}</td>
+                        <td class="d-none-mobile">{{ submission.card_number|truncatechars:10 }}</td>
+                        <td class="d-none-mobile">￥{{ submission.commission }}</td>
                         <td>
                             {% if submission.status == 'pending' %}
                             <span class="badge bg-warning">{{ submission.get_status_display }}</span>
@@ -41,11 +47,14 @@
                             {% else %}
                             <span class="badge bg-info">{{ submission.get_status_display }}</span>
                             {% endif %}
+                            <div class="d-block d-sm-none">
+                                <small class="text-muted">{{ submission.submitted_at|date:"m-d H:i" }}</small>
+                            </div>
                         </td>
-                        <td>{{ submission.submitted_at|date:"Y-m-d H:i" }}</td>
+                        <td class="d-none-mobile">{{ submission.submitted_at|date:"Y-m-d H:i" }}</td>
                         <td>
                             <a href="{% url 'submission_detail' submission.id %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i> 查看
+                                <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">查看</span>
                             </a>
                         </td>
                     </tr>
