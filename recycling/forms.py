@@ -31,6 +31,17 @@ class SubmissionForm(forms.ModelForm):
         elif self.instance.pk:
             self.fields['package'].queryset = self.instance.category.package_set.all()
     
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get('category')
+        package = cleaned_data.get('package')
+        
+        if category and package:
+            if package.category != category:
+                raise forms.ValidationError('选择的套餐不属于该类别')
+        
+        return cleaned_data
+    
     def save(self, commit=True):
         instance = super().save(commit=False)
         # 设置佣金

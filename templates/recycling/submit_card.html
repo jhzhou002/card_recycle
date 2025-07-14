@@ -86,6 +86,24 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
+    // 获取CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrftoken = getCookie('csrftoken');
+    
     // 类别选择变化时更新套餐
     $('#category').change(function() {
         var categoryId = $(this).val();
@@ -98,9 +116,12 @@ $(document).ready(function() {
                 $.each(data, function(index, package) {
                     packageSelect.append('<option value="' + package.id + '">' + package.name + '</option>');
                 });
+            }).fail(function() {
+                alert('获取套餐列表失败');
             });
         } else {
             $('#package').empty().append('<option value="">请先选择类别</option>');
+            $('#commissionInfo').text('请先选择类别');
         }
     });
     
@@ -114,6 +135,8 @@ $(document).ready(function() {
                 if (selectedPackage) {
                     $('#commissionInfo').text('佣金：￥' + selectedPackage.commission);
                 }
+            }).fail(function() {
+                $('#commissionInfo').text('获取佣金信息失败');
             });
         } else {
             $('#commissionInfo').text('请先选择套餐');
@@ -121,41 +144,143 @@ $(document).ready(function() {
     });
     
     // 图片上传
-    $('#imageUpload').click(function() {
+    $('#imageUpload').click(function(e) {
+        e.preventDefault();
         $('#imageFile').click();
+    });
+    
+    // 拖放上传
+    $('#imageUpload').on('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('dragover');
+    });
+    
+    $('#imageUpload').on('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('dragover');
+    });
+    
+    $('#imageUpload').on('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('dragover');
+        
+        var files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
     });
     
     $('#imageFile').change(function(e) {
         var file = e.target.files[0];
         if (file) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                $('#previewImg').attr('src', e.target.result);
-                $('#imagePreview').removeClass('d-none');
-                
-                // 上传到七牛云
-                uploadToQiniu(e.target.result);
-            };
-            reader.readAsDataURL(file);
+            handleFile(file);
         }
     });
     
+    function handleFile(file) {
+        // 验证文件类型
+        if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件');
+            return;
+        }
+        
+        // 验证文件大小 (最大10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('图片大小不能超过10MB');
+            return;
+        }
+        
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            $('#previewImg').attr('src', e.target.result);
+            $('#imagePreview').removeClass('d-none');
+            
+            // 上传到七牛云
+            uploadToQiniu(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+    
     function uploadToQiniu(imageData) {
+        // 显示上传进度
+        $('#imageUpload').html('<i class="fas fa-spinner fa-spin fa-2x"></i><p>上传中...</p>');
+        
         $.ajax({
             url: '/api/upload-image/',
             type: 'POST',
             data: JSON.stringify({image: imageData}),
             contentType: 'application/json',
+            headers: {
+                'X-CSRFToken': csrftoken
+            },
             success: function(response) {
                 if (response.url) {
                     $('#id_image').val(response.url);
+                    $('#imageUpload').html('<i class="fas fa-check fa-2x text-success"></i><p>上传成功</p>');
+                } else {
+                    $('#imageUpload').html('<i class="fas fa-cloud-upload-alt fa-2x text-muted"></i><p>点击或拖拽上传图片</p>');
+                    alert('图片上传失败：' + (response.error || '未知错误'));
                 }
             },
             error: function(xhr, status, error) {
-                alert('图片上传失败，请重试');
+                $('#imageUpload').html('<i class="fas fa-cloud-upload-alt fa-2x text-muted"></i><p>点击或拖拽上传图片</p>');
+                var errorMsg = '图片上传失败';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg += '：' + xhr.responseJSON.error;
+                }
+                alert(errorMsg);
             }
         });
     }
+    
+    // 表单提交验证
+    $('#submitForm').submit(function(e) {
+        // 验证必填字段
+        if (!$('#category').val()) {
+            alert('请选择卡券类别');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#package').val()) {
+            alert('请选择套餐');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#id_card_number').val()) {
+            alert('请输入卡号');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#id_card_secret').val()) {
+            alert('请输入密码');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#id_image').val()) {
+            alert('请上传核销码图片');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#id_expire_date').val()) {
+            alert('请选择过期时间');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!$('#id_telephone').val()) {
+            alert('请输入联系电话');
+            e.preventDefault();
+            return false;
+        }
+    });
 });
 </script>
 {% endblock %}

@@ -62,11 +62,19 @@ def submit_card(request):
     if request.method == 'POST':
         form = SubmissionForm(request.POST)
         if form.is_valid():
-            submission = form.save(commit=False)
-            submission.user = request.user
-            submission.save()
-            messages.success(request, '卡券提交成功！')
-            return redirect('my_submissions')
+            try:
+                submission = form.save(commit=False)
+                submission.user = request.user
+                submission.save()
+                messages.success(request, '卡券提交成功！')
+                return redirect('my_submissions')
+            except Exception as e:
+                messages.error(request, f'提交失败：{str(e)}')
+        else:
+            # 显示表单错误
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{form.fields[field].label}: {error}')
     else:
         form = SubmissionForm()
     return render(request, 'recycling/submit_card.html', {
@@ -94,7 +102,7 @@ def get_packages(request):
     return JsonResponse(data, safe=False)
 
 
-@csrf_exempt
+@login_required
 def get_qiniu_token(request):
     """获取七牛云上传token"""
     if request.method == 'POST':
@@ -103,7 +111,7 @@ def get_qiniu_token(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
-@csrf_exempt
+@login_required
 def upload_image(request):
     """上传图片到七牛云"""
     if request.method == 'POST':
@@ -116,18 +124,23 @@ def upload_image(request):
                     image_data = image_data.split(',')[1]
                 
                 # 解码base64
-                image_bytes = base64.b64decode(image_data)
+                try:
+                    image_bytes = base64.b64decode(image_data)
+                except Exception as e:
+                    return JsonResponse({'error': 'Base64解码失败'}, status=400)
                 
                 # 上传到七牛云
                 url = upload_data_to_qiniu(image_bytes)
                 if url:
                     return JsonResponse({'url': url})
                 else:
-                    return JsonResponse({'error': '上传失败'}, status=500)
+                    return JsonResponse({'error': '上传到七牛云失败'}, status=500)
             else:
                 return JsonResponse({'error': '没有图片数据'}, status=400)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'JSON数据格式错误'}, status=400)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({'error': f'服务器错误: {str(e)}'}, status=500)
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
