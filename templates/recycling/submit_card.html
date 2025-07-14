@@ -33,20 +33,23 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="{{ form.card_number.id_for_label }}" class="form-label">卡号</label>
+                                <label for="{{ form.card_number.id_for_label }}" class="form-label">卡号 <small class="text-muted">(可选)</small></label>
                                 {{ form.card_number }}
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="{{ form.card_secret.id_for_label }}" class="form-label">密码</label>
+                                <label for="{{ form.card_secret.id_for_label }}" class="form-label">密码 <small class="text-muted">(可选)</small></label>
                                 {{ form.card_secret }}
                             </div>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">核销码图片</label>
+                        <label class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
+                        <div class="form-text mb-2">
+                            <small class="text-info">注意：卡号密码和核销码图片至少需要提供一项</small>
+                        </div>
                         <div class="border rounded p-3 text-center" id="imageUpload">
                             <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
                             <p class="text-muted">点击或拖拽上传图片</p>
@@ -85,7 +88,13 @@
 
 {% block extra_js %}
 <script>
+// 防止重复绑定事件
+var eventsBound = false;
+
 $(document).ready(function() {
+    if (eventsBound) return;
+    eventsBound = true;
+    
     // 获取CSRF token
     function getCookie(name) {
         let cookieValue = null;
@@ -105,20 +114,22 @@ $(document).ready(function() {
     const csrftoken = getCookie('csrftoken');
     
     // 类别选择变化时更新套餐
-    $('#category').change(function() {
+    $('#category').off('change.cardRecycle').on('change.cardRecycle', function() {
         var categoryId = $(this).val();
         if (categoryId) {
-            $.get('/api/packages/', {category_id: categoryId}, function(data) {
-                var packageSelect = $('#package');
-                packageSelect.empty();
-                packageSelect.append('<option value="">请选择套餐</option>');
-                
-                $.each(data, function(index, package) {
-                    packageSelect.append('<option value="' + package.id + '">' + package.name + '</option>');
+            $.get('/api/packages/', {category_id: categoryId})
+                .done(function(data) {
+                    var packageSelect = $('#package');
+                    packageSelect.empty();
+                    packageSelect.append('<option value="">请选择套餐</option>');
+                    
+                    $.each(data, function(index, package) {
+                        packageSelect.append('<option value="' + package.id + '">' + package.name + '</option>');
+                    });
+                })
+                .fail(function() {
+                    console.error('获取套餐列表失败');
                 });
-            }).fail(function() {
-                alert('获取套餐列表失败');
-            });
         } else {
             $('#package').empty().append('<option value="">请先选择类别</option>');
             $('#commissionInfo').text('请先选择类别');
@@ -126,56 +137,72 @@ $(document).ready(function() {
     });
     
     // 套餐选择变化时显示佣金
-    $('#package').change(function() {
+    $('#package').off('change.cardRecycle').on('change.cardRecycle', function() {
         var packageId = $(this).val();
         if (packageId) {
             var categoryId = $('#category').val();
-            $.get('/api/packages/', {category_id: categoryId}, function(data) {
-                var selectedPackage = data.find(p => p.id == packageId);
-                if (selectedPackage) {
-                    $('#commissionInfo').text('佣金：￥' + selectedPackage.commission);
-                }
-            }).fail(function() {
-                $('#commissionInfo').text('获取佣金信息失败');
-            });
+            $.get('/api/packages/', {category_id: categoryId})
+                .done(function(data) {
+                    var selectedPackage = data.find(function(p) { return p.id == packageId; });
+                    if (selectedPackage) {
+                        $('#commissionInfo').text('佣金：￥' + selectedPackage.commission);
+                    }
+                })
+                .fail(function() {
+                    $('#commissionInfo').text('获取佣金信息失败');
+                });
         } else {
             $('#commissionInfo').text('请先选择套餐');
         }
     });
     
-    // 图片上传
-    $('#imageUpload').click(function(e) {
-        e.preventDefault();
-        $('#imageFile').click();
-    });
+    // 图片上传相关变量
+    var isUploading = false;
     
-    // 拖放上传
-    $('#imageUpload').on('dragover', function(e) {
+    // 图片上传点击事件
+    $('#imageUpload').off('click.cardRecycle').on('click.cardRecycle', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        $(this).addClass('dragover');
-    });
-    
-    $('#imageUpload').on('dragleave', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).removeClass('dragover');
-    });
-    
-    $('#imageUpload').on('drop', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).removeClass('dragover');
-        
-        var files = e.originalEvent.dataTransfer.files;
-        if (files.length > 0) {
-            handleFile(files[0]);
+        if (!isUploading) {
+            $('#imageFile').trigger('click');
         }
     });
     
-    $('#imageFile').change(function(e) {
+    // 拖放上传事件
+    var uploadArea = document.getElementById('imageUpload');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', handleDragOver, false);
+        uploadArea.addEventListener('dragleave', handleDragLeave, false);
+        uploadArea.addEventListener('drop', handleDrop, false);
+    }
+    
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#imageUpload').addClass('dragover');
+    }
+    
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#imageUpload').removeClass('dragover');
+    }
+    
+    function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#imageUpload').removeClass('dragover');
+        
+        var files = e.dataTransfer.files;
+        if (files.length > 0 && !isUploading) {
+            handleFile(files[0]);
+        }
+    }
+    
+    // 文件选择事件
+    $('#imageFile').off('change.cardRecycle').on('change.cardRecycle', function(e) {
         var file = e.target.files[0];
-        if (file) {
+        if (file && !isUploading) {
             handleFile(file);
         }
     });
@@ -193,18 +220,26 @@ $(document).ready(function() {
             return;
         }
         
+        isUploading = true;
+        
         var reader = new FileReader();
         reader.onload = function(e) {
             $('#previewImg').attr('src', e.target.result);
             $('#imagePreview').removeClass('d-none');
             
-            // 上传到七牛云
-            uploadToQiniu(e.target.result);
+            // 上传到服务器
+            uploadImage(e.target.result);
         };
+        
+        reader.onerror = function() {
+            alert('文件读取失败');
+            isUploading = false;
+        };
+        
         reader.readAsDataURL(file);
     }
     
-    function uploadToQiniu(imageData) {
+    function uploadImage(imageData) {
         // 显示上传进度
         $('#imageUpload').html('<i class="fas fa-spinner fa-spin fa-2x"></i><p>上传中...</p>');
         
@@ -216,28 +251,41 @@ $(document).ready(function() {
             headers: {
                 'X-CSRFToken': csrftoken
             },
+            timeout: 30000, // 30秒超时
             success: function(response) {
-                if (response.url) {
+                if (response && response.url) {
                     $('#id_image').val(response.url);
                     $('#imageUpload').html('<i class="fas fa-check fa-2x text-success"></i><p>上传成功</p>');
                 } else {
-                    $('#imageUpload').html('<i class="fas fa-cloud-upload-alt fa-2x text-muted"></i><p>点击或拖拽上传图片</p>');
+                    resetUploadArea();
                     alert('图片上传失败：' + (response.error || '未知错误'));
                 }
+                isUploading = false;
             },
             error: function(xhr, status, error) {
-                $('#imageUpload').html('<i class="fas fa-cloud-upload-alt fa-2x text-muted"></i><p>点击或拖拽上传图片</p>');
+                resetUploadArea();
                 var errorMsg = '图片上传失败';
-                if (xhr.responseJSON && xhr.responseJSON.error) {
-                    errorMsg += '：' + xhr.responseJSON.error;
+                try {
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg += '：' + xhr.responseJSON.error;
+                    } else if (status === 'timeout') {
+                        errorMsg += '：上传超时';
+                    }
+                } catch(e) {
+                    // 忽略JSON解析错误
                 }
                 alert(errorMsg);
+                isUploading = false;
             }
         });
     }
     
+    function resetUploadArea() {
+        $('#imageUpload').html('<i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i><p class="text-muted">点击或拖拽上传图片</p>');
+    }
+    
     // 表单提交验证
-    $('#submitForm').submit(function(e) {
+    $('#submitForm').off('submit.cardRecycle').on('submit.cardRecycle', function(e) {
         // 验证必填字段
         if (!$('#category').val()) {
             alert('请选择卡券类别');
@@ -251,20 +299,13 @@ $(document).ready(function() {
             return false;
         }
         
-        if (!$('#id_card_number').val()) {
-            alert('请输入卡号');
-            e.preventDefault();
-            return false;
-        }
+        // 卡号、密码、图片不是必填的，至少要有一个
+        var hasCardNumber = $('#id_card_number').val().trim();
+        var hasCardSecret = $('#id_card_secret').val().trim();
+        var hasImage = $('#id_image').val().trim();
         
-        if (!$('#id_card_secret').val()) {
-            alert('请输入密码');
-            e.preventDefault();
-            return false;
-        }
-        
-        if (!$('#id_image').val()) {
-            alert('请上传核销码图片');
+        if (!hasCardNumber && !hasCardSecret && !hasImage) {
+            alert('请至少填写卡号密码或上传核销码图片');
             e.preventDefault();
             return false;
         }
@@ -275,8 +316,15 @@ $(document).ready(function() {
             return false;
         }
         
-        if (!$('#id_telephone').val()) {
+        if (!$('#id_telephone').val().trim()) {
             alert('请输入联系电话');
+            e.preventDefault();
+            return false;
+        }
+        
+        // 防止重复提交
+        if (isUploading) {
+            alert('图片正在上传中，请稍候...');
             e.preventDefault();
             return false;
         }
