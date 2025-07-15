@@ -26,12 +26,12 @@ def user_login(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        captcha_input = request.POST.get('captcha', '').strip().upper()
-        captcha_session = request.session.get('captcha', '').upper()
+        captcha_input = request.POST.get('captcha', '').strip()
+        captcha_session = request.session.get('captcha', '')
         
-        # 验证验证码
+        # 验证验证码（数学运算结果）
         if not captcha_input or captcha_input != captcha_session:
-            messages.error(request, '验证码错误')
+            messages.error(request, '计算结果错误，请重新计算')
             # 清除session中的验证码
             if 'captcha' in request.session:
                 del request.session['captcha']

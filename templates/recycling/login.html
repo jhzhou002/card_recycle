@@ -71,18 +71,17 @@
     gap: 10px;
 }
 
-.captcha-image {
+.captcha-question {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 200px;
-    min-height: 80px;
-    object-fit: contain;
-}
-
-.captcha-image:hover {
-    border-color: #007bff;
+    padding: 12px 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #495057;
+    min-width: 120px;
+    text-align: center;
+    font-family: 'Courier New', monospace;
 }
 
 .refresh-captcha {
@@ -140,20 +139,19 @@
                     
                     <div class="mb-4">
                         <label for="captcha" class="form-label fw-bold">
-                            <i class="fas fa-shield-alt me-1"></i>验证码
+                            <i class="fas fa-calculator me-1"></i>安全验证
                         </label>
                         <div class="captcha-container">
                             <input type="text" class="form-control" id="captcha" name="captcha" 
-                                   placeholder="验证码" maxlength="4" style="flex: 1;" required>
-                            <img id="captchaImage" src="{{ captcha_image }}" alt="验证码" 
-                                 class="captcha-image" width="200" height="80" 
-                                 onclick="refreshCaptcha()" title="点击刷新验证码">
+                                   placeholder="请输入计算结果" maxlength="3" style="flex: 1;" required>
+                            <div id="captchaQuestion" class="captcha-question" onclick="refreshCaptcha()" 
+                                 title="点击刷新题目">{{ captcha_image }}</div>
                             <button type="button" class="refresh-captcha" onclick="refreshCaptcha()" 
-                                    title="刷新验证码">
+                                    title="刷新题目">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                         </div>
-                        <small class="text-muted">点击图片或刷新按钮更换验证码</small>
+                        <small class="text-muted">请计算数学题并输入结果</small>
                     </div>
                     
                     <div class="d-grid mb-4">
@@ -181,19 +179,19 @@ function refreshCaptcha() {
         .then(response => response.json())
         .then(data => {
             if (data.captcha_image) {
-                document.getElementById('captchaImage').src = data.captcha_image;
+                document.getElementById('captchaQuestion').textContent = data.captcha_image;
                 document.getElementById('captcha').value = '';
             }
         })
         .catch(error => {
-            console.error('刷新验证码失败:', error);
+            console.error('刷新题目失败:', error);
         });
 }
 
 document.getElementById('loginForm').addEventListener('submit', function(e) {
     const captcha = document.getElementById('captcha').value.trim();
     if (!captcha) {
-        alert('请输入验证码');
+        alert('请输入计算结果');
         e.preventDefault();
         return false;
     }
