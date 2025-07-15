@@ -166,7 +166,18 @@
 
 {% block extra_js %}
 <script>
+// 确保jQuery已加载
+if (typeof $ === 'undefined') {
+    console.error('jQuery未加载，请检查静态文件配置');
+    alert('页面加载异常，请刷新重试');
+}
+
 function updateStatus(submissionId, status) {
+    if (typeof $ === 'undefined') {
+        alert('页面未正确加载，请刷新后重试');
+        return;
+    }
+    
     $('#statusInput').val(status);
     $('#statusForm').attr('action', '/admin-submissions/' + submissionId + '/update/');
     $('#statusModal').modal('show');

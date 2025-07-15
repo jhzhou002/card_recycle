@@ -290,8 +290,16 @@
         </div>
     </footer>
 
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    <script>
+    // 全局jQuery检查
+    if (typeof $ === 'undefined') {
+        console.error('jQuery未能正确加载，请检查静态文件配置');
+        // 尝试从CDN加载jQuery作为备用
+        document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+    }
+    </script>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     {% block extra_js %}
     {% endblock %}
 </body>
