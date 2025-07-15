@@ -8,7 +8,30 @@ import os
 
 # 生产环境安全配置
 DEBUG = False
-ALLOWED_HOSTS = ['*']  # 请替换为您的实际域名
+ALLOWED_HOSTS = [
+    'card.lingjing235.cn',
+    'localhost',
+    '127.0.0.1',
+    '8.153.77.15',  # 服务器IP
+]
+
+# CSRF设置
+CSRF_TRUSTED_ORIGINS = [
+    'https://card.lingjing235.cn',
+    'http://card.lingjing235.cn',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+
+# CSRF Cookie设置
+CSRF_COOKIE_SECURE = False  # 如果使用HTTP则设为False，HTTPS则设为True
+CSRF_COOKIE_HTTPONLY = True  # 防止JavaScript访问CSRF cookie
+CSRF_COOKIE_SAMESITE = 'Lax'  # 防止CSRF攻击
+
+# Session Cookie设置
+SESSION_COOKIE_SECURE = False  # 如果使用HTTP则设为False，HTTPS则设为True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # 数据库配置 - 使用环境变量或修改为您的数据库信息
 DATABASES = {
