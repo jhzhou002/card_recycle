@@ -76,6 +76,9 @@
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
+    min-width: 200px;
+    min-height: 80px;
+    object-fit: contain;
 }
 
 .captcha-image:hover {
@@ -143,7 +146,7 @@
                             <input type="text" class="form-control" id="captcha" name="captcha" 
                                    placeholder="验证码" maxlength="4" style="flex: 1;" required>
                             <img id="captchaImage" src="{{ captcha_image }}" alt="验证码" 
-                                 class="captcha-image" width="160" height="60" 
+                                 class="captcha-image" width="200" height="80" 
                                  onclick="refreshCaptcha()" title="点击刷新验证码">
                             <button type="button" class="refresh-captcha" onclick="refreshCaptcha()" 
                                     title="刷新验证码">
