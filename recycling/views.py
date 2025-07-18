@@ -186,9 +186,13 @@ def submit_bottle_cap(request):
         # 检查是否是AJAX请求（前端上传）
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'qr_codes' in request.POST:
             try:
+                print("开始处理瓶盖提交请求")
+                
                 # 获取前端上传的URL
                 qr_codes_json = request.POST.get('qr_codes')
                 payment_code_url = request.POST.get('payment_code')
+                
+                print(f"接收到的数据: qr_codes={qr_codes_json}, payment_code={payment_code_url}")
                 
                 if not qr_codes_json:
                     return JsonResponse({'error': '请选择至少一张瓶盖二维码图片'}, status=400)
@@ -199,9 +203,12 @@ def submit_bottle_cap(request):
                 # 解析QR码URL列表
                 import json
                 qr_code_urls = json.loads(qr_codes_json)
+                print(f"解析后的QR码URLs: {qr_code_urls}")
                 
                 if not qr_code_urls:
                     return JsonResponse({'error': '瓶盖二维码上传失败'}, status=400)
+                
+                print(f"准备创建瓶盖记录，用户: {request.user.id}")
                 
                 # 创建瓶盖提交记录
                 bottle_cap_submission = BottleCapSubmission.objects.create(
@@ -210,6 +217,8 @@ def submit_bottle_cap(request):
                     payment_code=payment_code_url
                 )
                 
+                print(f"瓶盖记录创建成功，ID: {bottle_cap_submission.id}")
+                
                 return JsonResponse({
                     'success': True,
                     'message': f'瓶盖信息提交成功！已上传 {len(qr_code_urls)} 张瓶盖二维码',
@@ -217,6 +226,9 @@ def submit_bottle_cap(request):
                 })
                 
             except Exception as e:
+                print(f"瓶盖提交出错: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 return JsonResponse({'error': f'提交失败：{str(e)}'}, status=500)
         
         # 如果是传统表单提交（备用）
