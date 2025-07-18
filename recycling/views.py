@@ -444,6 +444,7 @@ def export_bottle_caps_pdf(request):
     import requests
     import io
     from PIL import Image as PILImage
+    import os
     
     # 获取筛选参数
     date_from = request.GET.get('date_from')
@@ -553,94 +554,103 @@ def export_bottle_caps_pdf(request):
                 try:
                     print(f"处理图片 {i+1}: {qr_url}")
                     
-                    # 确保URL是完整的
-                    if not qr_url.startswith('http'):
-                        qr_url = f"https://guangpan.lingjing235.cn/{qr_url}"
-                    
-                    print(f"完整URL: {qr_url}")
-                    
-                    # 下载图片
-                    headers = {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    }
-                    response_img = requests.get(qr_url, timeout=15, headers=headers)
-                    print(f"下载状态: {response_img.status_code}")
-                    
-                    if response_img.status_code == 200:
-                        # 使用PIL处理图片
-                        img_data = io.BytesIO(response_img.content)
-                        pil_img = PILImage.open(img_data)
-                        print(f"图片模式: {pil_img.mode}, 尺寸: {pil_img.size}")
-                        
-                        # 转换为RGB模式（如果需要）
-                        if pil_img.mode in ('RGBA', 'P'):
-                            pil_img = pil_img.convert('RGB')
-                        
-                        # 重新保存为JPEG
-                        img_buffer = io.BytesIO()
-                        pil_img.save(img_buffer, format='JPEG', quality=90)
-                        img_buffer.seek(0)
-                        print(f"图片处理完成，大小: {len(img_buffer.getvalue())} bytes")
-                        
-                        # 计算位置
-                        x_pos = margin + (images_in_current_row * (image_size + 20))
-                        
-                        # 检查是否需要换行
-                        if images_in_current_row >= images_per_row:
-                            y_position -= row_spacing
-                            images_in_current_row = 0
-                            x_pos = margin
-                            
-                            # 检查是否需要新页面
-                            if y_position < 200:
-                                p.showPage()
-                                y_position = height - margin
-                        
-                        print(f"绘制位置: x={x_pos}, y={y_position - image_size}")
-                        
-                        # 绘制图片 - 重置buffer位置
-                        img_buffer.seek(0)
-                        p.drawImage(img_buffer, x_pos, y_position - image_size, 
-                                  width=image_size, height=image_size)
-                        
-                        # 添加图片编号
-                        p.setFont("Helvetica", 8)
-                        p.drawString(x_pos, y_position - image_size - 15, f"QR {i+1}")
-                        
-                        images_in_current_row += 1
-                        print(f"图片 {i+1} 绘制成功")
-                        
-                    else:
-                        print(f"图片下载失败: {response_img.status_code}")
-                        # 绘制占位符
-                        x_pos = margin + (images_in_current_row * (image_size + 20))
-                        if images_in_current_row >= images_per_row:
-                            y_position -= row_spacing
-                            images_in_current_row = 0
-                            x_pos = margin
-                        
-                        p.rect(x_pos, y_position - image_size, image_size, image_size)
-                        p.setFont("Helvetica", 10)
-                        p.drawString(x_pos + 10, y_position - image_size/2, "Image")
-                        p.drawString(x_pos + 10, y_position - image_size/2 - 15, "Not Found")
-                        images_in_current_row += 1
-                        
-                except Exception as e:
-                    print(f"处理图片失败: {e}")
-                    import traceback
-                    traceback.print_exc()
-                    
-                    # 绘制错误占位符
+                    # 计算位置
                     x_pos = margin + (images_in_current_row * (image_size + 20))
+                    
+                    # 检查是否需要换行
                     if images_in_current_row >= images_per_row:
                         y_position -= row_spacing
                         images_in_current_row = 0
                         x_pos = margin
+                        
+                        # 检查是否需要新页面
+                        if y_position < 200:
+                            p.showPage()
+                            y_position = height - margin
                     
-                    p.rect(x_pos, y_position - image_size, image_size, image_size)
-                    p.setFont("Helvetica", 8)
-                    p.drawString(x_pos + 10, y_position - image_size/2, "Error")
-                    images_in_current_row += 1
+                    try:
+                        # 尝试多种方式获取图片
+                        img_buffer = None
+                        
+                        # 方法1: 尝试requests下载（如果网络可用）
+                        if qr_url.startswith('http'):
+                            full_url = qr_url
+                        else:
+                            full_url = f"https://guangpan.lingjing235.cn/{qr_url}"
+                        
+                        try:
+                            print(f"尝试下载: {full_url}")
+                            headers = {'User-Agent': 'Mozilla/5.0 (compatible; PDF-Export)'}
+                            # 设置代理为None，避免代理问题
+                            response_img = requests.get(full_url, timeout=10, headers=headers, 
+                                                      proxies={'http': None, 'https': None})
+                            print(f"下载状态: {response_img.status_code}")
+                            
+                            if response_img.status_code == 200:
+                                img_data = io.BytesIO(response_img.content)
+                                pil_img = PILImage.open(img_data)
+                                print(f"图片模式: {pil_img.mode}, 尺寸: {pil_img.size}")
+                                
+                                # 转换为RGB模式
+                                if pil_img.mode in ('RGBA', 'P'):
+                                    pil_img = pil_img.convert('RGB')
+                                
+                                # 重新保存为JPEG
+                                img_buffer = io.BytesIO()
+                                pil_img.save(img_buffer, format='JPEG', quality=90)
+                                img_buffer.seek(0)
+                                print(f"图片处理完成，大小: {len(img_buffer.getvalue())} bytes")
+                        except Exception as download_error:
+                            print(f"下载失败: {download_error}")
+                            img_buffer = None
+                        
+                        # 如果成功获取图片，绘制它
+                        if img_buffer:
+                            print(f"绘制位置: x={x_pos}, y={y_position - image_size}")
+                            img_buffer.seek(0)
+                            p.drawImage(img_buffer, x_pos, y_position - image_size, 
+                                      width=image_size, height=image_size)
+                            
+                            # 添加图片编号
+                            p.setFont("Helvetica", 8)
+                            p.drawString(x_pos, y_position - image_size - 15, f"QR {i+1}")
+                            print(f"图片 {i+1} 绘制成功")
+                        else:
+                            # 绘制URL文本作为备用
+                            print(f"绘制URL文本: {qr_url}")
+                            p.rect(x_pos, y_position - image_size, image_size, image_size)
+                            p.setFont("Helvetica", 8)
+                            
+                            # 将URL分行显示
+                            url_display = qr_url.replace('https://guangpan.lingjing235.cn/', '')
+                            if len(url_display) > 20:
+                                line1 = url_display[:20]
+                                line2 = url_display[20:40] if len(url_display) > 20 else ""
+                                line3 = "..." if len(url_display) > 40 else ""
+                            else:
+                                line1 = url_display
+                                line2 = ""
+                                line3 = ""
+                            
+                            p.drawString(x_pos + 5, y_position - image_size/2 + 20, f"QR {i+1}")
+                            p.drawString(x_pos + 5, y_position - image_size/2, line1)
+                            if line2:
+                                p.drawString(x_pos + 5, y_position - image_size/2 - 12, line2)
+                            if line3:
+                                p.drawString(x_pos + 5, y_position - image_size/2 - 24, line3)
+                        
+                        images_in_current_row += 1
+                        
+                    except Exception as inner_error:
+                        print(f"内部处理失败: {inner_error}")
+                        # 绘制错误占位符
+                        p.rect(x_pos, y_position - image_size, image_size, image_size)
+                        p.setFont("Helvetica", 8)
+                        p.drawString(x_pos + 10, y_position - image_size/2, "Error")
+                        images_in_current_row += 1
+                        
+                except Exception as e:
+                    print(f"外部处理失败: {e}")
                     continue
             
             # 移动到下一个记录的位置
