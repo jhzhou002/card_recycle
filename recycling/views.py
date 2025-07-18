@@ -325,72 +325,86 @@ def admin_submission_detail(request, submission_id):
 @staff_member_required
 def admin_bottle_caps(request):
     """管理员瓶盖管理页面"""
-    from django.db.models import Q
-    from datetime import datetime, date
-    
-    # 获取筛选参数
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    is_settled = request.GET.get('is_settled')
-    user_id = request.GET.get('user_id')
-    
-    # 基础查询
-    bottle_caps = BottleCapSubmission.objects.all()
-    
-    # 日期筛选
-    if date_from:
-        try:
-            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-            bottle_caps = bottle_caps.filter(submitted_at__date__gte=date_from_obj)
-        except ValueError:
-            pass
-    
-    if date_to:
-        try:
-            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
-            bottle_caps = bottle_caps.filter(submitted_at__date__lte=date_to_obj)
-        except ValueError:
-            pass
-    
-    # 结算状态筛选
-    if is_settled == 'true':
-        bottle_caps = bottle_caps.filter(is_settled=True)
-    elif is_settled == 'false':
-        bottle_caps = bottle_caps.filter(is_settled=False)
-    
-    # 用户ID筛选
-    if user_id:
-        try:
-            user_id_int = int(user_id)
-            bottle_caps = bottle_caps.filter(user_id=user_id_int)
-        except ValueError:
-            pass
-    
-    # 排序
-    bottle_caps = bottle_caps.order_by('-submitted_at')
-    
-    # 分页
-    paginator = Paginator(bottle_caps, 20)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    # 统计信息
-    total_count = bottle_caps.count()
-    settled_count = bottle_caps.filter(is_settled=True).count()
-    unsettled_count = bottle_caps.filter(is_settled=False).count()
-    
-    context = {
-        'page_obj': page_obj,
-        'total_count': total_count,
-        'settled_count': settled_count,
-        'unsettled_count': unsettled_count,
-        'date_from': date_from,
-        'date_to': date_to,
-        'is_settled': is_settled,
-        'user_id': user_id,
-    }
-    
-    return render(request, 'recycling/admin_bottle_caps.html', context)
+    print("admin_bottle_caps view called")
+    try:
+        from django.db.models import Q
+        from datetime import datetime, date
+        
+        # 获取筛选参数
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        is_settled = request.GET.get('is_settled')
+        user_id = request.GET.get('user_id')
+        
+        print(f"筛选参数: date_from={date_from}, date_to={date_to}, is_settled={is_settled}, user_id={user_id}")
+        
+        # 基础查询
+        bottle_caps = BottleCapSubmission.objects.all()
+        print(f"总瓶盖记录数: {bottle_caps.count()}")
+        
+        # 日期筛选
+        if date_from:
+            try:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                bottle_caps = bottle_caps.filter(submitted_at__date__gte=date_from_obj)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+                bottle_caps = bottle_caps.filter(submitted_at__date__lte=date_to_obj)
+            except ValueError:
+                pass
+        
+        # 结算状态筛选
+        if is_settled == 'true':
+            bottle_caps = bottle_caps.filter(is_settled=True)
+        elif is_settled == 'false':
+            bottle_caps = bottle_caps.filter(is_settled=False)
+        
+        # 用户ID筛选
+        if user_id:
+            try:
+                user_id_int = int(user_id)
+                bottle_caps = bottle_caps.filter(user_id=user_id_int)
+            except ValueError:
+                pass
+        
+        # 排序
+        bottle_caps = bottle_caps.order_by('-submitted_at')
+        
+        # 分页
+        paginator = Paginator(bottle_caps, 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # 统计信息
+        total_count = bottle_caps.count()
+        settled_count = bottle_caps.filter(is_settled=True).count()
+        unsettled_count = bottle_caps.filter(is_settled=False).count()
+        
+        print(f"统计: 总数={total_count}, 已结算={settled_count}, 未结算={unsettled_count}")
+        
+        context = {
+            'page_obj': page_obj,
+            'total_count': total_count,
+            'settled_count': settled_count,
+            'unsettled_count': unsettled_count,
+            'date_from': date_from,
+            'date_to': date_to,
+            'is_settled': is_settled,
+            'user_id': user_id,
+        }
+        
+        print("准备渲染模板")
+        return render(request, 'recycling/admin_bottle_caps.html', context)
+        
+    except Exception as e:
+        print(f"admin_bottle_caps view error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 @staff_member_required
