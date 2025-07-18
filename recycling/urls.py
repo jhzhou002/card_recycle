@@ -25,8 +25,8 @@ urlpatterns = [
     path('admin-submissions/<int:submission_id>/detail/', views.admin_submission_detail, name='admin_submission_detail'),
     
     # 管理员瓶盖管理路由
-    path('admin/bottle-caps/', views.admin_bottle_caps, name='admin_bottle_caps'),
-    path('admin/bottle-caps/<int:bottle_cap_id>/update/', views.admin_update_bottle_cap, name='admin_update_bottle_cap'),
-    path('admin/bottle-caps/<int:bottle_cap_id>/detail/', views.admin_bottle_cap_detail, name='admin_bottle_cap_detail'),
-    path('admin/bottle-caps/export-pdf/', views.export_bottle_caps_pdf, name='export_bottle_caps_pdf'),
+    path('admin-bottle-caps/', views.admin_bottle_caps, name='admin_bottle_caps'),
+    path('admin-bottle-caps/<int:bottle_cap_id>/update/', views.admin_update_bottle_cap, name='admin_update_bottle_cap'),
+    path('admin-bottle-caps/<int:bottle_cap_id>/detail/', views.admin_bottle_cap_detail, name='admin_bottle_cap_detail'),
+    path('admin-bottle-caps/export-pdf/', views.export_bottle_caps_pdf, name='export_bottle_caps_pdf'),
 ]

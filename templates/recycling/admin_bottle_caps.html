@@ -251,7 +251,7 @@
 {% block extra_js %}
 <script>
 function openUpdateModal(bottleCapId, isSettled, adminRemark) {
-    document.getElementById('updateForm').action = '/admin/bottle-caps/' + bottleCapId + '/update/';
+    document.getElementById('updateForm').action = '/admin-bottle-caps/' + bottleCapId + '/update/';
     document.getElementById('is_settled').checked = isSettled === 'true';
     document.getElementById('admin_remark').value = adminRemark;
     
