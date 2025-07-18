@@ -9,8 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.core.paginator import Paginator
-from .models import Category, Package, Submission, Store
-from .forms import SubmissionForm
+from .models import Category, Package, Submission, Store, BottleCapSubmission
+from .forms import SubmissionForm, BottleCapSubmissionForm
 from utils.qiniu_util import generate_qiniu_token, upload_data_to_qiniu
 import json
 import base64
@@ -179,6 +179,73 @@ def refresh_captcha(request):
     return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 
+@login_required
+def submit_bottle_cap(request):
+    """瓶盖二维码提交"""
+    if request.method == 'POST':
+        form = BottleCapSubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                # 获取上传的文件
+                qr_code_files = request.FILES.getlist('qr_code_images')
+                payment_code_file = request.FILES.get('payment_code_image')
+                
+                if not qr_code_files:
+                    messages.error(request, '请选择至少一张瓶盖二维码图片')
+                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+                
+                if not payment_code_file:
+                    messages.error(request, '请选择收款码图片')
+                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+                
+                # 处理瓶盖二维码图片 - 添加水印
+                from utils.watermark import process_bottle_cap_images, process_payment_code_image
+                from utils.qiniu_util import upload_bottle_cap_images, upload_payment_code_image
+                
+                # 处理瓶盖二维码
+                processed_qr_images = process_bottle_cap_images(qr_code_files, request.user.id)
+                qr_code_urls = upload_bottle_cap_images(processed_qr_images)
+                
+                # 处理收款码
+                processed_payment_image = process_payment_code_image(payment_code_file, request.user.id)
+                payment_code_url = upload_payment_code_image(processed_payment_image)
+                
+                if not qr_code_urls:
+                    messages.error(request, '瓶盖二维码上传失败，请重试')
+                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+                
+                if not payment_code_url:
+                    messages.error(request, '收款码上传失败，请重试')
+                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+                
+                # 创建瓶盖提交记录
+                bottle_cap_submission = BottleCapSubmission.objects.create(
+                    user=request.user,
+                    qr_codes=qr_code_urls,
+                    payment_code=payment_code_url
+                )
+                
+                messages.success(request, f'瓶盖信息提交成功！已上传 {len(qr_code_urls)} 张瓶盖二维码')
+                return redirect('my_bottle_caps')
+                
+            except Exception as e:
+                messages.error(request, f'提交失败：{str(e)}')
+    else:
+        form = BottleCapSubmissionForm()
+    
+    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+
+
+@login_required
+def my_bottle_caps(request):
+    """我的瓶盖提交记录"""
+    bottle_caps = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at')
+    paginator = Paginator(bottle_caps, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'recycling/my_bottle_caps.html', {'page_obj': page_obj})
+
+
 
 
 @staff_member_required
@@ -248,3 +315,272 @@ def admin_submission_detail(request, submission_id):
     """管理员查看提交记录详情"""
     submission = get_object_or_404(Submission, id=submission_id)
     return render(request, 'recycling/admin_submission_detail.html', {'submission': submission})
+
+
+@staff_member_required
+def admin_bottle_caps(request):
+    """管理员瓶盖管理页面"""
+    from django.db.models import Q
+    from datetime import datetime, date
+    
+    # 获取筛选参数
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    is_settled = request.GET.get('is_settled')
+    user_id = request.GET.get('user_id')
+    
+    # 基础查询
+    bottle_caps = BottleCapSubmission.objects.all()
+    
+    # 日期筛选
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            bottle_caps = bottle_caps.filter(submitted_at__date__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            bottle_caps = bottle_caps.filter(submitted_at__date__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    # 结算状态筛选
+    if is_settled == 'true':
+        bottle_caps = bottle_caps.filter(is_settled=True)
+    elif is_settled == 'false':
+        bottle_caps = bottle_caps.filter(is_settled=False)
+    
+    # 用户ID筛选
+    if user_id:
+        try:
+            user_id_int = int(user_id)
+            bottle_caps = bottle_caps.filter(user_id=user_id_int)
+        except ValueError:
+            pass
+    
+    # 排序
+    bottle_caps = bottle_caps.order_by('-submitted_at')
+    
+    # 分页
+    paginator = Paginator(bottle_caps, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # 统计信息
+    total_count = bottle_caps.count()
+    settled_count = bottle_caps.filter(is_settled=True).count()
+    unsettled_count = bottle_caps.filter(is_settled=False).count()
+    
+    context = {
+        'page_obj': page_obj,
+        'total_count': total_count,
+        'settled_count': settled_count,
+        'unsettled_count': unsettled_count,
+        'date_from': date_from,
+        'date_to': date_to,
+        'is_settled': is_settled,
+        'user_id': user_id,
+    }
+    
+    return render(request, 'recycling/admin_bottle_caps.html', context)
+
+
+@staff_member_required
+def admin_update_bottle_cap(request, bottle_cap_id):
+    """管理员更新瓶盖提交状态"""
+    bottle_cap = get_object_or_404(BottleCapSubmission, id=bottle_cap_id)
+    
+    if request.method == 'POST':
+        is_settled = request.POST.get('is_settled') == 'on'
+        admin_remark = request.POST.get('admin_remark', '')
+        
+        bottle_cap.is_settled = is_settled
+        bottle_cap.admin_remark = admin_remark
+        bottle_cap.save()
+        
+        status_text = '已结算' if is_settled else '未结算'
+        messages.success(request, f'瓶盖记录状态已更新为：{status_text}')
+    
+    return redirect('admin_bottle_caps')
+
+
+@staff_member_required
+def admin_bottle_cap_detail(request, bottle_cap_id):
+    """管理员查看瓶盖提交详情"""
+    bottle_cap = get_object_or_404(BottleCapSubmission, id=bottle_cap_id)
+    return render(request, 'recycling/admin_bottle_cap_detail.html', {'bottle_cap': bottle_cap})
+
+
+@staff_member_required
+def export_bottle_caps_pdf(request):
+    """导出瓶盖二维码PDF"""
+    from django.http import HttpResponse
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.utils import ImageReader
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    from reportlab.lib import colors
+    from datetime import datetime
+    import requests
+    import io
+    
+    # 获取筛选参数
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    is_settled = request.GET.get('is_settled')
+    user_id = request.GET.get('user_id')
+    
+    # 应用相同的筛选逻辑
+    bottle_caps = BottleCapSubmission.objects.all()
+    
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            bottle_caps = bottle_caps.filter(submitted_at__date__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            bottle_caps = bottle_caps.filter(submitted_at__date__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    if is_settled == 'true':
+        bottle_caps = bottle_caps.filter(is_settled=True)
+    elif is_settled == 'false':
+        bottle_caps = bottle_caps.filter(is_settled=False)
+    
+    if user_id:
+        try:
+            user_id_int = int(user_id)
+            bottle_caps = bottle_caps.filter(user_id=user_id_int)
+        except ValueError:
+            pass
+    
+    bottle_caps = bottle_caps.order_by('-submitted_at')
+    
+    # 创建PDF响应
+    response = HttpResponse(content_type='application/pdf')
+    filename = f'bottle_caps_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    # 创建PDF文档
+    doc = SimpleDocTemplate(response, pagesize=A4)
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # 标题
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        spaceAfter=30,
+        alignment=1  # 居中
+    )
+    story.append(Paragraph('瓶盖二维码导出报告', title_style))
+    story.append(Spacer(1, 12))
+    
+    # 导出信息
+    info_data = [
+        ['导出时间', datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
+        ['记录总数', str(bottle_caps.count())],
+        ['筛选条件', ''],
+    ]
+    
+    if date_from or date_to:
+        date_range = f"{date_from or '开始'} 至 {date_to or '结束'}"
+        info_data.append(['日期范围', date_range])
+    
+    if is_settled:
+        settlement_status = '已结算' if is_settled == 'true' else '未结算'
+        info_data.append(['结算状态', settlement_status])
+    
+    if user_id:
+        info_data.append(['用户ID', user_id])
+    
+    info_table = Table(info_data, colWidths=[2*inch, 4*inch])
+    info_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    story.append(info_table)
+    story.append(Spacer(1, 20))
+    
+    # 遍历每个瓶盖提交记录
+    for bottle_cap in bottle_caps:
+        # 用户信息标题
+        user_title = f"用户ID: {bottle_cap.user.id} | 用户名: {bottle_cap.user.username}"
+        story.append(Paragraph(user_title, styles['Heading2']))
+        story.append(Spacer(1, 6))
+        
+        # 提交信息
+        submit_info = f"提交时间: {bottle_cap.submitted_at.strftime('%Y-%m-%d %H:%M:%S')} | 结算状态: {'已结算' if bottle_cap.is_settled else '未结算'}"
+        story.append(Paragraph(submit_info, styles['Normal']))
+        story.append(Spacer(1, 12))
+        
+        # 添加瓶盖二维码图片
+        qr_codes = bottle_cap.qr_codes
+        if qr_codes:
+            story.append(Paragraph('瓶盖二维码:', styles['Heading3']))
+            story.append(Spacer(1, 6))
+            
+            # 每行显示3张图片
+            images_per_row = 3
+            image_width = 1.5 * inch
+            image_height = 1.5 * inch
+            
+            for i in range(0, len(qr_codes), images_per_row):
+                row_images = qr_codes[i:i + images_per_row]
+                image_data = []
+                
+                for j, qr_url in enumerate(row_images):
+                    try:
+                        # 下载图片
+                        response_img = requests.get(qr_url, timeout=10)
+                        if response_img.status_code == 200:
+                            img_data = io.BytesIO(response_img.content)
+                            img = Image(img_data, width=image_width, height=image_height)
+                            image_data.append(img)
+                        else:
+                            # 如果下载失败，添加占位符
+                            image_data.append(Paragraph(f'图片{i+j+1}加载失败', styles['Normal']))
+                    except Exception as e:
+                        # 添加错误占位符
+                        image_data.append(Paragraph(f'图片{i+j+1}错误', styles['Normal']))
+                
+                # 填充空位
+                while len(image_data) < images_per_row:
+                    image_data.append('')
+                
+                # 创建表格显示图片
+                img_table = Table([image_data], colWidths=[2*inch]*images_per_row)
+                img_table.setStyle(TableStyle([
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ]))
+                
+                story.append(img_table)
+                story.append(Spacer(1, 12))
+        
+        # 添加分隔线
+        story.append(Spacer(1, 12))
+        story.append(Paragraph('_' * 80, styles['Normal']))
+        story.append(Spacer(1, 12))
+    
+    # 生成PDF
+    doc.build(story)
+    return response

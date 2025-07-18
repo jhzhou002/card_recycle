@@ -87,3 +87,27 @@ class Submission(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.category.name} - {self.get_status_display()}"
+
+
+class BottleCapSubmission(models.Model):
+    """瓶盖提交记录"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='用户')
+    qr_codes = models.JSONField(verbose_name='瓶盖二维码图片列表', help_text='存储七牛云图片URL列表')
+    payment_code = models.URLField(verbose_name='收款码图片', help_text='微信或支付宝收款码')
+    is_settled = models.BooleanField(default=False, verbose_name='是否已结算')
+    submitted_at = models.DateTimeField(auto_now_add=True, verbose_name='提交时间')
+    settled_at = models.DateTimeField(null=True, blank=True, verbose_name='结算时间')
+    admin_remark = models.TextField(blank=True, verbose_name='管理员备注')
+    
+    class Meta:
+        verbose_name = '瓶盖提交记录'
+        verbose_name_plural = '瓶盖提交记录'
+        ordering = ['-submitted_at']
+    
+    def __str__(self):
+        status = '已结算' if self.is_settled else '待结算'
+        return f"{self.user.username} - 瓶盖提交 - {status}"
+    
+    def get_qr_code_count(self):
+        """获取瓶盖二维码数量"""
+        return len(self.qr_codes) if self.qr_codes else 0

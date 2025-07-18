@@ -73,6 +73,48 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-cogs"></i> 管理功能</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <a href="{% url 'admin_submissions' %}" class="btn btn-outline-primary btn-block w-100 mb-2">
+                            <i class="fas fa-clipboard-list"></i><br>
+                            卡券管理
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'admin_bottle_caps' %}" class="btn btn-outline-success btn-block w-100 mb-2">
+                            <i class="fas fa-bottle"></i><br>
+                            瓶盖管理
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-download"></i> 快速导出</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <a href="{% url 'export_bottle_caps_pdf' %}" class="btn btn-outline-danger btn-block w-100 mb-2" target="_blank">
+                            <i class="fas fa-file-pdf"></i> 导出所有瓶盖PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-12">
         <div class="card">

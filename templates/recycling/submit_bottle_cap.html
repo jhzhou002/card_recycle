@@ -1,0 +1,212 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}瓶盖提交 - 卡券回收平台{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-bottle"></i> 瓶盖二维码提交</h4>
+                <p class="mb-0 text-muted">上传瓶盖二维码和收款码，系统将自动添加用户ID水印</p>
+            </div>
+            <div class="card-body">
+                <form method="post" id="bottleCapForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- 瓶盖二维码上传 -->
+                    <div class="mb-4">
+                        <label for="{{ form.qr_code_images.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-qrcode me-1"></i>瓶盖二维码 <span class="text-danger">*</span>
+                        </label>
+                        {{ form.qr_code_images }}
+                        {% if form.qr_code_images.help_text %}
+                        <div class="form-text">{{ form.qr_code_images.help_text }}</div>
+                        {% endif %}
+                        {% if form.qr_code_images.errors %}
+                        <div class="text-danger">
+                            {% for error in form.qr_code_images.errors %}
+                            <small>{{ error }}</small><br>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 预览区域 -->
+                        <div id="qrCodePreview" class="mt-3" style="display: none;">
+                            <h6>已选择的瓶盖二维码：</h6>
+                            <div id="qrCodeList" class="row"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 收款码上传 -->
+                    <div class="mb-4">
+                        <label for="{{ form.payment_code_image.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-mobile-alt me-1"></i>收款码 <span class="text-danger">*</span>
+                        </label>
+                        {{ form.payment_code_image }}
+                        {% if form.payment_code_image.help_text %}
+                        <div class="form-text">{{ form.payment_code_image.help_text }}</div>
+                        {% endif %}
+                        {% if form.payment_code_image.errors %}
+                        <div class="text-danger">
+                            {% for error in form.payment_code_image.errors %}
+                            <small>{{ error }}</small><br>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- 收款码预览 -->
+                        <div id="paymentCodePreview" class="mt-3" style="display: none;">
+                            <h6>收款码预览：</h6>
+                            <img id="paymentCodeImage" class="img-thumbnail" style="max-width: 200px;">
+                        </div>
+                    </div>
+                    
+                    <!-- 用户信息提示 -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>温馨提示：</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>系统将自动为所有图片添加用户ID水印：<strong>用户ID: {{ user.id }}</strong></li>
+                            <li>瓶盖二维码将存储在qrcode文件夹</li>
+                            <li>收款码将存储在collection_code文件夹</li>
+                            <li>支持同时上传多张瓶盖二维码图片</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 提交按钮 -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-upload me-2"></i>提交瓶盖信息
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加载中模态框 -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">处理中...</span>
+                </div>
+                <h5>正在处理图片并上传</h5>
+                <p class="text-muted mb-0">请稍候，正在添加水印并上传到云存储...</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar" role="progressbar" style="width: 0%" id="uploadProgress"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 确保jQuery已加载
+if (typeof $ === 'undefined') {
+    console.error('jQuery未加载，请检查静态文件配置');
+    alert('页面加载异常，请刷新重试');
+}
+
+$(document).ready(function() {
+    // 瓶盖二维码文件选择处理
+    $('#id_qr_code_images').change(function() {
+        handleQrCodeImages(this.files);
+    });
+    
+    // 收款码文件选择处理
+    $('#id_payment_code_image').change(function() {
+        handlePaymentCodeImage(this.files[0]);
+    });
+    
+    // 表单提交处理
+    $('#bottleCapForm').submit(function(e) {
+        const qrCodeFiles = $('#id_qr_code_images')[0].files;
+        const paymentFile = $('#id_payment_code_image')[0].files[0];
+        
+        if (qrCodeFiles.length === 0) {
+            alert('请选择至少一张瓶盖二维码图片');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (!paymentFile) {
+            alert('请选择收款码图片');
+            e.preventDefault();
+            return false;
+        }
+        
+        // 显示加载模态框
+        $('#loadingModal').modal('show');
+        $('#submitBtn').prop('disabled', true);
+        
+        // 模拟进度
+        let progress = 0;
+        const progressInterval = setInterval(function() {
+            progress += Math.random() * 20;
+            if (progress > 90) progress = 90;
+            $('#uploadProgress').css('width', progress + '%');
+        }, 500);
+        
+        // 清理函数
+        setTimeout(function() {
+            clearInterval(progressInterval);
+        }, 10000);
+    });
+    
+    function handleQrCodeImages(files) {
+        const previewArea = $('#qrCodePreview');
+        const listArea = $('#qrCodeList');
+        
+        if (files.length > 0) {
+            listArea.empty();
+            
+            Array.from(files).forEach(function(file, index) {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const col = $(`
+                            <div class="col-md-3 col-6 mb-3">
+                                <div class="card">
+                                    <img src="${e.target.result}" class="card-img-top" style="height: 120px; object-fit: cover;">
+                                    <div class="card-body p-2">
+                                        <small class="text-muted">瓶盖 ${index + 1}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                        listArea.append(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            previewArea.show();
+        } else {
+            previewArea.hide();
+        }
+    }
+    
+    function handlePaymentCodeImage(file) {
+        const previewArea = $('#paymentCodePreview');
+        const imgElement = $('#paymentCodeImage');
+        
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imgElement.attr('src', e.target.result);
+                previewArea.show();
+            };
+            reader.readAsDataURL(file);
+        } else {
+            previewArea.hide();
+        }
+    }
+});
+</script>
+{% endblock %}

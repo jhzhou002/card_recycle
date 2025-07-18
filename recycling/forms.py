@@ -1,5 +1,5 @@
 from django import forms
-from .models import Submission, Category, Package, Store
+from .models import Submission, Category, Package, Store, BottleCapSubmission
 
 
 class SubmissionForm(forms.ModelForm):
@@ -84,3 +84,44 @@ class SubmissionForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class BottleCapSubmissionForm(forms.Form):
+    """瓶盖提交表单"""
+    qr_code_images = forms.FileField(
+        label='瓶盖二维码',
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+            'multiple': True,
+            'accept': 'image/*'
+        }),
+        help_text='支持上传多张瓶盖二维码图片（JPG、PNG格式）'
+    )
+    
+    payment_code_image = forms.ImageField(
+        label='收款码',
+        widget=forms.ClearableFileInput(attrs={
+            'class': 'form-control',
+            'accept': 'image/*'
+        }),
+        help_text='上传微信或支付宝收款码图片'
+    )
+    
+    def clean_qr_code_images(self):
+        """验证瓶盖二维码图片"""
+        # 由于这是多文件上传，在视图中处理
+        return self.cleaned_data.get('qr_code_images')
+    
+    def clean_payment_code_image(self):
+        """验证收款码图片"""
+        image = self.cleaned_data.get('payment_code_image')
+        if image:
+            # 验证文件大小（最大10MB）
+            if image.size > 10 * 1024 * 1024:
+                raise forms.ValidationError('收款码图片大小不能超过10MB')
+            
+            # 验证文件类型
+            if not image.content_type.startswith('image/'):
+                raise forms.ValidationError('请上传有效的图片文件')
+        
+        return image

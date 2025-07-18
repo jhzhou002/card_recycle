@@ -108,3 +108,79 @@ def upload_data_to_local(data, file_name=None):
     except Exception as e:
         logger.error(f"本地存储数据上传失败: {str(e)}")
         return None
+
+
+def upload_bottle_cap_images(image_data_list):
+    """
+    批量上传瓶盖二维码图片到七牛云qrcode文件夹
+    
+    Args:
+        image_data_list: 图片数据列表，每个元素包含 {'data': bytes, 'filename': str}
+    
+    Returns:
+        上传成功的URL列表
+    """
+    urls = []
+    
+    for image_info in image_data_list:
+        try:
+            # 瓶盖码存储在qrcode文件夹
+            file_name = f"qrcode/{image_info['filename']}"
+            
+            if QINIU_AVAILABLE:
+                q = Auth(settings.QINIU_ACCESS_KEY, settings.QINIU_SECRET_KEY)
+                token = q.upload_token(settings.QINIU_BUCKET_NAME, file_name)
+                ret, info = put_data(token, file_name, image_info['data'])
+                
+                if ret and ret.get('key') == file_name:
+                    url = f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
+                    urls.append(url)
+                else:
+                    logger.error(f"瓶盖图片上传失败: {info}")
+            else:
+                # 备用本地存储
+                file_obj = ContentFile(image_info['data'])
+                saved_path = default_storage.save(file_name, file_obj)
+                url = default_storage.url(saved_path)
+                urls.append(url)
+                
+        except Exception as e:
+            logger.error(f"上传瓶盖图片失败: {str(e)}")
+            continue
+    
+    return urls
+
+
+def upload_payment_code_image(image_data):
+    """
+    上传收款码图片到七牛云collection_code文件夹
+    
+    Args:
+        image_data: 图片数据字典 {'data': bytes, 'filename': str}
+    
+    Returns:
+        上传成功的URL或None
+    """
+    try:
+        # 收款码存储在collection_code文件夹
+        file_name = f"collection_code/{image_data['filename']}"
+        
+        if QINIU_AVAILABLE:
+            q = Auth(settings.QINIU_ACCESS_KEY, settings.QINIU_SECRET_KEY)
+            token = q.upload_token(settings.QINIU_BUCKET_NAME, file_name)
+            ret, info = put_data(token, file_name, image_data['data'])
+            
+            if ret and ret.get('key') == file_name:
+                return f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
+            else:
+                logger.error(f"收款码图片上传失败: {info}")
+                return None
+        else:
+            # 备用本地存储
+            file_obj = ContentFile(image_data['data'])
+            saved_path = default_storage.save(file_name, file_obj)
+            return default_storage.url(saved_path)
+            
+    except Exception as e:
+        logger.error(f"上传收款码图片失败: {str(e)}")
+        return None

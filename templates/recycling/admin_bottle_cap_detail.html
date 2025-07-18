@@ -1,0 +1,205 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}瓶盖详情 - 管理中心{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4><i class="fas fa-info-circle"></i> 瓶盖提交详情</h4>
+                <a href="{% url 'admin_bottle_caps' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            </div>
+            <div class="card-body">
+                <!-- 基础信息 -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-user"></i> 用户信息</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>用户ID:</strong> {{ bottle_cap.user.id }}</p>
+                                <p><strong>用户名:</strong> {{ bottle_cap.user.username }}</p>
+                                <p><strong>提交时间:</strong> {{ bottle_cap.submitted_at|date:"Y-m-d H:i:s" }}</p>
+                                <p><strong>结算状态:</strong> 
+                                    {% if bottle_cap.is_settled %}
+                                        <span class="badge bg-success">已结算</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">未结算</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-chart-bar"></i> 统计信息</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>瓶盖数量:</strong> {{ bottle_cap.qr_codes|length }} 张</p>
+                                <p><strong>记录ID:</strong> {{ bottle_cap.id }}</p>
+                                {% if bottle_cap.admin_remark %}
+                                <p><strong>管理员备注:</strong></p>
+                                <div class="alert alert-info">
+                                    {{ bottle_cap.admin_remark }}
+                                </div>
+                                {% else %}
+                                <p><strong>管理员备注:</strong> <small class="text-muted">无</small></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 管理操作 -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-cogs"></i> 管理操作</h6>
+                            </div>
+                            <div class="card-body">
+                                <form method="post" action="{% url 'admin_update_bottle_cap' bottle_cap.id %}">
+                                    {% csrf_token %}
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="is_settled" 
+                                                       name="is_settled" {% if bottle_cap.is_settled %}checked{% endif %}>
+                                                <label class="form-check-label" for="is_settled">
+                                                    已结算
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <textarea class="form-control" name="admin_remark" rows="2" 
+                                                      placeholder="输入管理员备注...">{{ bottle_cap.admin_remark }}</textarea>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-save"></i> 保存更改
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 瓶盖二维码展示 -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-qrcode"></i> 瓶盖二维码 ({{ bottle_cap.qr_codes|length }} 张)</h6>
+                            </div>
+                            <div class="card-body">
+                                {% if bottle_cap.qr_codes %}
+                                <div class="row">
+                                    {% for qr_url in bottle_cap.qr_codes %}
+                                    <div class="col-md-3 col-sm-4 col-6 mb-3">
+                                        <div class="card">
+                                            <img src="{{ qr_url }}" class="card-img-top" 
+                                                 style="height: 200px; object-fit: cover; cursor: pointer;"
+                                                 onclick="showImageModal('{{ qr_url }}', '瓶盖二维码 {{ forloop.counter }}')"
+                                                 alt="瓶盖二维码 {{ forloop.counter }}">
+                                            <div class="card-body p-2 text-center">
+                                                <small class="text-muted">瓶盖 {{ forloop.counter }}</small>
+                                                <br>
+                                                <a href="{{ qr_url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                                                    <i class="fas fa-external-link-alt"></i> 查看原图
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    <p>暂无瓶盖二维码图片</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 收款码展示 -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-mobile-alt"></i> 收款码</h6>
+                            </div>
+                            <div class="card-body">
+                                {% if bottle_cap.payment_code %}
+                                <div class="row justify-content-center">
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="card">
+                                            <img src="{{ bottle_cap.payment_code }}" class="card-img-top" 
+                                                 style="height: 300px; object-fit: cover; cursor: pointer;"
+                                                 onclick="showImageModal('{{ bottle_cap.payment_code }}', '收款码')"
+                                                 alt="收款码">
+                                            <div class="card-body text-center">
+                                                <a href="{{ bottle_cap.payment_code }}" target="_blank" class="btn btn-outline-primary">
+                                                    <i class="fas fa-external-link-alt"></i> 查看原图
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                    <p>暂无收款码图片</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图片预览模态框 -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">图片预览</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" class="img-fluid" alt="图片预览">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <a id="modalImageLink" href="" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt"></i> 在新窗口打开
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showImageModal(imageUrl, title) {
+    document.getElementById('imageModalLabel').textContent = title;
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('modalImageLink').href = imageUrl;
+    
+    var imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    imageModal.show();
+}
+</script>
+{% endblock %}
