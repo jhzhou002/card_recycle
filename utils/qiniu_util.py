@@ -151,16 +151,44 @@ def upload_bottle_cap_images(image_data_list):
             file_name = f"qrcode/{image_info['filename']}"
             
             if QINIU_AVAILABLE:
-                q = Auth(settings.QINIU_ACCESS_KEY, settings.QINIU_SECRET_KEY)
-                token = q.upload_token(settings.QINIU_BUCKET_NAME, file_name)
-                ret, info = put_data(token, file_name, image_info['data'])
-                
-                if ret and ret.get('key') == file_name:
-                    url = f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
-                    urls.append(url)
-                    logger.info(f"瓶盖图片上传成功: {file_name}")
-                else:
-                    logger.error(f"瓶盖图片上传失败: {info}")
+                print(f"第 {i+1} 张图片开始七牛云上传")
+                try:
+                    q = Auth(settings.QINIU_ACCESS_KEY, settings.QINIU_SECRET_KEY)
+                    token = q.upload_token(settings.QINIU_BUCKET_NAME, file_name)
+                    print(f"第 {i+1} 张图片获取token成功")
+                    
+                    ret, info = put_data(token, file_name, image_info['data'])
+                    print(f"第 {i+1} 张图片上传返回: ret={ret}, info={info}")
+                    
+                    if ret is not None and ret.get('key') == file_name:
+                        url = f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
+                        urls.append(url)
+                        print(f"第 {i+1} 张图片上传成功: {url}")
+                        logger.info(f"瓶盖图片上传成功: {file_name}")
+                    else:
+                        print(f"第 {i+1} 张图片上传失败: ret={ret}, info={info}")
+                        logger.error(f"瓶盖图片上传失败: {info}")
+                        # 回退到本地存储
+                        print(f"第 {i+1} 张图片尝试本地存储")
+                        file_obj = ContentFile(image_info['data'])
+                        saved_path = default_storage.save(file_name, file_obj)
+                        url = default_storage.url(saved_path)
+                        urls.append(url)
+                        print(f"第 {i+1} 张图片本地存储成功: {url}")
+                except Exception as qiniu_error:
+                    print(f"第 {i+1} 张图片七牛云上传异常: {qiniu_error}")
+                    logger.error(f"七牛云上传异常: {qiniu_error}")
+                    # 回退到本地存储
+                    try:
+                        print(f"第 {i+1} 张图片尝试本地存储")
+                        file_obj = ContentFile(image_info['data'])
+                        saved_path = default_storage.save(file_name, file_obj)
+                        url = default_storage.url(saved_path)
+                        urls.append(url)
+                        print(f"第 {i+1} 张图片本地存储成功: {url}")
+                    except Exception as local_error:
+                        print(f"第 {i+1} 张图片本地存储也失败: {local_error}")
+                        logger.error(f"本地存储也失败: {local_error}")
             else:
                 # 备用本地存储
                 file_obj = ContentFile(image_info['data'])
@@ -204,16 +232,45 @@ def upload_payment_code_image(image_data):
         file_name = f"collection_code/{image_data['filename']}"
         
         if QINIU_AVAILABLE:
-            q = Auth(settings.QINIU_ACCESS_KEY, settings.QINIU_SECRET_KEY)
-            token = q.upload_token(settings.QINIU_BUCKET_NAME, file_name)
-            ret, info = put_data(token, file_name, image_data['data'])
-            
-            if ret and ret.get('key') == file_name:
-                logger.info(f"收款码图片上传成功: {file_name}")
-                return f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
-            else:
-                logger.error(f"收款码图片上传失败: {info}")
-                return None
+            print("收款码开始七牛云上传")
+            try:
+                q = Auth(settings.QINIU_ACCESS_KEY, settings.QINIU_SECRET_KEY)
+                token = q.upload_token(settings.QINIU_BUCKET_NAME, file_name)
+                print("收款码获取token成功")
+                
+                ret, info = put_data(token, file_name, image_data['data'])
+                print(f"收款码上传返回: ret={ret}, info={info}")
+                
+                if ret is not None and ret.get('key') == file_name:
+                    url = f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
+                    print(f"收款码上传成功: {url}")
+                    logger.info(f"收款码图片上传成功: {file_name}")
+                    return url
+                else:
+                    print(f"收款码上传失败: ret={ret}, info={info}")
+                    logger.error(f"收款码图片上传失败: {info}")
+                    # 回退到本地存储
+                    print("收款码尝试本地存储")
+                    file_obj = ContentFile(image_data['data'])
+                    saved_path = default_storage.save(file_name, file_obj)
+                    url = default_storage.url(saved_path)
+                    print(f"收款码本地存储成功: {url}")
+                    return url
+            except Exception as qiniu_error:
+                print(f"收款码七牛云上传异常: {qiniu_error}")
+                logger.error(f"七牛云上传异常: {qiniu_error}")
+                # 回退到本地存储
+                try:
+                    print("收款码尝试本地存储")
+                    file_obj = ContentFile(image_data['data'])
+                    saved_path = default_storage.save(file_name, file_obj)
+                    url = default_storage.url(saved_path)
+                    print(f"收款码本地存储成功: {url}")
+                    return url
+                except Exception as local_error:
+                    print(f"收款码本地存储也失败: {local_error}")
+                    logger.error(f"本地存储也失败: {local_error}")
+                    return None
         else:
             # 备用本地存储
             file_obj = ContentFile(image_data['data'])
