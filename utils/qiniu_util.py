@@ -126,20 +126,26 @@ def upload_bottle_cap_images(image_data_list):
         logger.warning("图片数据列表为空")
         return urls
     
-    for image_info in image_data_list:
+    for i, image_info in enumerate(image_data_list):
+        print(f"处理上传第 {i+1} 张瓶盖图片")
         try:
             # 检查image_info是否为None或缺少必要字段
             if not image_info or not isinstance(image_info, dict):
+                print(f"第 {i+1} 张图片信息无效: {image_info}")
                 logger.error(f"无效的图片信息: {image_info}")
                 continue
                 
             if 'filename' not in image_info or 'data' not in image_info:
+                print(f"第 {i+1} 张图片缺少必要字段: {list(image_info.keys())}")
                 logger.error(f"图片信息缺少必要字段: {image_info}")
                 continue
                 
             if not image_info['data']:
+                print(f"第 {i+1} 张图片数据为空: {image_info['filename']}")
                 logger.error(f"图片数据为空: {image_info['filename']}")
                 continue
+            
+            print(f"第 {i+1} 张图片验证通过，数据大小: {len(image_info['data'])} bytes")
             
             # 瓶盖码存储在qrcode文件夹
             file_name = f"qrcode/{image_info['filename']}"
