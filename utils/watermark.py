@@ -150,15 +150,38 @@ def process_bottle_cap_images(image_files, user_id):
     
     for image_file in image_files:
         try:
+            # 重置文件指针到开始位置
+            if hasattr(image_file, 'seek'):
+                image_file.seek(0)
+                
             # 为每张图片添加水印
             watermarked_data = add_watermark(image_file, watermark_text, 'bottom_right')
-            processed_images.append({
-                'data': watermarked_data,
-                'filename': generate_unique_filename(image_file.name, 'qrcode')
-            })
+            if watermarked_data:
+                processed_images.append({
+                    'data': watermarked_data,
+                    'filename': generate_unique_filename(image_file.name, 'qrcode')
+                })
+            else:
+                # 如果水印添加失败，使用原图
+                if hasattr(image_file, 'seek'):
+                    image_file.seek(0)
+                processed_images.append({
+                    'data': image_file.read(),
+                    'filename': generate_unique_filename(image_file.name, 'qrcode')
+                })
         except Exception as e:
             print(f"处理图片失败: {e}")
-            continue
+            # 如果处理失败，尝试使用原图
+            try:
+                if hasattr(image_file, 'seek'):
+                    image_file.seek(0)
+                processed_images.append({
+                    'data': image_file.read(),
+                    'filename': generate_unique_filename(image_file.name, 'qrcode')
+                })
+            except Exception as e2:
+                print(f"读取原图也失败: {e2}")
+                continue
     
     return processed_images
 
@@ -177,11 +200,34 @@ def process_payment_code_image(image_file, user_id):
     watermark_text = f"用户ID: {user_id}"
     
     try:
+        # 重置文件指针到开始位置
+        if hasattr(image_file, 'seek'):
+            image_file.seek(0)
+            
         watermarked_data = add_watermark(image_file, watermark_text, 'top_left')
-        return {
-            'data': watermarked_data,
-            'filename': generate_unique_filename(image_file.name, 'payment')
-        }
+        if watermarked_data:
+            return {
+                'data': watermarked_data,
+                'filename': generate_unique_filename(image_file.name, 'payment')
+            }
+        else:
+            # 如果水印添加失败，使用原图
+            if hasattr(image_file, 'seek'):
+                image_file.seek(0)
+            return {
+                'data': image_file.read(),
+                'filename': generate_unique_filename(image_file.name, 'payment')
+            }
     except Exception as e:
         print(f"处理收款码图片失败: {e}")
-        return None
+        # 如果处理失败，使用原图
+        try:
+            if hasattr(image_file, 'seek'):
+                image_file.seek(0)
+            return {
+                'data': image_file.read(),
+                'filename': generate_unique_filename(image_file.name, 'payment')
+            }
+        except Exception as e2:
+            print(f"读取原图也失败: {e2}")
+            return None

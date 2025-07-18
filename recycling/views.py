@@ -203,12 +203,24 @@ def submit_bottle_cap(request):
                 from utils.qiniu_util import upload_bottle_cap_images, upload_payment_code_image
                 
                 # 处理瓶盖二维码
+                print(f"开始处理 {len(qr_code_files)} 张瓶盖图片")
                 processed_qr_images = process_bottle_cap_images(qr_code_files, request.user.id)
-                qr_code_urls = upload_bottle_cap_images(processed_qr_images)
+                print(f"处理后得到 {len(processed_qr_images)} 张图片")
+                
+                qr_code_urls = []
+                if processed_qr_images:
+                    qr_code_urls = upload_bottle_cap_images(processed_qr_images)
+                    print(f"上传成功 {len(qr_code_urls)} 张瓶盖图片")
                 
                 # 处理收款码
+                print("开始处理收款码图片")
                 processed_payment_image = process_payment_code_image(payment_code_file, request.user.id)
-                payment_code_url = upload_payment_code_image(processed_payment_image)
+                print(f"收款码处理结果: {processed_payment_image is not None}")
+                
+                payment_code_url = None
+                if processed_payment_image:
+                    payment_code_url = upload_payment_code_image(processed_payment_image)
+                    print(f"收款码上传结果: {payment_code_url}")
                 
                 if not qr_code_urls:
                     messages.error(request, '瓶盖二维码上传失败，请重试')
