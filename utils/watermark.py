@@ -165,20 +165,28 @@ def process_bottle_cap_images(image_files, user_id):
                 # 如果水印添加失败，使用原图
                 if hasattr(image_file, 'seek'):
                     image_file.seek(0)
-                processed_images.append({
-                    'data': image_file.read(),
-                    'filename': generate_unique_filename(image_file.name, 'qrcode')
-                })
+                raw_data = image_file.read()
+                if raw_data:
+                    processed_images.append({
+                        'data': raw_data,
+                        'filename': generate_unique_filename(image_file.name, 'qrcode')
+                    })
+                else:
+                    print(f"图片数据为空: {image_file.name}")
         except Exception as e:
             print(f"处理图片失败: {e}")
             # 如果处理失败，尝试使用原图
             try:
                 if hasattr(image_file, 'seek'):
                     image_file.seek(0)
-                processed_images.append({
-                    'data': image_file.read(),
-                    'filename': generate_unique_filename(image_file.name, 'qrcode')
-                })
+                raw_data = image_file.read()
+                if raw_data:
+                    processed_images.append({
+                        'data': raw_data,
+                        'filename': generate_unique_filename(image_file.name, 'qrcode')
+                    })
+                else:
+                    print(f"原图数据也为空: {image_file.name}")
             except Exception as e2:
                 print(f"读取原图也失败: {e2}")
                 continue
@@ -214,20 +222,30 @@ def process_payment_code_image(image_file, user_id):
             # 如果水印添加失败，使用原图
             if hasattr(image_file, 'seek'):
                 image_file.seek(0)
-            return {
-                'data': image_file.read(),
-                'filename': generate_unique_filename(image_file.name, 'payment')
-            }
+            raw_data = image_file.read()
+            if raw_data:
+                return {
+                    'data': raw_data,
+                    'filename': generate_unique_filename(image_file.name, 'payment')
+                }
+            else:
+                print(f"收款码图片数据为空: {image_file.name}")
+                return None
     except Exception as e:
         print(f"处理收款码图片失败: {e}")
         # 如果处理失败，使用原图
         try:
             if hasattr(image_file, 'seek'):
                 image_file.seek(0)
-            return {
-                'data': image_file.read(),
-                'filename': generate_unique_filename(image_file.name, 'payment')
-            }
+            raw_data = image_file.read()
+            if raw_data:
+                return {
+                    'data': raw_data,
+                    'filename': generate_unique_filename(image_file.name, 'payment')
+                }
+            else:
+                print(f"收款码原图数据也为空: {image_file.name}")
+                return None
         except Exception as e2:
             print(f"读取原图也失败: {e2}")
             return None

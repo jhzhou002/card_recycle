@@ -122,8 +122,25 @@ def upload_bottle_cap_images(image_data_list):
     """
     urls = []
     
+    if not image_data_list:
+        logger.warning("图片数据列表为空")
+        return urls
+    
     for image_info in image_data_list:
         try:
+            # 检查image_info是否为None或缺少必要字段
+            if not image_info or not isinstance(image_info, dict):
+                logger.error(f"无效的图片信息: {image_info}")
+                continue
+                
+            if 'filename' not in image_info or 'data' not in image_info:
+                logger.error(f"图片信息缺少必要字段: {image_info}")
+                continue
+                
+            if not image_info['data']:
+                logger.error(f"图片数据为空: {image_info['filename']}")
+                continue
+            
             # 瓶盖码存储在qrcode文件夹
             file_name = f"qrcode/{image_info['filename']}"
             
@@ -135,6 +152,7 @@ def upload_bottle_cap_images(image_data_list):
                 if ret and ret.get('key') == file_name:
                     url = f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
                     urls.append(url)
+                    logger.info(f"瓶盖图片上传成功: {file_name}")
                 else:
                     logger.error(f"瓶盖图片上传失败: {info}")
             else:
@@ -143,6 +161,7 @@ def upload_bottle_cap_images(image_data_list):
                 saved_path = default_storage.save(file_name, file_obj)
                 url = default_storage.url(saved_path)
                 urls.append(url)
+                logger.info(f"瓶盖图片本地存储成功: {file_name}")
                 
         except Exception as e:
             logger.error(f"上传瓶盖图片失败: {str(e)}")
@@ -162,6 +181,19 @@ def upload_payment_code_image(image_data):
         上传成功的URL或None
     """
     try:
+        # 检查image_data是否为None或缺少必要字段
+        if not image_data or not isinstance(image_data, dict):
+            logger.error(f"无效的收款码图片信息: {image_data}")
+            return None
+            
+        if 'filename' not in image_data or 'data' not in image_data:
+            logger.error(f"收款码图片信息缺少必要字段: {image_data}")
+            return None
+            
+        if not image_data['data']:
+            logger.error(f"收款码图片数据为空: {image_data.get('filename', 'unknown')}")
+            return None
+        
         # 收款码存储在collection_code文件夹
         file_name = f"collection_code/{image_data['filename']}"
         
@@ -171,6 +203,7 @@ def upload_payment_code_image(image_data):
             ret, info = put_data(token, file_name, image_data['data'])
             
             if ret and ret.get('key') == file_name:
+                logger.info(f"收款码图片上传成功: {file_name}")
                 return f"{settings.QINIU_BUCKET_DOMAIN}/{file_name}"
             else:
                 logger.error(f"收款码图片上传失败: {info}")
@@ -179,6 +212,7 @@ def upload_payment_code_image(image_data):
             # 备用本地存储
             file_obj = ContentFile(image_data['data'])
             saved_path = default_storage.save(file_name, file_obj)
+            logger.info(f"收款码图片本地存储成功: {file_name}")
             return default_storage.url(saved_path)
             
     except Exception as e:
