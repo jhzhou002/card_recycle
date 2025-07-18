@@ -440,6 +440,7 @@ def export_bottle_caps_pdf(request):
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import inch
+    from reportlab.lib.utils import ImageReader
     from datetime import datetime
     import requests
     import io
@@ -608,7 +609,10 @@ def export_bottle_caps_pdf(request):
                         if img_buffer:
                             print(f"绘制位置: x={x_pos}, y={y_position - image_size}")
                             img_buffer.seek(0)
-                            p.drawImage(img_buffer, x_pos, y_position - image_size, 
+                            
+                            # 使用ImageReader包装BytesIO对象
+                            img_reader = ImageReader(img_buffer)
+                            p.drawImage(img_reader, x_pos, y_position - image_size, 
                                       width=image_size, height=image_size)
                             
                             # 添加图片编号
