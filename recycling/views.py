@@ -553,21 +553,34 @@ def export_bottle_caps_pdf(request):
                 try:
                     print(f"处理图片 {i+1}: {qr_url}")
                     
+                    # 确保URL是完整的
+                    if not qr_url.startswith('http'):
+                        qr_url = f"https://guangpan.lingjing235.cn/{qr_url}"
+                    
+                    print(f"完整URL: {qr_url}")
+                    
                     # 下载图片
-                    response_img = requests.get(qr_url, timeout=10)
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                    response_img = requests.get(qr_url, timeout=15, headers=headers)
+                    print(f"下载状态: {response_img.status_code}")
+                    
                     if response_img.status_code == 200:
                         # 使用PIL处理图片
                         img_data = io.BytesIO(response_img.content)
                         pil_img = PILImage.open(img_data)
+                        print(f"图片模式: {pil_img.mode}, 尺寸: {pil_img.size}")
                         
                         # 转换为RGB模式（如果需要）
-                        if pil_img.mode != 'RGB':
+                        if pil_img.mode in ('RGBA', 'P'):
                             pil_img = pil_img.convert('RGB')
                         
                         # 重新保存为JPEG
                         img_buffer = io.BytesIO()
-                        pil_img.save(img_buffer, format='JPEG', quality=85)
+                        pil_img.save(img_buffer, format='JPEG', quality=90)
                         img_buffer.seek(0)
+                        print(f"图片处理完成，大小: {len(img_buffer.getvalue())} bytes")
                         
                         # 计算位置
                         x_pos = margin + (images_in_current_row * (image_size + 20))
@@ -583,7 +596,10 @@ def export_bottle_caps_pdf(request):
                                 p.showPage()
                                 y_position = height - margin
                         
-                        # 绘制图片
+                        print(f"绘制位置: x={x_pos}, y={y_position - image_size}")
+                        
+                        # 绘制图片 - 重置buffer位置
+                        img_buffer.seek(0)
                         p.drawImage(img_buffer, x_pos, y_position - image_size, 
                                   width=image_size, height=image_size)
                         
@@ -592,12 +608,39 @@ def export_bottle_caps_pdf(request):
                         p.drawString(x_pos, y_position - image_size - 15, f"QR {i+1}")
                         
                         images_in_current_row += 1
+                        print(f"图片 {i+1} 绘制成功")
                         
                     else:
                         print(f"图片下载失败: {response_img.status_code}")
+                        # 绘制占位符
+                        x_pos = margin + (images_in_current_row * (image_size + 20))
+                        if images_in_current_row >= images_per_row:
+                            y_position -= row_spacing
+                            images_in_current_row = 0
+                            x_pos = margin
+                        
+                        p.rect(x_pos, y_position - image_size, image_size, image_size)
+                        p.setFont("Helvetica", 10)
+                        p.drawString(x_pos + 10, y_position - image_size/2, "Image")
+                        p.drawString(x_pos + 10, y_position - image_size/2 - 15, "Not Found")
+                        images_in_current_row += 1
                         
                 except Exception as e:
                     print(f"处理图片失败: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    
+                    # 绘制错误占位符
+                    x_pos = margin + (images_in_current_row * (image_size + 20))
+                    if images_in_current_row >= images_per_row:
+                        y_position -= row_spacing
+                        images_in_current_row = 0
+                        x_pos = margin
+                    
+                    p.rect(x_pos, y_position - image_size, image_size, image_size)
+                    p.setFont("Helvetica", 8)
+                    p.drawString(x_pos + 10, y_position - image_size/2, "Error")
+                    images_in_current_row += 1
                     continue
             
             # 移动到下一个记录的位置
