@@ -435,24 +435,23 @@ def admin_bottle_cap_detail(request, bottle_cap_id):
 
 @staff_member_required
 def export_bottle_caps_pdf(request):
-    """导出瓶盖二维码PDF"""
+    """导出瓶盖二维码PDF - 简化版本"""
     from django.http import HttpResponse
     from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter, A4
-    from reportlab.lib.utils import ImageReader
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import inch
-    from reportlab.lib import colors
     from datetime import datetime
     import requests
     import io
+    from PIL import Image as PILImage
     
     # 获取筛选参数
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     is_settled = request.GET.get('is_settled')
     user_id = request.GET.get('user_id')
+    
+    print("开始生成PDF")
     
     # 应用相同的筛选逻辑
     bottle_caps = BottleCapSubmission.objects.all()
@@ -484,122 +483,133 @@ def export_bottle_caps_pdf(request):
             pass
     
     bottle_caps = bottle_caps.order_by('-submitted_at')
+    print(f"找到 {bottle_caps.count()} 条记录")
     
     # 创建PDF响应
     response = HttpResponse(content_type='application/pdf')
-    filename = f'bottle_caps_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    filename = f'bottle_caps_qr_codes_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
-    # 创建PDF文档
-    doc = SimpleDocTemplate(response, pagesize=A4)
-    story = []
-    styles = getSampleStyleSheet()
+    # 创建PDF canvas
+    p = canvas.Canvas(response, pagesize=A4)
+    width, height = A4
     
-    # 标题
-    title_style = ParagraphStyle(
-        'CustomTitle',
-        parent=styles['Heading1'],
-        fontSize=18,
-        spaceAfter=30,
-        alignment=1  # 居中
-    )
-    story.append(Paragraph('瓶盖二维码导出报告', title_style))
-    story.append(Spacer(1, 12))
+    # 页面设置
+    margin = 50
+    y_position = height - margin
+    images_per_row = 3
+    image_size = 150  # 每张图片的大小
+    row_spacing = 180  # 行间距
     
-    # 导出信息
-    info_data = [
-        ['导出时间', datetime.now().strftime('%Y-%m-%d %H:%M:%S')],
-        ['记录总数', str(bottle_caps.count())],
-        ['筛选条件', ''],
-    ]
+    # PDF标题
+    p.setFont("Helvetica-Bold", 16)
+    title = f"Bottle Cap QR Codes Export - {datetime.now().strftime('%Y-%m-%d')}"
+    p.drawString(margin, y_position, title)
+    y_position -= 40
     
+    # 统计信息
+    p.setFont("Helvetica", 10)
+    p.drawString(margin, y_position, f"Total Records: {bottle_caps.count()}")
     if date_from or date_to:
-        date_range = f"{date_from or '开始'} 至 {date_to or '结束'}"
-        info_data.append(['日期范围', date_range])
-    
+        y_position -= 15
+        p.drawString(margin, y_position, f"Date Range: {date_from or 'Start'} to {date_to or 'End'}")
     if is_settled:
-        settlement_status = '已结算' if is_settled == 'true' else '未结算'
-        info_data.append(['结算状态', settlement_status])
+        y_position -= 15
+        status_text = "Settled" if is_settled == 'true' else "Unsettled"
+        p.drawString(margin, y_position, f"Status: {status_text}")
     
-    if user_id:
-        info_data.append(['用户ID', user_id])
+    y_position -= 30
     
-    info_table = Table(info_data, colWidths=[2*inch, 4*inch])
-    info_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-    ]))
-    
-    story.append(info_table)
-    story.append(Spacer(1, 20))
-    
-    # 遍历每个瓶盖提交记录
+    # 处理每个瓶盖记录
     for bottle_cap in bottle_caps:
-        # 用户信息标题
-        user_title = f"用户ID: {bottle_cap.user.id} | 用户名: {bottle_cap.user.username}"
-        story.append(Paragraph(user_title, styles['Heading2']))
-        story.append(Spacer(1, 6))
+        # 检查是否需要新页面
+        if y_position < 200:
+            p.showPage()
+            y_position = height - margin
         
-        # 提交信息
-        submit_info = f"提交时间: {bottle_cap.submitted_at.strftime('%Y-%m-%d %H:%M:%S')} | 结算状态: {'已结算' if bottle_cap.is_settled else '未结算'}"
-        story.append(Paragraph(submit_info, styles['Normal']))
-        story.append(Spacer(1, 12))
+        # 用户信息
+        p.setFont("Helvetica-Bold", 12)
+        user_info = f"User ID: {bottle_cap.user.id} | Username: {bottle_cap.user.username}"
+        p.drawString(margin, y_position, user_info)
+        y_position -= 20
         
-        # 添加瓶盖二维码图片
+        p.setFont("Helvetica", 10)
+        submit_info = f"Submit Time: {bottle_cap.submitted_at.strftime('%Y-%m-%d %H:%M')} | Status: {'Settled' if bottle_cap.is_settled else 'Pending'}"
+        p.drawString(margin, y_position, submit_info)
+        y_position -= 25
+        
+        # 处理瓶盖二维码图片
         qr_codes = bottle_cap.qr_codes
         if qr_codes:
-            story.append(Paragraph('瓶盖二维码:', styles['Heading3']))
-            story.append(Spacer(1, 6))
+            p.setFont("Helvetica-Bold", 10)
+            p.drawString(margin, y_position, f"QR Codes ({len(qr_codes)} images):")
+            y_position -= 20
             
-            # 每行显示3张图片
-            images_per_row = 3
-            image_width = 1.5 * inch
-            image_height = 1.5 * inch
+            # 按行排列图片
+            current_row = 0
+            images_in_current_row = 0
             
-            for i in range(0, len(qr_codes), images_per_row):
-                row_images = qr_codes[i:i + images_per_row]
-                image_data = []
-                
-                for j, qr_url in enumerate(row_images):
-                    try:
-                        # 下载图片
-                        response_img = requests.get(qr_url, timeout=10)
-                        if response_img.status_code == 200:
-                            img_data = io.BytesIO(response_img.content)
-                            img = Image(img_data, width=image_width, height=image_height)
-                            image_data.append(img)
-                        else:
-                            # 如果下载失败，添加占位符
-                            image_data.append(Paragraph(f'图片{i+j+1}加载失败', styles['Normal']))
-                    except Exception as e:
-                        # 添加错误占位符
-                        image_data.append(Paragraph(f'图片{i+j+1}错误', styles['Normal']))
-                
-                # 填充空位
-                while len(image_data) < images_per_row:
-                    image_data.append('')
-                
-                # 创建表格显示图片
-                img_table = Table([image_data], colWidths=[2*inch]*images_per_row)
-                img_table.setStyle(TableStyle([
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ]))
-                
-                story.append(img_table)
-                story.append(Spacer(1, 12))
+            for i, qr_url in enumerate(qr_codes):
+                try:
+                    print(f"处理图片 {i+1}: {qr_url}")
+                    
+                    # 下载图片
+                    response_img = requests.get(qr_url, timeout=10)
+                    if response_img.status_code == 200:
+                        # 使用PIL处理图片
+                        img_data = io.BytesIO(response_img.content)
+                        pil_img = PILImage.open(img_data)
+                        
+                        # 转换为RGB模式（如果需要）
+                        if pil_img.mode != 'RGB':
+                            pil_img = pil_img.convert('RGB')
+                        
+                        # 重新保存为JPEG
+                        img_buffer = io.BytesIO()
+                        pil_img.save(img_buffer, format='JPEG', quality=85)
+                        img_buffer.seek(0)
+                        
+                        # 计算位置
+                        x_pos = margin + (images_in_current_row * (image_size + 20))
+                        
+                        # 检查是否需要换行
+                        if images_in_current_row >= images_per_row:
+                            y_position -= row_spacing
+                            images_in_current_row = 0
+                            x_pos = margin
+                            
+                            # 检查是否需要新页面
+                            if y_position < 200:
+                                p.showPage()
+                                y_position = height - margin
+                        
+                        # 绘制图片
+                        p.drawImage(img_buffer, x_pos, y_position - image_size, 
+                                  width=image_size, height=image_size)
+                        
+                        # 添加图片编号
+                        p.setFont("Helvetica", 8)
+                        p.drawString(x_pos, y_position - image_size - 15, f"QR {i+1}")
+                        
+                        images_in_current_row += 1
+                        
+                    else:
+                        print(f"图片下载失败: {response_img.status_code}")
+                        
+                except Exception as e:
+                    print(f"处理图片失败: {e}")
+                    continue
+            
+            # 移动到下一个记录的位置
+            y_position -= row_spacing + 30
+        else:
+            y_position -= 20
         
         # 添加分隔线
-        story.append(Spacer(1, 12))
-        story.append(Paragraph('_' * 80, styles['Normal']))
-        story.append(Spacer(1, 12))
+        p.line(margin, y_position, width - margin, y_position)
+        y_position -= 20
     
-    # 生成PDF
-    doc.build(story)
+    # 保存PDF
+    p.save()
+    print("PDF生成完成")
     return response
