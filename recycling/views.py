@@ -183,52 +183,25 @@ def refresh_captcha(request):
 def submit_bottle_cap(request):
     """瓶盖二维码提交"""
     if request.method == 'POST':
-        form = BottleCapSubmissionForm(request.POST, request.FILES)
-        if form.is_valid():
+        # 检查是否是AJAX请求（前端上传）
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'qr_codes' in request.POST:
             try:
-                # 获取上传的文件
-                qr_code_files = request.FILES.getlist('qr_code_images')
-                payment_code_file = request.FILES.get('payment_code_image')
+                # 获取前端上传的URL
+                qr_codes_json = request.POST.get('qr_codes')
+                payment_code_url = request.POST.get('payment_code')
                 
-                if not qr_code_files:
-                    messages.error(request, '请选择至少一张瓶盖二维码图片')
-                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
-                
-                if not payment_code_file:
-                    messages.error(request, '请选择收款码图片')
-                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
-                
-                # 处理瓶盖二维码图片 - 添加水印
-                from utils.watermark import process_bottle_cap_images, process_payment_code_image
-                from utils.qiniu_util import upload_bottle_cap_images, upload_payment_code_image
-                
-                # 处理瓶盖二维码
-                print(f"开始处理 {len(qr_code_files)} 张瓶盖图片")
-                processed_qr_images = process_bottle_cap_images(qr_code_files, request.user.id)
-                print(f"处理后得到 {len(processed_qr_images)} 张图片")
-                
-                qr_code_urls = []
-                if processed_qr_images:
-                    qr_code_urls = upload_bottle_cap_images(processed_qr_images)
-                    print(f"上传成功 {len(qr_code_urls)} 张瓶盖图片")
-                
-                # 处理收款码
-                print("开始处理收款码图片")
-                processed_payment_image = process_payment_code_image(payment_code_file, request.user.id)
-                print(f"收款码处理结果: {processed_payment_image is not None}")
-                
-                payment_code_url = None
-                if processed_payment_image:
-                    payment_code_url = upload_payment_code_image(processed_payment_image)
-                    print(f"收款码上传结果: {payment_code_url}")
-                
-                if not qr_code_urls:
-                    messages.error(request, '瓶盖二维码上传失败，请重试')
-                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+                if not qr_codes_json:
+                    return JsonResponse({'error': '请选择至少一张瓶盖二维码图片'}, status=400)
                 
                 if not payment_code_url:
-                    messages.error(request, '收款码上传失败，请重试')
-                    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+                    return JsonResponse({'error': '请选择收款码图片'}, status=400)
+                
+                # 解析QR码URL列表
+                import json
+                qr_code_urls = json.loads(qr_codes_json)
+                
+                if not qr_code_urls:
+                    return JsonResponse({'error': '瓶盖二维码上传失败'}, status=400)
                 
                 # 创建瓶盖提交记录
                 bottle_cap_submission = BottleCapSubmission.objects.create(
@@ -237,11 +210,19 @@ def submit_bottle_cap(request):
                     payment_code=payment_code_url
                 )
                 
-                messages.success(request, f'瓶盖信息提交成功！已上传 {len(qr_code_urls)} 张瓶盖二维码')
-                return redirect('my_bottle_caps')
+                return JsonResponse({
+                    'success': True,
+                    'message': f'瓶盖信息提交成功！已上传 {len(qr_code_urls)} 张瓶盖二维码',
+                    'redirect': '/my-bottle-caps/'
+                })
                 
             except Exception as e:
-                messages.error(request, f'提交失败：{str(e)}')
+                return JsonResponse({'error': f'提交失败：{str(e)}'}, status=500)
+        
+        # 如果是传统表单提交（备用）
+        form = BottleCapSubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            messages.error(request, '请使用新的上传方式')
     else:
         form = BottleCapSubmissionForm()
     
