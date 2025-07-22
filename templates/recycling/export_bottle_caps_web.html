@@ -136,7 +136,7 @@
                         <div class="qr-codes-grid">
                             {% for qr_url in submission.qr_codes %}
                                 <div class="qr-code-item">
-                                    {% if qr_url.startswith:'http' %}
+                                    {% if 'http' in qr_url %}
                                         <img src="{{ qr_url }}" alt="QR Code {{ forloop.counter }}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZjhmOWZhIiBzdHJva2U9IiNkZWUyZTYiLz4KPHN0cmluZyB4PSI5MCIgeT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2Yzc1N2QiPuWbvueJh+aXoOazleWKoOi9vjwvdGV4dD4KPC9zdmc+'">
                                     {% else %}
                                         <img src="https://guangpan.lingjing235.cn/{{ qr_url }}" alt="QR Code {{ forloop.counter }}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDE4MCAxODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiBmaWxsPSIjZjhmOWZhIiBzdHJva2U9IiNkZWUyZTYiLz4KPHN0cmluZyB4PSI5MCIgeT0iOTAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2Yzc1N2QiPuWbvueJh+aXoOazleWKoOi9vjwvdGV4dD4KPC9zdmc+'">
