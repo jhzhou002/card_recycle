@@ -203,7 +203,10 @@ $(document).ready(function() {
         }
         
         // 检查收款码：如果用户没有历史收款码，则必须上传
-        var hasExistingPaymentCode = {{ has_existing_payment_code|yesno:"true,false" }};
+        var hasExistingPaymentCode = {% if has_existing_payment_code %}true{% else %}false{% endif %};
+        console.log('hasExistingPaymentCode:', hasExistingPaymentCode);
+        console.log('paymentFile:', paymentFile);
+        
         if (!paymentFile && !hasExistingPaymentCode) {
             alert('请选择收款码图片（首次提交必需）');
             return false;
@@ -251,7 +254,7 @@ $(document).ready(function() {
             var completedFiles = 0;
             
             // 检查是否需要上传收款码来计算进度比例
-            var hasExistingPaymentCode = {{ has_existing_payment_code|yesno:"true,false" }};
+            var hasExistingPaymentCode = {% if has_existing_payment_code %}true{% else %}false{% endif %};
             var paymentFile = $('#id_payment_code_image')[0].files[0];
             var qrProgressRatio = (hasExistingPaymentCode && !paymentFile) ? 100 : 50;
             
