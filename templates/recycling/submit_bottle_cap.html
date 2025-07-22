@@ -7,7 +7,7 @@
 <!-- 系统通知模态框 -->
 {% if notification %}
 <div class="modal fade" id="notificationModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">
@@ -456,11 +456,30 @@ $(document).ready(function() {
     
     // 显示系统通知
     {% if notification %}
-    $(window).on('load', function() {
-        setTimeout(function() {
+    // 多种方式确保通知在移动端也能显示
+    function showNotification() {
+        if ($('#notificationModal').length > 0) {
+            console.log('显示通知弹窗');
             $('#notificationModal').modal('show');
-        }, 500);
+        }
+    }
+    
+    // 尝试多种触发方式
+    $(document).ready(function() {
+        setTimeout(showNotification, 800);
     });
+    
+    $(window).on('load', function() {
+        setTimeout(showNotification, 1000);
+    });
+    
+    // 如果前面都没有显示，再尝试一次（移动端兜底）
+    setTimeout(function() {
+        if (!$('#notificationModal').hasClass('show')) {
+            console.log('兜底显示通知');
+            showNotification();
+        }
+    }, 2000);
     {% endif %}
 });
 </script>
@@ -475,6 +494,33 @@ $(document).ready(function() {
 .notification-content ul, .notification-content ol {
     margin-bottom: 1rem;
     padding-left: 1.5rem;
+}
+
+/* 移动端通知弹窗优化 */
+@media (max-width: 768px) {
+    #notificationModal .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    #notificationModal .modal-content {
+        border-radius: 8px;
+    }
+    
+    #notificationModal .modal-body {
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    /* 确保在移动端能正常显示 */
+    #notificationModal {
+        padding-right: 0 !important;
+    }
+    
+    #notificationModal .modal-backdrop {
+        position: fixed;
+    }
 }
 </style>
 {% endblock %}
