@@ -40,9 +40,28 @@
                     
                     <!-- 收款码上传 -->
                     <div class="mb-4">
+                        {% if has_existing_payment_code %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <strong>收款码复用：</strong>系统已自动使用您之前上传的收款码，无需重复上传。
+                            如需更换收款码，请上传新的收款码图片。
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-mobile-alt me-1"></i>当前收款码：
+                            </label>
+                            <div class="border rounded p-2">
+                                <img src="{{ existing_payment_code_url }}" alt="当前收款码" style="max-width: 200px; max-height: 200px;" class="img-thumbnail">
+                            </div>
+                        </div>
+                        <label for="{{ form.payment_code_image.id_for_label }}" class="form-label fw-bold">
+                            <i class="fas fa-mobile-alt me-1"></i>更换收款码（可选）
+                        </label>
+                        {% else %}
                         <label for="{{ form.payment_code_image.id_for_label }}" class="form-label fw-bold">
                             <i class="fas fa-mobile-alt me-1"></i>收款码 <span class="text-danger">*</span>
                         </label>
+                        {% endif %}
                         {{ form.payment_code_image }}
                         {% if form.payment_code_image.help_text %}
                         <div class="form-text">{{ form.payment_code_image.help_text }}</div>

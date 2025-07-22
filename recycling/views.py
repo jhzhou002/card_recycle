@@ -197,8 +197,19 @@ def submit_bottle_cap(request):
                 if not qr_codes_json:
                     return JsonResponse({'error': '请选择至少一张瓶盖二维码图片'}, status=400)
                 
-                if not payment_code_url:
-                    return JsonResponse({'error': '请选择收款码图片'}, status=400)
+                # 检查用户是否已有收款码记录
+                existing_payment_code = None
+                last_submission = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at').first()
+                if last_submission and last_submission.payment_code:
+                    existing_payment_code = last_submission.payment_code
+                    print(f"找到用户已有收款码: {existing_payment_code}")
+                
+                # 如果没有传入收款码且用户没有历史收款码，则要求上传
+                if not payment_code_url and not existing_payment_code:
+                    return JsonResponse({'error': '请上传收款码图片（首次提交必需）'}, status=400)
+                
+                # 使用传入的收款码或复用已有的收款码
+                final_payment_code = payment_code_url if payment_code_url else existing_payment_code
                 
                 # 解析QR码URL列表
                 import json
@@ -214,15 +225,21 @@ def submit_bottle_cap(request):
                 bottle_cap_submission = BottleCapSubmission.objects.create(
                     user=request.user,
                     qr_codes=qr_code_urls,
-                    payment_code=payment_code_url
+                    payment_code=final_payment_code
                 )
                 
                 print(f"瓶盖记录创建成功，ID: {bottle_cap_submission.id}")
                 
+                # 构建提示消息
+                message = f'瓶盖信息提交成功！已上传 {len(qr_code_urls)} 张瓶盖二维码'
+                if not payment_code_url and existing_payment_code:
+                    message += '（已复用历史收款码）'
+                
                 return JsonResponse({
                     'success': True,
-                    'message': f'瓶盖信息提交成功！已上传 {len(qr_code_urls)} 张瓶盖二维码',
-                    'redirect': '/my-bottle-caps/'
+                    'message': message,
+                    'redirect': '/my-bottle-caps/',
+                    'reused_payment_code': not payment_code_url and existing_payment_code is not None
                 })
                 
             except Exception as e:
@@ -236,9 +253,18 @@ def submit_bottle_cap(request):
         if form.is_valid():
             messages.error(request, '请使用新的上传方式')
     else:
-        form = BottleCapSubmissionForm()
+        # GET请求，检查用户是否已有收款码
+        existing_payment_code = None
+        last_submission = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at').first()
+        if last_submission and last_submission.payment_code:
+            existing_payment_code = last_submission.payment_code
     
-    return render(request, 'recycling/submit_bottle_cap.html', {'form': form})
+    context = {
+        'has_existing_payment_code': existing_payment_code is not None,
+        'existing_payment_code_url': existing_payment_code
+    }
+    
+    return render(request, 'recycling/submit_bottle_cap.html', context)
 
 
 @login_required
