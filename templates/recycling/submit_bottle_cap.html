@@ -362,12 +362,24 @@ $(document).ready(function() {
     
     // 提交表单数据
     function submitFormData() {
-        if (uploadedQrCodeUrls.length === 0 || !uploadedPaymentCodeUrl) {
-            alert('图片上传未完成');
+        var hasExistingPaymentCode = {% if has_existing_payment_code %}true{% else %}false{% endif %};
+        
+        // 检查上传完成状态
+        if (uploadedQrCodeUrls.length === 0) {
+            alert('瓶盖二维码上传未完成');
+            return;
+        }
+        
+        // 如果没有历史收款码且没有上传新收款码，则提示
+        if (!hasExistingPaymentCode && !uploadedPaymentCodeUrl) {
+            alert('收款码上传未完成');
             return;
         }
         
         $('#uploadProgress').css('width', '90%');
+        
+        // 确定要提交的收款码：新上传的或空（后端会使用历史收款码）
+        var paymentCodeToSubmit = uploadedPaymentCodeUrl || '';
         
         // 提交数据到后端
         $.ajax({
@@ -375,7 +387,7 @@ $(document).ready(function() {
             method: 'POST',
             data: {
                 'qr_codes': JSON.stringify(uploadedQrCodeUrls),
-                'payment_code': uploadedPaymentCodeUrl,
+                'payment_code': paymentCodeToSubmit,
                 'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
             },
             success: function(response) {
