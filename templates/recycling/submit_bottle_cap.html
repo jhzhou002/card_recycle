@@ -202,8 +202,10 @@ $(document).ready(function() {
             return false;
         }
         
-        if (!paymentFile) {
-            alert('请选择收款码图片');
+        // 检查收款码：如果用户没有历史收款码，则必须上传
+        var hasExistingPaymentCode = {{ has_existing_payment_code|yesno:"true,false" }};
+        if (!paymentFile && !hasExistingPaymentCode) {
+            alert('请选择收款码图片（首次提交必需）');
             return false;
         }
         
@@ -218,8 +220,13 @@ $(document).ready(function() {
         
         // 先上传瓶盖二维码
         uploadQrCodeImages(qrCodeFiles).then(function() {
-            // 再上传收款码
-            return uploadPaymentCodeImage(paymentFile);
+            // 如果选择了新收款码，则上传；否则跳过
+            if (paymentFile) {
+                return uploadPaymentCodeImage(paymentFile);
+            } else {
+                // 没有新收款码，直接返回resolved Promise
+                return Promise.resolve();
+            }
         }).then(function() {
             // 提交表单数据
             submitFormData();
@@ -243,10 +250,15 @@ $(document).ready(function() {
             var totalFiles = files.length;
             var completedFiles = 0;
             
+            // 检查是否需要上传收款码来计算进度比例
+            var hasExistingPaymentCode = {{ has_existing_payment_code|yesno:"true,false" }};
+            var paymentFile = $('#id_payment_code_image')[0].files[0];
+            var qrProgressRatio = (hasExistingPaymentCode && !paymentFile) ? 100 : 50;
+            
             for (var i = 0; i < files.length; i++) {
                 uploadPromises.push(uploadSingleImage(files[i], 'qrcode', function() {
                     completedFiles++;
-                    var progress = Math.floor((completedFiles / totalFiles) * 50); // 瓶盖图片占50%进度
+                    var progress = Math.floor((completedFiles / totalFiles) * qrProgressRatio); 
                     $('#uploadProgress').css('width', progress + '%');
                 }));
             }
