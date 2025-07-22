@@ -187,9 +187,19 @@ $(document).ready(function() {
     });
     
     // 收款码文件选择处理
-    $('#id_payment_code_image').change(function() {
+    $('#paymentCodeInput').change(function() {
         handlePaymentCodeImage(this.files[0]);
     });
+    
+    // 收款码图片悬停效果
+    $('.current-payment-code .border').hover(
+        function() {
+            $(this).find('.position-absolute').css('opacity', '1');
+        },
+        function() {
+            $(this).find('.position-absolute').css('opacity', '0');
+        }
+    );
     
     // 表单提交处理
     $('#bottleCapForm').submit(function(e) {
