@@ -82,7 +82,7 @@
                         
                         <!-- 当前收款码显示区域 -->
                         <div class="current-payment-code mb-3">
-                            <div class="border rounded p-3 text-center bg-light position-relative" style="cursor: pointer;" onclick="triggerPaymentCodeUpload()">
+                            <div class="payment-code-click border rounded p-3 text-center bg-light position-relative" style="cursor: pointer;">
                                 <img src="{{ existing_payment_code_url }}" alt="当前收款码" 
                                      style="max-width: 200px; max-height: 200px;" class="img-thumbnail">
                                 <div class="position-absolute top-50 start-50 translate-middle bg-dark bg-opacity-75 text-white px-2 py-1 rounded" style="opacity: 0; transition: opacity 0.3s;">
@@ -93,7 +93,7 @@
                         {% else %}
                         <!-- 首次上传提示 -->
                         <div class="upload-area mb-3">
-                            <div class="border border-2 border-dashed rounded p-4 text-center bg-light" style="cursor: pointer;" onclick="triggerPaymentCodeUpload()">
+                            <div class="payment-code-click border border-2 border-dashed rounded p-4 text-center bg-light" style="cursor: pointer;">
                                 <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
                                 <p class="mb-0">点击上传收款码图片</p>
                                 <small class="text-muted">支持微信或支付宝收款码</small>
@@ -191,8 +191,13 @@ $(document).ready(function() {
         handlePaymentCodeImage(this.files[0]);
     });
     
+    // 收款码点击事件
+    $('.payment-code-click').click(function() {
+        $('#paymentCodeInput').click();
+    });
+    
     // 收款码图片悬停效果
-    $('.current-payment-code .border').hover(
+    $('.current-payment-code .payment-code-click').hover(
         function() {
             $(this).find('.position-absolute').css('opacity', '1');
         },
@@ -435,11 +440,6 @@ $(document).ready(function() {
         } else {
             previewArea.hide();
         }
-    }
-    
-    // 触发收款码上传
-    function triggerPaymentCodeUpload() {
-        $('#paymentCodeInput').click();
     }
     
     // 显示系统通知
