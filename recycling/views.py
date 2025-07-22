@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.core.paginator import Paginator
 from .models import Category, Package, Submission, Store, BottleCapSubmission
-from .forms import SubmissionForm
+from .forms import SubmissionForm, BottleCapSubmissionForm
 from utils.qiniu_util import generate_qiniu_token, upload_data_to_qiniu
 import json
 import base64
@@ -259,7 +259,11 @@ def submit_bottle_cap(request):
         if last_submission and last_submission.payment_code:
             existing_payment_code = last_submission.payment_code
     
+    # 创建表单对象供模板使用
+    form = BottleCapSubmissionForm()
+    
     context = {
+        'form': form,
         'has_existing_payment_code': existing_payment_code is not None,
         'existing_payment_code_url': existing_payment_code
     }
