@@ -29,4 +29,5 @@ urlpatterns = [
     path('admin-bottle-caps/<int:bottle_cap_id>/update/', views.admin_update_bottle_cap, name='admin_update_bottle_cap'),
     path('admin-bottle-caps/<int:bottle_cap_id>/detail/', views.admin_bottle_cap_detail, name='admin_bottle_cap_detail'),
     path('admin-bottle-caps/export-pdf/', views.export_bottle_caps_pdf, name='export_bottle_caps_pdf'),
+    path('admin-bottle-caps/export-web/', views.export_bottle_caps_web, name='export_bottle_caps_web'),
 ]

@@ -16,6 +16,10 @@
                        class="btn btn-success" target="_blank">
                         <i class="fas fa-file-pdf"></i> 导出PDF
                     </a>
+                    <a href="{% url 'export_bottle_caps_web' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                       class="btn btn-info" target="_blank">
+                        <i class="fas fa-globe"></i> 网页导出
+                    </a>
                 </div>
             </div>
             <div class="card-body">
