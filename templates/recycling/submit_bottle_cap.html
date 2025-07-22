@@ -3,6 +3,32 @@
 {% block title %}瓶盖提交 - 卡券回收平台{% endblock %}
 
 {% block content %}
+
+<!-- 系统通知模态框 -->
+{% if notification %}
+<div class="modal fade" id="notificationModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-bell me-2"></i>{{ notification.title }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="notification-content">
+                    {{ notification.content|safe }}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    <i class="fas fa-check me-1"></i>我知道了
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
@@ -23,6 +49,10 @@
                         {% if form.qr_code_images.help_text %}
                         <div class="form-text">{{ form.qr_code_images.help_text }}</div>
                         {% endif %}
+                        <div class="form-text text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>注意：</strong>每张图片大小不能超过10MB，建议压缩后上传
+                        </div>
                         {% if form.qr_code_images.errors %}
                         <div class="text-danger">
                             {% for error in form.qr_code_images.errors %}
@@ -66,6 +96,10 @@
                         {% if form.payment_code_image.help_text %}
                         <div class="form-text">{{ form.payment_code_image.help_text }}</div>
                         {% endif %}
+                        <div class="form-text text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>注意：</strong>图片大小不能超过10MB
+                        </div>
                         {% if form.payment_code_image.errors %}
                         <div class="text-danger">
                             {% for error in form.payment_code_image.errors %}
@@ -378,6 +412,28 @@ $(document).ready(function() {
             previewArea.hide();
         }
     }
+    
+    // 显示系统通知
+    {% if notification %}
+    $(window).on('load', function() {
+        setTimeout(function() {
+            $('#notificationModal').modal('show');
+        }, 500);
+    });
+    {% endif %}
 });
 </script>
+
+<style>
+.notification-content {
+    line-height: 1.6;
+}
+.notification-content p {
+    margin-bottom: 1rem;
+}
+.notification-content ul, .notification-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+</style>
 {% endblock %}

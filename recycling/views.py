@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.core.paginator import Paginator
-from .models import Category, Package, Submission, Store, BottleCapSubmission
+from .models import Category, Package, Submission, Store, BottleCapSubmission, Notification
 from .forms import SubmissionForm, BottleCapSubmissionForm
 from utils.qiniu_util import generate_qiniu_token, upload_data_to_qiniu
 import json
@@ -262,10 +262,17 @@ def submit_bottle_cap(request):
     # 创建表单对象供模板使用
     form = BottleCapSubmissionForm()
     
+    # 获取瓶盖提交页面的通知
+    notification = Notification.objects.filter(
+        is_active=True,
+        target_page__in=['bottle_cap', 'all_pages']
+    ).first()
+    
     context = {
         'form': form,
         'has_existing_payment_code': existing_payment_code is not None,
-        'existing_payment_code_url': existing_payment_code
+        'existing_payment_code_url': existing_payment_code,
+        'notification': notification
     }
     
     return render(request, 'recycling/submit_bottle_cap.html', context)
@@ -743,3 +750,66 @@ def export_bottle_caps_web(request):
     }
     
     return render(request, 'recycling/export_bottle_caps_web.html', context)
+
+
+@staff_member_required
+def admin_notifications(request):
+    """管理员通知管理"""
+    notifications = Notification.objects.all().order_by('-updated_at')
+    
+    context = {
+        'notifications': notifications,
+    }
+    
+    return render(request, 'recycling/admin_notifications.html', context)
+
+
+@staff_member_required
+def admin_notification_edit(request, notification_id=None):
+    """编辑通知"""
+    if notification_id:
+        notification = get_object_or_404(Notification, id=notification_id)
+    else:
+        notification = None
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        is_active = request.POST.get('is_active') == 'on'
+        target_page = request.POST.get('target_page')
+        
+        if notification:
+            notification.title = title
+            notification.content = content
+            notification.is_active = is_active
+            notification.target_page = target_page
+            notification.save()
+            messages.success(request, '通知更新成功')
+        else:
+            Notification.objects.create(
+                title=title,
+                content=content,
+                is_active=is_active,
+                target_page=target_page
+            )
+            messages.success(request, '通知创建成功')
+        
+        return redirect('admin_notifications')
+    
+    context = {
+        'notification': notification,
+        'target_page_choices': Notification._meta.get_field('target_page').choices,
+    }
+    
+    return render(request, 'recycling/admin_notification_edit.html', context)
+
+
+@staff_member_required
+def admin_notification_delete(request, notification_id):
+    """删除通知"""
+    if request.method == 'POST':
+        notification = get_object_or_404(Notification, id=notification_id)
+        notification.delete()
+        messages.success(request, '通知已删除')
+    
+    return redirect('admin_notifications')

@@ -241,8 +241,25 @@
                         <a class="nav-link" href="{% url 'my_bottle_caps' %}">瓶盖记录</a>
                     </li>
                     {% if user.is_staff %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin_dashboard' %}">管理中心</a>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i> 管理中心
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'admin_dashboard' %}">
+                                <i class="fas fa-tachometer-alt"></i> 仪表板
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin_submissions' %}">
+                                <i class="fas fa-list"></i> 卡券管理
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'admin_bottle_caps' %}">
+                                <i class="fas fa-bottle"></i> 瓶盖管理
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'admin_notifications' %}">
+                                <i class="fas fa-bell"></i> 通知管理
+                            </a></li>
+                        </ul>
                     </li>
                     {% endif %}
                     {% endif %}

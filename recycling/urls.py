@@ -30,4 +30,10 @@ urlpatterns = [
     path('admin-bottle-caps/<int:bottle_cap_id>/detail/', views.admin_bottle_cap_detail, name='admin_bottle_cap_detail'),
     path('admin-bottle-caps/export-pdf/', views.export_bottle_caps_pdf, name='export_bottle_caps_pdf'),
     path('admin-bottle-caps/export-web/', views.export_bottle_caps_web, name='export_bottle_caps_web'),
+    
+    # 通知管理路由
+    path('admin-notifications/', views.admin_notifications, name='admin_notifications'),
+    path('admin-notifications/add/', views.admin_notification_edit, name='admin_notification_add'),
+    path('admin-notifications/<int:notification_id>/edit/', views.admin_notification_edit, name='admin_notification_edit'),
+    path('admin-notifications/<int:notification_id>/delete/', views.admin_notification_delete, name='admin_notification_delete'),
 ]

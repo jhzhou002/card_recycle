@@ -111,3 +111,30 @@ class BottleCapSubmission(models.Model):
     def get_qr_code_count(self):
         """获取瓶盖二维码数量"""
         return len(self.qr_codes) if self.qr_codes else 0
+
+
+class Notification(models.Model):
+    """系统通知模型"""
+    title = models.CharField(max_length=200, verbose_name='通知标题')
+    content = models.TextField(verbose_name='通知内容', help_text='支持HTML格式')
+    is_active = models.BooleanField(default=True, verbose_name='是否启用')
+    target_page = models.CharField(
+        max_length=50, 
+        choices=[
+            ('bottle_cap', '瓶盖提交页面'),
+            ('card_submit', '卡券提交页面'),
+            ('all_pages', '所有页面'),
+        ],
+        default='bottle_cap',
+        verbose_name='显示页面'
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    
+    class Meta:
+        verbose_name = '系统通知'
+        verbose_name_plural = '系统通知'
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f'{self.title} - {"启用" if self.is_active else "停用"}'

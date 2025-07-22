@@ -1,0 +1,169 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}{% if notification %}编辑通知{% else %}新增通知{% endif %} - 管理中心{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4>
+                    <i class="fas fa-{% if notification %}edit{% else %}plus{% endif %}"></i> 
+                    {% if notification %}编辑通知{% else %}新增通知{% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- 标题 -->
+                    <div class="mb-3">
+                        <label for="title" class="form-label fw-bold">通知标题 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{% if notification %}{{ notification.title }}{% endif %}" 
+                               placeholder="请输入通知标题" required>
+                    </div>
+                    
+                    <!-- 显示页面 -->
+                    <div class="mb-3">
+                        <label for="target_page" class="form-label fw-bold">显示页面 <span class="text-danger">*</span></label>
+                        <select class="form-control" id="target_page" name="target_page" required>
+                            {% for value, display in target_page_choices %}
+                            <option value="{{ value }}" 
+                                    {% if notification.target_page == value %}selected{% endif %}>
+                                {{ display }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- 状态 -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                   {% if not notification or notification.is_active %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="is_active">
+                                启用通知
+                            </label>
+                            <div class="form-text">勾选后，用户访问对应页面时会弹出通知</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 内容 -->
+                    <div class="mb-4">
+                        <label for="content" class="form-label fw-bold">通知内容 <span class="text-danger">*</span></label>
+                        <div class="mb-2">
+                            <div class="btn-toolbar" role="toolbar">
+                                <div class="btn-group me-2" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('strong')">
+                                        <i class="fas fa-bold"></i> 粗体
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('em')">
+                                        <i class="fas fa-italic"></i> 斜体
+                                    </button>
+                                </div>
+                                <div class="btn-group me-2" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertList('ul')">
+                                        <i class="fas fa-list-ul"></i> 无序列表
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertList('ol')">
+                                        <i class="fas fa-list-ol"></i> 有序列表
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTag('p', '段落内容')">
+                                        <i class="fas fa-paragraph"></i> 段落
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <textarea class="form-control" id="content" name="content" rows="10" 
+                                  placeholder="请输入通知内容，支持HTML格式" required>{% if notification %}{{ notification.content }}{% endif %}</textarea>
+                        <div class="form-text">
+                            支持HTML格式，可以使用 &lt;p&gt;、&lt;strong&gt;、&lt;em&gt;、&lt;ul&gt;、&lt;ol&gt;、&lt;li&gt; 等标签
+                        </div>
+                    </div>
+                    
+                    <!-- 预览区域 -->
+                    <div class="mb-4">
+                        <h6>预览效果：</h6>
+                        <div class="border rounded p-3 bg-light">
+                            <div id="preview">
+                                {% if notification %}{{ notification.content|safe }}{% else %}在上方输入内容即可实时预览...{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 提交按钮 -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'admin_notifications' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {% if notification %}更新通知{% else %}创建通知{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // 实时预览
+    $('#content').on('input', function() {
+        const content = $(this).val();
+        $('#preview').html(content || '在上方输入内容即可实时预览...');
+    });
+    
+    // 初始预览
+    $('#content').trigger('input');
+});
+
+// 插入HTML标签
+function insertTag(tag, defaultText = '文本内容') {
+    const textarea = document.getElementById('content');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+    const textToInsert = selectedText || defaultText;
+    
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
+    
+    const newText = beforeText + `<${tag}>${textToInsert}</${tag}>` + afterText;
+    textarea.value = newText;
+    
+    // 触发实时预览
+    $('#content').trigger('input');
+    
+    // 设置光标位置
+    const newCursorPos = start + `<${tag}>`.length + textToInsert.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    textarea.focus();
+}
+
+// 插入列表
+function insertList(listType) {
+    const textarea = document.getElementById('content');
+    const start = textarea.selectionStart;
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(start);
+    
+    const listHtml = `<${listType}>
+    <li>列表项 1</li>
+    <li>列表项 2</li>
+    <li>列表项 3</li>
+</${listType}>`;
+    
+    const newText = beforeText + listHtml + afterText;
+    textarea.value = newText;
+    
+    // 触发实时预览
+    $('#content').trigger('input');
+    
+    textarea.focus();
+}
+</script>
+{% endblock %}
