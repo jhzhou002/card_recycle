@@ -20,6 +20,10 @@
                        class="btn btn-info" target="_blank">
                         <i class="fas fa-globe"></i> 网页导出
                     </a>
+                    <a href="{% url 'export_bottle_caps_with_payment' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                       class="btn btn-warning" target="_blank">
+                        <i class="fas fa-credit-card"></i> 含收款码导出
+                    </a>
                 </div>
             </div>
             <div class="card-body">

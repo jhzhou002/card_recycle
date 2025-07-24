@@ -805,6 +805,56 @@ def export_bottle_caps_web(request):
 
 
 @staff_member_required
+def export_bottle_caps_with_payment(request):
+    """网页版瓶盖导出（包含收款码）"""
+    from datetime import datetime
+    
+    # 获取筛选参数
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    is_settled = request.GET.get('is_settled')
+    user_id = request.GET.get('user_id')
+    
+    # 构建查询
+    queryset = BottleCapSubmission.objects.all()
+    
+    if date_from:
+        queryset = queryset.filter(submitted_at__date__gte=date_from)
+    if date_to:
+        queryset = queryset.filter(submitted_at__date__lte=date_to)
+    if is_settled:
+        if is_settled == 'true':
+            queryset = queryset.filter(is_settled=True)
+        elif is_settled == 'false':
+            queryset = queryset.filter(is_settled=False)
+    if user_id:
+        queryset = queryset.filter(user_id=user_id)
+    
+    submissions = queryset.order_by('-submitted_at')
+    
+    # 计算总图片数量
+    total_images = 0
+    for submission in submissions:
+        if submission.qr_codes:
+            total_images += len(submission.qr_codes)
+    
+    context = {
+        'submissions': submissions,
+        'total_count': queryset.count(),
+        'total_images': total_images,
+        'export_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'filter_info': {
+            'date_from': date_from,
+            'date_to': date_to,
+            'is_settled': is_settled,
+            'user_id': user_id,
+        }
+    }
+    
+    return render(request, 'recycling/export_bottle_caps_with_payment.html', context)
+
+
+@staff_member_required
 def admin_notifications(request):
     """管理员通知管理"""
     notifications = Notification.objects.all().order_by('-updated_at')

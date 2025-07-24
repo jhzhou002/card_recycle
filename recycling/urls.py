@@ -31,6 +31,7 @@ urlpatterns = [
     path('admin-bottle-caps/batch-update/', views.admin_bottle_caps_batch_update, name='admin_bottle_caps_batch_update'),
     path('admin-bottle-caps/export-pdf/', views.export_bottle_caps_pdf, name='export_bottle_caps_pdf'),
     path('admin-bottle-caps/export-web/', views.export_bottle_caps_web, name='export_bottle_caps_web'),
+    path('admin-bottle-caps/export-with-payment/', views.export_bottle_caps_with_payment, name='export_bottle_caps_with_payment'),
     
     # 通知管理路由
     path('admin-notifications/', views.admin_notifications, name='admin_notifications'),
