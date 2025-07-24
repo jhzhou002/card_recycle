@@ -379,19 +379,34 @@ def admin_bottle_caps(request):
         bottle_caps = BottleCapSubmission.objects.all()
         print(f"总瓶盖记录数: {bottle_caps.count()}")
         
-        # 日期筛选
+        # 日期时间筛选（精确到秒）
         if date_from:
             try:
-                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
-                bottle_caps = bottle_caps.filter(submitted_at__date__gte=date_from_obj)
-            except ValueError:
+                # 支持datetime-local格式 (YYYY-MM-DDTHH:MM:SS)
+                if 'T' in date_from:
+                    date_from_obj = datetime.strptime(date_from, '%Y-%m-%dT%H:%M')
+                else:
+                    # 兼容旧的日期格式
+                    date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+                bottle_caps = bottle_caps.filter(submitted_at__gte=date_from_obj)
+                print(f"开始时间筛选: {date_from_obj}")
+            except ValueError as e:
+                print(f"开始时间格式错误: {e}")
                 pass
         
         if date_to:
             try:
-                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
-                bottle_caps = bottle_caps.filter(submitted_at__date__lte=date_to_obj)
-            except ValueError:
+                # 支持datetime-local格式 (YYYY-MM-DDTHH:MM:SS)
+                if 'T' in date_to:
+                    date_to_obj = datetime.strptime(date_to, '%Y-%m-%dT%H:%M')
+                else:
+                    # 兼容旧的日期格式，设置为当天23:59:59
+                    date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+                    date_to_obj = date_to_obj.replace(hour=23, minute=59, second=59)
+                bottle_caps = bottle_caps.filter(submitted_at__lte=date_to_obj)
+                print(f"结束时间筛选: {date_to_obj}")
+            except ValueError as e:
+                print(f"结束时间格式错误: {e}")
                 pass
         
         # 结算状态筛选
@@ -455,10 +470,26 @@ def admin_update_bottle_cap(request, bottle_cap_id):
         
         bottle_cap.is_settled = is_settled
         bottle_cap.admin_remark = admin_remark
+        
+        # 如果标记为已结算，记录结算时间
+        if is_settled:
+            from django.utils import timezone
+            bottle_cap.settled_at = timezone.now()
+        else:
+            bottle_cap.settled_at = None
+            
         bottle_cap.save()
         
         status_text = '已结算' if is_settled else '未结算'
         messages.success(request, f'瓶盖记录状态已更新为：{status_text}')
+    
+    # 检查是否有返回参数，用于维持页码和筛选条件
+    if request.GET:
+        # 构建带参数的重定向URL
+        from django.http import QueryDict
+        params = request.GET.copy()
+        redirect_url = f"/admin-bottle-caps/?{params.urlencode()}"
+        return redirect(redirect_url)
     
     return redirect('admin_bottle_caps')
 
@@ -467,7 +498,21 @@ def admin_update_bottle_cap(request, bottle_cap_id):
 def admin_bottle_cap_detail(request, bottle_cap_id):
     """管理员查看瓶盖提交详情"""
     bottle_cap = get_object_or_404(BottleCapSubmission, id=bottle_cap_id)
-    return render(request, 'recycling/admin_bottle_cap_detail.html', {'bottle_cap': bottle_cap})
+    
+    # 获取页码参数，用于返回列表时维持页码
+    page = request.GET.get('page', '1')
+    
+    # 构建返回URL，保持所有筛选参数
+    return_params = request.GET.copy()
+    if 'page' not in return_params:
+        return_params['page'] = page
+    
+    context = {
+        'bottle_cap': bottle_cap,
+        'return_params': return_params.urlencode()
+    }
+    
+    return render(request, 'recycling/admin_bottle_cap_detail.html', context)
 
 
 @staff_member_required
@@ -813,3 +858,46 @@ def admin_notification_delete(request, notification_id):
         messages.success(request, '通知已删除')
     
     return redirect('admin_notifications')
+
+
+@staff_member_required
+def admin_bottle_caps_batch_update(request):
+    """批量更新瓶盖状态"""
+    if request.method == 'POST':
+        batch_ids = request.POST.get('batch_ids', '')
+        is_settled = request.POST.get('is_settled') == 'on'
+        admin_remark = request.POST.get('admin_remark', '')
+        
+        if batch_ids:
+            try:
+                # 解析ID列表
+                id_list = [int(id.strip()) for id in batch_ids.split(',') if id.strip().isdigit()]
+                
+                if id_list:
+                    # 批量更新
+                    updated_count = 0
+                    for bottle_cap_id in id_list:
+                        try:
+                            bottle_cap = BottleCapSubmission.objects.get(id=bottle_cap_id)
+                            bottle_cap.is_settled = is_settled
+                            if admin_remark:
+                                bottle_cap.admin_remark = admin_remark
+                            if is_settled:
+                                from django.utils import timezone
+                                bottle_cap.settled_at = timezone.now()
+                            else:
+                                bottle_cap.settled_at = None
+                            bottle_cap.save()
+                            updated_count += 1
+                        except BottleCapSubmission.DoesNotExist:
+                            continue
+                    
+                    messages.success(request, f'成功批量更新 {updated_count} 条记录')
+                else:
+                    messages.error(request, '无效的记录ID')
+            except ValueError:
+                messages.error(request, '记录ID格式错误')
+        else:
+            messages.error(request, '请选择要更新的记录')
+    
+    return redirect('admin_bottle_caps')
