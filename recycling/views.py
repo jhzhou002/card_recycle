@@ -855,6 +855,193 @@ def export_bottle_caps_with_payment(request):
 
 
 @staff_member_required
+def export_bottle_caps_images(request):
+    """单个图片导出 - ZIP打包下载"""
+    import zipfile
+    import tempfile
+    import os
+    import csv
+    import requests
+    from datetime import datetime
+    from django.http import HttpResponse
+    from urllib.parse import urlparse
+    
+    # 获取筛选参数
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    is_settled = request.GET.get('is_settled')
+    user_id = request.GET.get('user_id')
+    
+    # 构建查询
+    queryset = BottleCapSubmission.objects.all()
+    
+    if date_from:
+        try:
+            if 'T' in date_from:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%dT%H:%M')
+            else:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            queryset = queryset.filter(submitted_at__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            if 'T' in date_to:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%dT%H:%M')
+            else:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+                date_to_obj = date_to_obj.replace(hour=23, minute=59, second=59)
+            queryset = queryset.filter(submitted_at__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    if is_settled:
+        if is_settled == 'true':
+            queryset = queryset.filter(is_settled=True)
+        elif is_settled == 'false':
+            queryset = queryset.filter(is_settled=False)
+    
+    if user_id:
+        try:
+            user_id_int = int(user_id)
+            queryset = queryset.filter(user_id=user_id_int)
+        except ValueError:
+            pass
+    
+    submissions = queryset.order_by('-submitted_at')
+    
+    if not submissions.exists():
+        return HttpResponse('没有找到符合条件的记录', status=404)
+    
+    # 创建临时目录
+    temp_dir = tempfile.mkdtemp()
+    
+    try:
+        # 创建CSV映射文件
+        csv_file_path = os.path.join(temp_dir, 'image_mapping.csv')
+        with open(csv_file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([
+                '文件名', '用户ID', '用户名', '提交记录ID', '图片序号', 
+                '提交时间', '结算状态', '原始URL', '管理员备注'
+            ])
+            
+            total_images = 0
+            successful_downloads = 0
+            
+            for submission in submissions:
+                if not submission.qr_codes:
+                    continue
+                    
+                for idx, qr_url in enumerate(submission.qr_codes, 1):
+                    total_images += 1
+                    
+                    # 生成文件名
+                    timestamp = submission.submitted_at.strftime('%Y%m%d_%H%M%S')
+                    file_extension = '.jpg'  # 默认扩展名
+                    
+                    # 尝试从URL获取扩展名
+                    try:
+                        parsed_url = urlparse(qr_url)
+                        if parsed_url.path:
+                            original_ext = os.path.splitext(parsed_url.path)[1]
+                            if original_ext.lower() in ['.jpg', '.jpeg', '.png', '.gif', '.bmp']:
+                                file_extension = original_ext
+                    except:
+                        pass
+                    
+                    filename = f"user{submission.user.id}_submission{submission.id}_qr{idx:03d}_{timestamp}{file_extension}"
+                    file_path = os.path.join(temp_dir, filename)
+                    
+                    # 写入CSV记录
+                    writer.writerow([
+                        filename,
+                        submission.user.id,
+                        submission.user.username,
+                        submission.id,
+                        idx,
+                        submission.submitted_at.strftime('%Y-%m-%d %H:%M:%S'),
+                        '已结算' if submission.is_settled else '未结算',
+                        qr_url,
+                        submission.admin_remark or ''
+                    ])
+                    
+                    # 下载图片
+                    try:
+                        # 处理URL
+                        if qr_url.startswith('http'):
+                            download_url = qr_url
+                        else:
+                            download_url = f"https://guangpan.lingjing235.cn/{qr_url}"
+                        
+                        print(f"下载图片: {download_url}")
+                        
+                        # 下载图片
+                        response = requests.get(download_url, timeout=30, stream=True)
+                        if response.status_code == 200:
+                            with open(file_path, 'wb') as f:
+                                for chunk in response.iter_content(chunk_size=8192):
+                                    f.write(chunk)
+                            successful_downloads += 1
+                            print(f"成功下载: {filename}")
+                        else:
+                            print(f"下载失败: {download_url}, 状态码: {response.status_code}")
+                            
+                    except Exception as e:
+                        print(f"下载图片失败: {qr_url}, 错误: {str(e)}")
+                        continue
+        
+        # 创建统计文件
+        stats_file_path = os.path.join(temp_dir, 'export_summary.txt')
+        with open(stats_file_path, 'w', encoding='utf-8') as f:
+            f.write(f"瓶盖图片导出统计报告\n")
+            f.write(f"=" * 50 + "\n")
+            f.write(f"导出时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"总记录数: {submissions.count()}\n")
+            f.write(f"总图片数: {total_images}\n")
+            f.write(f"成功下载: {successful_downloads}\n")
+            f.write(f"失败数量: {total_images - successful_downloads}\n")
+            f.write(f"成功率: {(successful_downloads / total_images * 100):.1f}%\n\n")
+            
+            if date_from:
+                f.write(f"开始时间: {date_from}\n")
+            if date_to:
+                f.write(f"结束时间: {date_to}\n")
+            if is_settled:
+                status_text = "已结算" if is_settled == 'true' else "未结算"
+                f.write(f"状态筛选: {status_text}\n")
+            if user_id:
+                f.write(f"用户ID筛选: {user_id}\n")
+        
+        # 创建ZIP文件
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        zip_filename = f'bottle_caps_images_{timestamp}.zip'
+        
+        response = HttpResponse(content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+        
+        with zipfile.ZipFile(response, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # 添加所有文件到ZIP
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    arcname = os.path.relpath(file_path, temp_dir)
+                    zipf.write(file_path, arcname=arcname)
+        
+        print(f"ZIP文件创建完成，包含 {successful_downloads} 个图片文件")
+        return response
+        
+    finally:
+        # 清理临时文件
+        import shutil
+        try:
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+
+
+@staff_member_required
 def admin_notifications(request):
     """管理员通知管理"""
     notifications = Notification.objects.all().order_by('-updated_at')
