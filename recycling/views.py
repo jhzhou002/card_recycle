@@ -782,9 +782,16 @@ def export_bottle_caps_web(request):
     
     submissions = queryset.order_by('-submitted_at')
     
+    # 计算总图片数量
+    total_images = 0
+    for submission in submissions:
+        if submission.qr_codes:
+            total_images += len(submission.qr_codes)
+    
     context = {
         'submissions': submissions,
         'total_count': queryset.count(),
+        'total_images': total_images,
         'export_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'filter_info': {
             'date_from': date_from,
