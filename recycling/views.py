@@ -1001,7 +1001,7 @@ def export_bottle_caps_images(request):
                                     draw = ImageDraw.Draw(img)
                                     
                                     # 水印文本
-                                    watermark_text = f"用户ID: {submission.user.id} | 记录: {submission.id} | 图片: {idx}"
+                                    watermark_text = f"USER-ID: {submission.user.id} | RECORD: {submission.id} | IMAGE: {idx}"
                                     
                                     # 图片尺寸
                                     img_width, img_height = img.size
