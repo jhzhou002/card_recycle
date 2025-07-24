@@ -967,7 +967,7 @@ def export_bottle_caps_images(request):
                         submission.admin_remark or ''
                     ])
                     
-                    # 下载图片
+                    # 下载图片并添加水印
                     try:
                         # 处理URL
                         if qr_url.startswith('http'):
@@ -980,11 +980,102 @@ def export_bottle_caps_images(request):
                         # 下载图片
                         response = requests.get(download_url, timeout=30, stream=True)
                         if response.status_code == 200:
-                            with open(file_path, 'wb') as f:
+                            # 先保存原图到临时位置
+                            temp_image_path = file_path + '.temp'
+                            with open(temp_image_path, 'wb') as f:
                                 for chunk in response.iter_content(chunk_size=8192):
                                     f.write(chunk)
-                            successful_downloads += 1
-                            print(f"成功下载: {filename}")
+                            
+                            # 添加水印
+                            try:
+                                from PIL import Image, ImageDraw, ImageFont
+                                import io
+                                
+                                # 打开图片
+                                with Image.open(temp_image_path) as img:
+                                    # 转换为RGB模式（如果需要）
+                                    if img.mode in ('RGBA', 'P'):
+                                        img = img.convert('RGB')
+                                    
+                                    # 创建绘图对象
+                                    draw = ImageDraw.Draw(img)
+                                    
+                                    # 水印文本
+                                    watermark_text = f"用户ID: {submission.user.id} | 记录: {submission.id} | 图片: {idx}"
+                                    
+                                    # 图片尺寸
+                                    img_width, img_height = img.size
+                                    
+                                    # 尝试使用系统字体，如果失败则使用默认字体
+                                    try:
+                                        # 根据图片大小动态调整字体大小
+                                        font_size = max(20, min(img_width, img_height) // 25)
+                                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+                                    except:
+                                        try:
+                                            font_size = max(20, min(img_width, img_height) // 25)
+                                            font = ImageFont.truetype("arial.ttf", font_size)
+                                        except:
+                                            font = ImageFont.load_default()
+                                            font_size = 20
+                                    
+                                    # 获取文本尺寸
+                                    try:
+                                        bbox = draw.textbbox((0, 0), watermark_text, font=font)
+                                        text_width = bbox[2] - bbox[0]
+                                        text_height = bbox[3] - bbox[1]
+                                    except:
+                                        # 兼容旧版本PIL
+                                        text_width, text_height = draw.textsize(watermark_text, font=font)
+                                    
+                                    # 水印位置（右下角）
+                                    margin = 10
+                                    x = img_width - text_width - margin
+                                    y = img_height - text_height - margin
+                                    
+                                    # 绘制背景矩形（半透明黑色）
+                                    padding = 5
+                                    bg_bbox = [
+                                        x - padding,
+                                        y - padding,
+                                        x + text_width + padding,
+                                        y + text_height + padding
+                                    ]
+                                    
+                                    # 创建半透明背景
+                                    overlay = Image.new('RGBA', img.size, (0, 0, 0, 0))
+                                    overlay_draw = ImageDraw.Draw(overlay)
+                                    overlay_draw.rectangle(bg_bbox, fill=(0, 0, 0, 128))  # 半透明黑色
+                                    
+                                    # 将背景合并到原图
+                                    img = img.convert('RGBA')
+                                    img = Image.alpha_composite(img, overlay)
+                                    img = img.convert('RGB')
+                                    
+                                    # 重新创建绘图对象
+                                    draw = ImageDraw.Draw(img)
+                                    
+                                    # 绘制白色文字
+                                    draw.text((x, y), watermark_text, fill=(255, 255, 255), font=font)
+                                    
+                                    # 保存添加水印后的图片
+                                    img.save(file_path, 'JPEG', quality=95)
+                                    
+                                # 删除临时文件
+                                os.remove(temp_image_path)
+                                
+                                successful_downloads += 1
+                                print(f"成功下载并添加水印: {filename}")
+                                
+                            except Exception as watermark_error:
+                                print(f"添加水印失败: {watermark_error}")
+                                # 如果水印失败，使用原图
+                                try:
+                                    os.rename(temp_image_path, file_path)
+                                    successful_downloads += 1
+                                    print(f"水印失败，使用原图: {filename}")
+                                except:
+                                    print(f"保存原图也失败: {filename}")
                         else:
                             print(f"下载失败: {download_url}, 状态码: {response.status_code}")
                             
@@ -995,7 +1086,7 @@ def export_bottle_caps_images(request):
         # 创建统计文件
         stats_file_path = os.path.join(temp_dir, 'export_summary.txt')
         with open(stats_file_path, 'w', encoding='utf-8') as f:
-            f.write(f"瓶盖图片导出统计报告\n")
+            f.write(f"瓶盖图片导出统计报告（含水印版）\n")
             f.write(f"=" * 50 + "\n")
             f.write(f"导出时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"总记录数: {submissions.count()}\n")
@@ -1003,6 +1094,12 @@ def export_bottle_caps_images(request):
             f.write(f"成功下载: {successful_downloads}\n")
             f.write(f"失败数量: {total_images - successful_downloads}\n")
             f.write(f"成功率: {(successful_downloads / total_images * 100):.1f}%\n\n")
+            
+            f.write(f"水印功能说明：\n")
+            f.write(f"- 每张图片右下角自动添加水印\n")
+            f.write(f"- 水印内容：用户ID | 记录ID | 图片序号\n")
+            f.write(f"- 适用场景：微信聊天发送时可直接看到用户信息\n")
+            f.write(f"- 水印样式：白色文字 + 半透明黑色背景\n\n")
             
             if date_from:
                 f.write(f"开始时间: {date_from}\n")
