@@ -769,16 +769,41 @@ def export_bottle_caps_web(request):
     queryset = BottleCapSubmission.objects.all()
     
     if date_from:
-        queryset = queryset.filter(submitted_at__date__gte=date_from)
+        try:
+            # 支持datetime-local格式 (YYYY-MM-DDTHH:MM:SS)
+            if 'T' in date_from:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%dT%H:%M')
+            else:
+                # 兼容旧的日期格式
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            queryset = queryset.filter(submitted_at__gte=date_from_obj)
+        except ValueError:
+            pass
+    
     if date_to:
-        queryset = queryset.filter(submitted_at__date__lte=date_to)
+        try:
+            # 支持datetime-local格式 (YYYY-MM-DDTHH:MM:SS)
+            if 'T' in date_to:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%dT%H:%M')
+            else:
+                # 兼容旧的日期格式，设置为当天23:59:59
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+                date_to_obj = date_to_obj.replace(hour=23, minute=59, second=59)
+            queryset = queryset.filter(submitted_at__lte=date_to_obj)
+        except ValueError:
+            pass
+    
     if is_settled:
         if is_settled == 'true':
             queryset = queryset.filter(is_settled=True)
         elif is_settled == 'false':
             queryset = queryset.filter(is_settled=False)
     if user_id:
-        queryset = queryset.filter(user_id=user_id)
+        try:
+            user_id_int = int(user_id)
+            queryset = queryset.filter(user_id=user_id_int)
+        except ValueError:
+            pass
     
     submissions = queryset.order_by('-submitted_at')
     
@@ -819,16 +844,41 @@ def export_bottle_caps_with_payment(request):
     queryset = BottleCapSubmission.objects.all()
     
     if date_from:
-        queryset = queryset.filter(submitted_at__date__gte=date_from)
+        try:
+            # 支持datetime-local格式 (YYYY-MM-DDTHH:MM:SS)
+            if 'T' in date_from:
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%dT%H:%M')
+            else:
+                # 兼容旧的日期格式
+                date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
+            queryset = queryset.filter(submitted_at__gte=date_from_obj)
+        except ValueError:
+            pass
+    
     if date_to:
-        queryset = queryset.filter(submitted_at__date__lte=date_to)
+        try:
+            # 支持datetime-local格式 (YYYY-MM-DDTHH:MM:SS)
+            if 'T' in date_to:
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%dT%H:%M')
+            else:
+                # 兼容旧的日期格式，设置为当天23:59:59
+                date_to_obj = datetime.strptime(date_to, '%Y-%m-%d')
+                date_to_obj = date_to_obj.replace(hour=23, minute=59, second=59)
+            queryset = queryset.filter(submitted_at__lte=date_to_obj)
+        except ValueError:
+            pass
+    
     if is_settled:
         if is_settled == 'true':
             queryset = queryset.filter(is_settled=True)
         elif is_settled == 'false':
             queryset = queryset.filter(is_settled=False)
     if user_id:
-        queryset = queryset.filter(user_id=user_id)
+        try:
+            user_id_int = int(user_id)
+            queryset = queryset.filter(user_id=user_id_int)
+        except ValueError:
+            pass
     
     submissions = queryset.order_by('-submitted_at')
     
