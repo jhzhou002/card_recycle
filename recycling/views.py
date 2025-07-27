@@ -182,6 +182,12 @@ def refresh_captcha(request):
 @login_required
 def submit_bottle_cap(request):
     """瓶盖二维码提交"""
+    # 初始化existing_payment_code变量，确保在所有代码路径中都可用
+    existing_payment_code = None
+    last_submission = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at').first()
+    if last_submission and last_submission.payment_code:
+        existing_payment_code = last_submission.payment_code
+    
     if request.method == 'POST':
         # 检查是否是AJAX请求（前端上传）
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'qr_codes' in request.POST:
@@ -198,11 +204,7 @@ def submit_bottle_cap(request):
                     return JsonResponse({'error': '请选择至少一张瓶盖二维码图片'}, status=400)
                 
                 # 检查用户是否已有收款码记录
-                existing_payment_code = None
-                last_submission = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at').first()
-                if last_submission and last_submission.payment_code:
-                    existing_payment_code = last_submission.payment_code
-                    print(f"找到用户已有收款码: {existing_payment_code}")
+                print(f"找到用户已有收款码: {existing_payment_code}")
                 
                 # 如果没有传入收款码且用户没有历史收款码，则要求上传
                 if not payment_code_url and not existing_payment_code:
@@ -252,12 +254,7 @@ def submit_bottle_cap(request):
         form = BottleCapSubmissionForm(request.POST, request.FILES)
         if form.is_valid():
             messages.error(request, '请使用新的上传方式')
-    else:
-        # GET请求，检查用户是否已有收款码
-        existing_payment_code = None
-        last_submission = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at').first()
-        if last_submission and last_submission.payment_code:
-            existing_payment_code = last_submission.payment_code
+    # GET请求或POST请求处理完成后，继续处理模板渲染
     
     # 创建表单对象供模板使用
     form = BottleCapSubmissionForm()
