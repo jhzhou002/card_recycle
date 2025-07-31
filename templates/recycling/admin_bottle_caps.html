@@ -235,6 +235,14 @@
                         <label for="user_id" class="form-label">用户ID</label>
                         <input type="number" class="form-control" id="user_id" name="user_id" value="{{ user_id }}" placeholder="输入用户ID">
                     </div>
+                    <div class="mb-3">
+                        <label for="sort_by" class="form-label">排序方式</label>
+                        <select class="form-control" id="sort_by" name="sort_by">
+                            <option value="">默认排序（提交时间倒序）</option>
+                            <option value="user_id_asc" {% if sort_by == 'user_id_asc' %}selected{% endif %}>用户ID升序</option>
+                            <option value="user_id_desc" {% if sort_by == 'user_id_desc' %}selected{% endif %}>用户ID降序</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>

@@ -369,8 +369,9 @@ def admin_bottle_caps(request):
         date_to = request.GET.get('date_to')
         is_settled = request.GET.get('is_settled')
         user_id = request.GET.get('user_id')
+        sort_by = request.GET.get('sort_by')
         
-        print(f"筛选参数: date_from={date_from}, date_to={date_to}, is_settled={is_settled}, user_id={user_id}")
+        print(f"筛选参数: date_from={date_from}, date_to={date_to}, is_settled={is_settled}, user_id={user_id}, sort_by={sort_by}")
         
         # 基础查询
         bottle_caps = BottleCapSubmission.objects.all()
@@ -421,7 +422,12 @@ def admin_bottle_caps(request):
                 pass
         
         # 排序
-        bottle_caps = bottle_caps.order_by('-submitted_at')
+        if sort_by == 'user_id_asc':
+            bottle_caps = bottle_caps.order_by('user_id', '-submitted_at')
+        elif sort_by == 'user_id_desc':
+            bottle_caps = bottle_caps.order_by('-user_id', '-submitted_at')
+        else:
+            bottle_caps = bottle_caps.order_by('-submitted_at')
         
         # 分页
         paginator = Paginator(bottle_caps, 20)
@@ -444,6 +450,7 @@ def admin_bottle_caps(request):
             'date_to': date_to,
             'is_settled': is_settled,
             'user_id': user_id,
+            'sort_by': sort_by,
         }
         
         print("准备渲染模板")
@@ -761,6 +768,7 @@ def export_bottle_caps_web(request):
     date_to = request.GET.get('date_to')
     is_settled = request.GET.get('is_settled')
     user_id = request.GET.get('user_id')
+    sort_by = request.GET.get('sort_by')
     
     # 构建查询
     queryset = BottleCapSubmission.objects.all()
