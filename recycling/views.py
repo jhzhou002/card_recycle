@@ -810,7 +810,13 @@ def export_bottle_caps_web(request):
         except ValueError:
             pass
     
-    submissions = queryset.order_by('-submitted_at')
+    # 排序
+    if sort_by == 'user_id_asc':
+        submissions = queryset.order_by('user_id', '-submitted_at')
+    elif sort_by == 'user_id_desc':
+        submissions = queryset.order_by('-user_id', '-submitted_at')
+    else:
+        submissions = queryset.order_by('-submitted_at')
     
     # 计算总图片数量
     total_images = 0
@@ -844,6 +850,7 @@ def export_bottle_caps_with_payment(request):
     date_to = request.GET.get('date_to')
     is_settled = request.GET.get('is_settled')
     user_id = request.GET.get('user_id')
+    sort_by = request.GET.get('sort_by')
     
     # 构建查询
     queryset = BottleCapSubmission.objects.all()
@@ -885,7 +892,13 @@ def export_bottle_caps_with_payment(request):
         except ValueError:
             pass
     
-    submissions = queryset.order_by('-submitted_at')
+    # 排序
+    if sort_by == 'user_id_asc':
+        submissions = queryset.order_by('user_id', '-submitted_at')
+    elif sort_by == 'user_id_desc':
+        submissions = queryset.order_by('-user_id', '-submitted_at')
+    else:
+        submissions = queryset.order_by('-submitted_at')
     
     # 计算总图片数量
     total_images = 0
@@ -926,6 +939,7 @@ def export_bottle_caps_images(request):
     date_to = request.GET.get('date_to')
     is_settled = request.GET.get('is_settled')
     user_id = request.GET.get('user_id')
+    sort_by = request.GET.get('sort_by')
     
     # 构建查询
     queryset = BottleCapSubmission.objects.all()
@@ -964,7 +978,13 @@ def export_bottle_caps_images(request):
         except ValueError:
             pass
     
-    submissions = queryset.order_by('-submitted_at')
+    # 排序
+    if sort_by == 'user_id_asc':
+        submissions = queryset.order_by('user_id', '-submitted_at')
+    elif sort_by == 'user_id_desc':
+        submissions = queryset.order_by('-user_id', '-submitted_at')
+    else:
+        submissions = queryset.order_by('-submitted_at')
     
     if not submissions.exists():
         return HttpResponse('没有找到符合条件的记录', status=404)
