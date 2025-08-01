@@ -139,24 +139,33 @@
                 
                 <!-- 导出功能区域 -->
                 <div class="export-section mb-4">
-                    <div class="d-flex flex-wrap gap-2">
-                        <small class="text-muted me-3 align-self-center">导出功能：</small>
-                        <a href="{% url 'export_bottle_caps_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                           class="btn btn-success btn-sm" target="_blank">
-                            <i class="fas fa-file-pdf"></i> PDF
-                        </a>
-                        <a href="{% url 'export_bottle_caps_web' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                           class="btn btn-info btn-sm" target="_blank">
-                            <i class="fas fa-globe"></i> 网页
-                        </a>
-                        <a href="{% url 'export_bottle_caps_with_payment' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                           class="btn btn-warning btn-sm" target="_blank">
-                            <i class="fas fa-credit-card"></i> 含收款码
-                        </a>
-                        <a href="{% url 'export_bottle_caps_images' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                           class="btn btn-danger btn-sm" target="_blank" title="每张图片自动添加用户ID水印">
-                            <i class="fas fa-download"></i> 图片文件
-                        </a>
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download"></i> 导出数据
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'export_bottle_caps_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" target="_blank">
+                                    <i class="fas fa-file-pdf text-danger me-2"></i>PDF格式
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'export_bottle_caps_web' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" target="_blank">
+                                    <i class="fas fa-globe text-info me-2"></i>网页格式
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'export_bottle_caps_with_payment' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" target="_blank">
+                                    <i class="fas fa-credit-card text-warning me-2"></i>含收款码
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'export_bottle_caps_images' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" target="_blank" title="每张图片自动添加用户ID水印">
+                                    <i class="fas fa-images text-success me-2"></i>图片文件 (ZIP)
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
                 <!-- 统计信息 -->
@@ -580,7 +589,7 @@ $(document).ready(function() {
     // 更新导出链接参数
     function updateExportLinks() {
         var currentParams = window.location.search;
-        $('.export-section a').each(function() {
+        $('.dropdown-menu a').each(function() {
             var baseUrl = $(this).attr('href').split('?')[0];
             $(this).attr('href', baseUrl + currentParams);
         });
