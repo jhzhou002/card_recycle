@@ -2,35 +2,163 @@
 
 {% block title %}瓶盖管理 - 管理中心{% endblock %}
 
+{% block extra_css %}
+<style>
+.filter-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.filter-section.active {
+    border-color: #007bff;
+    background-color: #f8f9ff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+}
+
+.export-section {
+    background-color: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.form-label.small {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.btn-sm {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.form-control-sm, .form-select-sm {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .filter-section .row > div {
+        margin-bottom: 1rem;
+    }
+    
+    .export-section .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .export-section .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+.loading-overlay {
+    position: relative;
+}
+
+.loading-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: none;
+}
+
+.loading-overlay.loading::after {
+    display: block;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header">
                 <h4><i class="fas fa-cogs"></i> 瓶盖管理</h4>
-                <div class="btn-group">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
-                        <i class="fas fa-filter"></i> 筛选条件
-                    </button>
-                    <a href="{% url 'export_bottle_caps_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                       class="btn btn-success" target="_blank">
-                        <i class="fas fa-file-pdf"></i> 导出PDF
-                    </a>
-                    <a href="{% url 'export_bottle_caps_web' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                       class="btn btn-info" target="_blank">
-                        <i class="fas fa-globe"></i> 网页导出
-                    </a>
-                    <a href="{% url 'export_bottle_caps_with_payment' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                       class="btn btn-warning" target="_blank">
-                        <i class="fas fa-credit-card"></i> 含收款码导出
-                    </a>
-                    <a href="{% url 'export_bottle_caps_images' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
-                       class="btn btn-danger" target="_blank" title="每张图片自动添加用户ID水印，适合微信发送">
-                        <i class="fas fa-download"></i> 图片导出(含水印)
-                    </a>
-                </div>
             </div>
             <div class="card-body">
+                <!-- 筛选条件区域 -->
+                <div class="filter-section mb-4">
+                    <form id="filterForm" method="get">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">开始时间</label>
+                                <input type="datetime-local" class="form-control form-control-sm" 
+                                       name="date_from" value="{{ date_from }}" id="dateFrom">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">结束时间</label>
+                                <input type="datetime-local" class="form-control form-control-sm" 
+                                       name="date_to" value="{{ date_to }}" id="dateTo">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">结算状态</label>
+                                <select class="form-select form-select-sm" name="is_settled" id="isSettled">
+                                    <option value="">全部</option>
+                                    <option value="true" {% if is_settled == 'true' %}selected{% endif %}>已结算</option>
+                                    <option value="false" {% if is_settled == 'false' %}selected{% endif %}>未结算</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">用户ID</label>
+                                <input type="number" class="form-control form-control-sm" 
+                                       name="user_id" value="{{ user_id }}" placeholder="用户ID" id="userId">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label small text-muted">排序方式</label>
+                                <select class="form-select form-select-sm" name="sort_by" id="sortBy">
+                                    <option value="">默认排序</option>
+                                    <option value="user_id_asc" {% if sort_by == 'user_id_asc' %}selected{% endif %}>用户ID升序</option>
+                                    <option value="user_id_desc" {% if sort_by == 'user_id_desc' %}selected{% endif %}>用户ID降序</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="clearFilters">
+                                        <i class="fas fa-times"></i> 清空
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-sm" id="applyFilters">
+                                        <i class="fas fa-search"></i> 筛选
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- 导出功能区域 -->
+                <div class="export-section mb-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        <small class="text-muted me-3 align-self-center">导出功能：</small>
+                        <a href="{% url 'export_bottle_caps_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-success btn-sm" target="_blank">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                        <a href="{% url 'export_bottle_caps_web' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-info btn-sm" target="_blank">
+                            <i class="fas fa-globe"></i> 网页
+                        </a>
+                        <a href="{% url 'export_bottle_caps_with_payment' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-warning btn-sm" target="_blank">
+                            <i class="fas fa-credit-card"></i> 含收款码
+                        </a>
+                        <a href="{% url 'export_bottle_caps_images' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" 
+                           class="btn btn-danger btn-sm" target="_blank" title="每张图片自动添加用户ID水印">
+                            <i class="fas fa-download"></i> 图片文件
+                        </a>
+                    </div>
+                </div>
                 <!-- 统计信息 -->
                 <div class="row mb-4">
                     <div class="col-md-3">
@@ -203,55 +331,6 @@
     </div>
 </div>
 
-<!-- 筛选条件模态框 -->
-<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">筛选条件</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
-            </div>
-            <form method="get">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="date_from" class="form-label">开始时间</label>
-                        <input type="datetime-local" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
-                        <div class="form-text">精确到秒的开始时间筛选</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="date_to" class="form-label">结束时间</label>
-                        <input type="datetime-local" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
-                        <div class="form-text">精确到秒的结束时间筛选</div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="is_settled" class="form-label">结算状态</label>
-                        <select class="form-control" id="is_settled" name="is_settled">
-                            <option value="">全部</option>
-                            <option value="true" {% if is_settled == 'true' %}selected{% endif %}>已结算</option>
-                            <option value="false" {% if is_settled == 'false' %}selected{% endif %}>未结算</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="user_id" class="form-label">用户ID</label>
-                        <input type="number" class="form-control" id="user_id" name="user_id" value="{{ user_id }}" placeholder="输入用户ID">
-                    </div>
-                    <div class="mb-3">
-                        <label for="sort_by" class="form-label">排序方式</label>
-                        <select class="form-control" id="sort_by" name="sort_by">
-                            <option value="">默认排序（提交时间倒序）</option>
-                            <option value="user_id_asc" {% if sort_by == 'user_id_asc' %}selected{% endif %}>用户ID升序</option>
-                            <option value="user_id_desc" {% if sort_by == 'user_id_desc' %}selected{% endif %}>用户ID降序</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary">应用筛选</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 <!-- 更新状态模态框 -->
 <div class="modal fade" id="updateModal" tabindex="-1" aria-labelledby="updateModalLabel" aria-hidden="true">
@@ -397,6 +476,114 @@ $(document).ready(function() {
         var checkedCount = $('.row-checkbox:checked').length;
         $('#selectedCount').text('已选择 ' + checkedCount + ' 项');
         $('#batchUpdateBtn').prop('disabled', checkedCount === 0);
+    }
+    
+    // 自动筛选功能
+    function initAutoFilter() {
+        // 为所有筛选控件添加变化监听
+        $('#dateFrom, #dateTo, #isSettled, #userId, #sortBy').on('change', function() {
+            // 短暂延迟，避免用户快速输入时频繁请求
+            clearTimeout(window.filterTimeout);
+            window.filterTimeout = setTimeout(function() {
+                applyFilters();
+            }, 500);
+        });
+        
+        // 用户ID输入框特殊处理（输入时实时筛选）
+        $('#userId').on('input', function() {
+            clearTimeout(window.userIdTimeout);
+            window.userIdTimeout = setTimeout(function() {
+                applyFilters();
+            }, 800);
+        });
+        
+        // 手动筛选按钮
+        $('#applyFilters').on('click', function() {
+            applyFilters();
+        });
+        
+        // 清空按钮
+        $('#clearFilters').on('click', function() {
+            clearFilters();
+        });
+    }
+    
+    // 应用筛选
+    function applyFilters() {
+        var formData = {
+            date_from: $('#dateFrom').val(),
+            date_to: $('#dateTo').val(),
+            is_settled: $('#isSettled').val(),
+            user_id: $('#userId').val(),
+            sort_by: $('#sortBy').val()
+        };
+        
+        // 构建URL参数
+        var params = new URLSearchParams();
+        Object.keys(formData).forEach(function(key) {
+            if (formData[key] && formData[key].trim() !== '') {
+                params.append(key, formData[key]);
+            }
+        });
+        
+        // 显示加载状态
+        showFilterLoading(true);
+        
+        // 跳转到新的URL
+        var newUrl = window.location.pathname;
+        if (params.toString()) {
+            newUrl += '?' + params.toString();
+        }
+        window.location.href = newUrl;
+    }
+    
+    // 清空筛选条件
+    function clearFilters() {
+        $('#dateFrom').val('');
+        $('#dateTo').val('');
+        $('#isSettled').val('');
+        $('#userId').val('');
+        $('#sortBy').val('');
+        
+        // 跳转到无参数页面
+        window.location.href = window.location.pathname;
+    }
+    
+    // 显示筛选加载状态
+    function showFilterLoading(show) {
+        if (show) {
+            $('#applyFilters').html('<i class="fas fa-spinner fa-spin"></i> 筛选中...');
+            $('#applyFilters').prop('disabled', true);
+        } else {
+            $('#applyFilters').html('<i class="fas fa-search"></i> 筛选');
+            $('#applyFilters').prop('disabled', false);
+        }
+    }
+    
+    // 初始化自动筛选
+    initAutoFilter();
+    
+    // 页面加载完成后显示当前筛选状态
+    $(document).ready(function() {
+        var hasFilters = $('#dateFrom').val() || $('#dateTo').val() || $('#isSettled').val() || 
+                        $('#userId').val() || $('#sortBy').val();
+        
+        if (hasFilters) {
+            // 高亮筛选区域，表示当前有筛选条件
+            $('.filter-section').addClass('border border-primary').css('background-color', '#f8f9ff');
+        }
+        
+        // 更新导出链接的参数
+        updateExportLinks();
+    });
+    
+    // 更新导出链接参数
+    function updateExportLinks() {
+        var currentParams = window.location.search;
+        $('.export-section a').each(function() {
+            var baseUrl = $(this).attr('href').split('?')[0];
+            $(this).attr('href', baseUrl + currentParams);
+        });
     }
 });
 </script>
