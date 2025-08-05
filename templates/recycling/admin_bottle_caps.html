@@ -1,43 +1,14 @@
-{% extends 'recycling/base.html' %}
+{% extends 'recycling/admin_base.html' %}
 
-{% block title %}瓶盖管理 - 管理中心{% endblock %}
+{% block title %}瓶盖管理{% endblock %}
+{% block page_title %}瓶盖管理{% endblock %}
+{% block page_icon %}<i class="fas fa-bottle"></i>{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item active">瓶盖管理</li>
+{% endblock %}
 
 {% block extra_css %}
 <style>
-/* 主容器样式 */
-.admin-container {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px 0;
-}
-
-.admin-card {
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: none;
-    backdrop-filter: blur(10px);
-}
-
-.admin-card .card-header {
-    background: linear-gradient(135deg, #4a90e2, #357abd);
-    color: white;
-    border-radius: 20px 20px 0 0;
-    padding: 25px 30px;
-    border: none;
-}
-
-.admin-card .card-header h4 {
-    margin: 0;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.admin-card .card-body {
-    padding: 30px;
-}
 
 /* 筛选区域优化 */
 .filter-section {
@@ -438,15 +409,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="admin-container">
-    <div class="container-fluid">
-        <div class="row justify-content-center">
-            <div class="col-12">
-                <div class="card admin-card fade-in-up">
-                    <div class="card-header">
-                        <h4><i class="fas fa-crown"></i> 瓶盖管理中心</h4>
-                    </div>
-                    <div class="card-body">
+<div class="p-4">
                 <!-- 筛选条件区域 -->
                 <div class="filter-section mb-4">
                     <div class="filter-title">
@@ -718,11 +681,6 @@
                     <p>暂无瓶盖提交记录</p>
                 </div>
                 {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 </div>
 
 

@@ -1,14 +1,14 @@
-{% extends 'recycling/base.html' %}
+{% extends 'recycling/admin_base.html' %}
 
-{% block title %}管理员仪表板 - 卡券回收平台{% endblock %}
+{% block title %}仪表板{% endblock %}
+{% block page_title %}仪表板{% endblock %}
+{% block page_icon %}<i class="fas fa-tachometer-alt"></i>{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item active">仪表板</li>
+{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h2><i class="fas fa-tachometer-alt"></i> 管理员仪表板</h2>
-        <hr>
-    </div>
-</div>
+<div class="p-4">
 
 <div class="row mb-4">
     <div class="col-md-3">
@@ -179,5 +179,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}

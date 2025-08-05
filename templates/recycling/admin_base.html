@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}管理后台{% endblock %} - 卡券回收平台</title>
+    {% load static %}
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'css/all.min.css' %}" rel="stylesheet">
+    <style>
+        /* 管理后台基础样式 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* 顶部导航栏 */
+        .admin-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            height: 70px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+        }
+
+        .admin-header .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4a90e2;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-header .logo:hover {
+            color: #357abd;
+        }
+
+        .admin-header .user-info {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-header .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        /* 左侧导航栏 */
+        .admin-sidebar {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 280px;
+            height: calc(100vh - 70px);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px 0;
+            overflow-y: auto;
+            z-index: 999;
+        }
+
+        .admin-sidebar .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .admin-sidebar .nav-section-title {
+            padding: 0 25px 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #8e9aaf;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .admin-sidebar .nav-item {
+            margin: 2px 15px;
+        }
+
+        .admin-sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: #5a6c7d;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .admin-sidebar .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            transition: all 0.3s ease;
+            z-index: -1;
+        }
+
+        .admin-sidebar .nav-link:hover::before,
+        .admin-sidebar .nav-link.active::before {
+            left: 0;
+        }
+
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link.active {
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .admin-sidebar .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        .admin-sidebar .nav-link .badge {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.2);
+            color: inherit;
+        }
+
+        /* 主内容区域 */
+        .admin-content {
+            margin-left: 280px;
+            margin-top: 70px;
+            padding: 30px;
+            min-height: calc(100vh - 70px);
+        }
+
+        .admin-content .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .admin-content .page-header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .admin-content .page-header .breadcrumb {
+            margin: 10px 0 0 0;
+            background: transparent;
+            padding: 0;
+        }
+
+        .admin-content .page-header .breadcrumb-item {
+            color: #6c757d;
+        }
+
+        .admin-content .page-header .breadcrumb-item.active {
+            color: #4a90e2;
+        }
+
+        .admin-content .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .admin-sidebar.show {
+                transform: translateX(0);
+            }
+
+            .admin-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .admin-header {
+                padding: 0 20px;
+            }
+
+            .mobile-menu-toggle {
+                display: block !important;
+            }
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: #4a90e2;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-toggle:hover {
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        /* 侧边栏覆盖层 */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        /* 滚动条样式 */
+        .admin-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .admin-sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .admin-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(74, 144, 226, 0.3);
+            border-radius: 3px;
+        }
+
+        .admin-sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(74, 144, 226, 0.5);
+        }
+
+        {% block extra_css %}
+        {% endblock %}
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="admin-header">
+        <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <a href="{% url 'admin_dashboard' %}" class="logo">
+            <i class="fas fa-crown"></i>
+            管理后台
+        </a>
+        <div class="user-info">
+            <div class="dropdown">
+                <div class="d-flex align-items-center cursor-pointer" data-bs-toggle="dropdown">
+                    <div class="user-avatar">
+                        {{ user.username|first|upper }}
+                    </div>
+                    <div class="ms-2">
+                        <div class="fw-bold text-dark">{{ user.username }}</div>
+                        <small class="text-muted">ID: {{ user.id }}</small>
+                    </div>
+                    <i class="fas fa-chevron-down ms-2 text-muted"></i>
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><h6 class="dropdown-header">用户操作</h6></li>
+                    <li><a class="dropdown-item" href="{% url 'home' %}">
+                        <i class="fas fa-home me-2"></i>返回前台
+                    </a></li>
+                    <li><a class="dropdown-item" href="/admin/">
+                        <i class="fas fa-cog me-2"></i>Django后台
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏覆盖层 -->
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- 左侧导航栏 -->
+    <nav class="admin-sidebar" id="adminSidebar">
+        <div class="nav-section">
+            <div class="nav-section-title">概览</div>
+            <div class="nav-item">
+                <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    仪表板
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">内容管理</div>
+            <div class="nav-item">
+                <a href="{% url 'admin_submissions' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_submissions' %}active{% endif %}">
+                    <i class="fas fa-credit-card"></i>
+                    卡券管理
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="{% url 'admin_bottle_caps' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_bottle_caps' %}active{% endif %}">
+                    <i class="fas fa-bottle"></i>
+                    瓶盖管理
+                </a>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">系统功能</div>
+            <div class="nav-item">
+                <a href="{% url 'admin_notifications' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_notifications' %}active{% endif %}">
+                    <i class="fas fa-bell"></i>
+                    通知管理
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域 -->
+    <main class="admin-content">
+        <!-- 页面头部 -->
+        <div class="page-header">
+            <h1>
+                {% block page_icon %}<i class="fas fa-tachometer-alt"></i>{% endblock %}
+                {% block page_title %}仪表板{% endblock %}
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">管理后台</a></li>
+                    {% block breadcrumb %}
+                    <li class="breadcrumb-item active">仪表板</li>
+                    {% endblock %}
+                </ol>
+            </nav>
+        </div>
+
+        <!-- 消息提示 -->
+        {% if messages %}
+        <div class="position-fixed" style="top: 90px; right: 20px; z-index: 1050; width: 350px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- 页面内容 -->
+        <div class="content-card">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script>
+        // 切换侧边栏显示/隐藏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+
+        // 点击覆盖层关闭侧边栏
+        document.querySelector('.sidebar-overlay').addEventListener('click', function() {
+            toggleSidebar();
+        });
+
+        // 响应式处理
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                const sidebar = document.getElementById('adminSidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            }
+        });
+
+        // 自动关闭提示消息
+        setTimeout(function() {
+            $('.alert').fadeOut();
+        }, 5000);
+    </script>
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>
