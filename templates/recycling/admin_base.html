@@ -8,21 +8,21 @@
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/all.min.css' %}" rel="stylesheet">
     <style>
-        /* 管理后台基础样式 */
+        /* 管理后台基础样式 - 简约浅色高级设计 */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f8fafc;
             min-height: 100vh;
             margin: 0;
             overflow-x: hidden;
+            color: #1e293b;
         }
 
         /* 顶部导航栏 */
         .admin-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-            height: 70px;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            height: 64px;
             position: fixed;
             top: 0;
             left: 0;
@@ -30,169 +30,132 @@
             z-index: 1000;
             display: flex;
             align-items: center;
-            padding: 0 30px;
+            padding: 0 24px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         .admin-header .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #4a90e2;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
             text-decoration: none;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .admin-header .logo:hover {
-            color: #357abd;
+            color: #3b82f6;
         }
 
         .admin-header .user-info {
             margin-left: auto;
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
         .admin-header .user-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #4a90e2, #357abd);
+            width: 36px;
+            height: 36px;
+            background: #3b82f6;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: 600;
+            font-weight: 500;
+            font-size: 0.875rem;
         }
 
         /* 左侧导航栏 */
         .admin-sidebar {
             position: fixed;
-            top: 70px;
+            top: 64px;
             left: 0;
-            width: 280px;
-            height: calc(100vh - 70px);
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
-            padding: 30px 0;
+            width: 240px;
+            height: calc(100vh - 64px);
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
+            padding: 24px 0;
             overflow-y: auto;
             z-index: 999;
         }
 
-        .admin-sidebar .nav-section {
-            margin-bottom: 30px;
-        }
-
-        .admin-sidebar .nav-section-title {
-            padding: 0 25px 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #8e9aaf;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
         .admin-sidebar .nav-item {
-            margin: 2px 15px;
+            margin: 2px 12px;
         }
 
         .admin-sidebar .nav-link {
             display: flex;
             align-items: center;
-            padding: 15px 20px;
-            color: #5a6c7d;
+            padding: 12px 16px;
+            color: #64748b;
             text-decoration: none;
-            border-radius: 12px;
-            transition: all 0.3s ease;
+            border-radius: 8px;
+            transition: all 0.2s ease;
             font-weight: 500;
-            position: relative;
-            overflow: hidden;
+            font-size: 0.875rem;
         }
 
-        .admin-sidebar .nav-link::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #4a90e2, #357abd);
-            transition: all 0.3s ease;
-            z-index: -1;
+        .admin-sidebar .nav-link:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
         }
 
-        .admin-sidebar .nav-link:hover::before,
-        .admin-sidebar .nav-link.active::before {
-            left: 0;
-        }
-
-        .admin-sidebar .nav-link:hover,
         .admin-sidebar .nav-link.active {
-            color: white;
-            transform: translateX(5px);
+            background: #eff6ff;
+            color: #3b82f6;
+            border-left: 3px solid #3b82f6;
+            margin-left: 9px;
+            padding-left: 19px;
         }
 
         .admin-sidebar .nav-link i {
-            width: 20px;
+            width: 18px;
             margin-right: 12px;
-            font-size: 1.1rem;
-        }
-
-        .admin-sidebar .nav-link .badge {
-            margin-left: auto;
-            background: rgba(255, 255, 255, 0.2);
-            color: inherit;
+            font-size: 1rem;
         }
 
         /* 主内容区域 */
         .admin-content {
-            margin-left: 280px;
-            margin-top: 70px;
-            padding: 30px;
-            min-height: calc(100vh - 70px);
+            margin-left: 240px;
+            margin-top: 64px;
+            padding: 24px;
+            min-height: calc(100vh - 64px);
+            background: #f8fafc;
         }
 
         .admin-content .page-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .admin-content .page-header h1 {
-            margin: 0;
-            color: #2c3e50;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 15px;
+            margin-bottom: 24px;
         }
 
         .admin-content .page-header .breadcrumb {
-            margin: 10px 0 0 0;
+            margin: 0;
             background: transparent;
             padding: 0;
+            font-size: 0.875rem;
         }
 
         .admin-content .page-header .breadcrumb-item {
-            color: #6c757d;
+            color: #64748b;
         }
 
         .admin-content .page-header .breadcrumb-item.active {
-            color: #4a90e2;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .admin-content .page-header .breadcrumb-item + .breadcrumb-item::before {
+            content: "/"!important;
+            color: #cbd5e1;
         }
 
         .admin-content .content-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
             overflow: hidden;
         }
 
@@ -209,11 +172,11 @@
 
             .admin-content {
                 margin-left: 0;
-                padding: 20px;
+                padding: 16px;
             }
 
             .admin-header {
-                padding: 0 20px;
+                padding: 0 16px;
             }
 
             .mobile-menu-toggle {
@@ -225,16 +188,17 @@
             display: none;
             background: none;
             border: none;
-            color: #4a90e2;
-            font-size: 1.2rem;
+            color: #64748b;
+            font-size: 1.125rem;
             cursor: pointer;
             padding: 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            border-radius: 6px;
+            transition: all 0.2s ease;
         }
 
         .mobile-menu-toggle:hover {
-            background: rgba(74, 144, 226, 0.1);
+            background: #f1f5f9;
+            color: #3b82f6;
         }
 
         /* 侧边栏覆盖层 */
@@ -257,7 +221,7 @@
 
         /* 滚动条样式 */
         .admin-sidebar::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
 
         .admin-sidebar::-webkit-scrollbar-track {
@@ -265,12 +229,12 @@
         }
 
         .admin-sidebar::-webkit-scrollbar-thumb {
-            background: rgba(74, 144, 226, 0.3);
-            border-radius: 3px;
+            background: #cbd5e1;
+            border-radius: 2px;
         }
 
         .admin-sidebar::-webkit-scrollbar-thumb:hover {
-            background: rgba(74, 144, 226, 0.5);
+            background: #94a3b8;
         }
 
         {% block extra_css %}
@@ -321,40 +285,29 @@
 
     <!-- 左侧导航栏 -->
     <nav class="admin-sidebar" id="adminSidebar">
-        <div class="nav-section">
-            <div class="nav-section-title">概览</div>
-            <div class="nav-item">
-                <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt"></i>
-                    仪表板
-                </a>
-            </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                仪表板
+            </a>
         </div>
-
-        <div class="nav-section">
-            <div class="nav-section-title">内容管理</div>
-            <div class="nav-item">
-                <a href="{% url 'admin_submissions' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_submissions' %}active{% endif %}">
-                    <i class="fas fa-credit-card"></i>
-                    卡券管理
-                </a>
-            </div>
-            <div class="nav-item">
-                <a href="{% url 'admin_bottle_caps' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_bottle_caps' %}active{% endif %}">
-                    <i class="fas fa-bottle"></i>
-                    瓶盖管理
-                </a>
-            </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_submissions' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_submissions' %}active{% endif %}">
+                <i class="fas fa-credit-card"></i>
+                卡券管理
+            </a>
         </div>
-
-        <div class="nav-section">
-            <div class="nav-section-title">系统功能</div>
-            <div class="nav-item">
-                <a href="{% url 'admin_notifications' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_notifications' %}active{% endif %}">
-                    <i class="fas fa-bell"></i>
-                    通知管理
-                </a>
-            </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_bottle_caps' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_bottle_caps' %}active{% endif %}">
+                <i class="fas fa-bottle"></i>
+                瓶盖管理
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_notifications' %}" class="nav-link {% if request.resolver_match.url_name == 'admin_notifications' %}active{% endif %}">
+                <i class="fas fa-bell"></i>
+                通知管理
+            </a>
         </div>
     </nav>
 
@@ -362,10 +315,6 @@
     <main class="admin-content">
         <!-- 页面头部 -->
         <div class="page-header">
-            <h1>
-                {% block page_icon %}<i class="fas fa-tachometer-alt"></i>{% endblock %}
-                {% block page_title %}仪表板{% endblock %}
-            </h1>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">管理后台</a></li>

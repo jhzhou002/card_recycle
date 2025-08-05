@@ -1,8 +1,6 @@
 {% extends 'recycling/admin_base.html' %}
 
 {% block title %}卡券详情{% endblock %}
-{% block page_title %}卡券详情 #{{ submission.id }}{% endblock %}
-{% block page_icon %}<i class="fas fa-info-circle"></i>{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'admin_submissions' %}">卡券管理</a></li>
 <li class="breadcrumb-item active">详情 #{{ submission.id }}</li>

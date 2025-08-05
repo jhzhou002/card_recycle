@@ -1,8 +1,6 @@
 {% extends 'recycling/admin_base.html' %}
 
 {% block title %}{% if notification %}编辑通知{% else %}新增通知{% endif %}{% endblock %}
-{% block page_title %}{% if notification %}编辑通知{% else %}新增通知{% endif %}{% endblock %}
-{% block page_icon %}<i class="fas fa-{% if notification %}edit{% else %}plus{% endif %}"></i>{% endblock %}
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'admin_notifications' %}">通知管理</a></li>
 <li class="breadcrumb-item active">{% if notification %}编辑通知{% else %}新增通知{% endif %}</li>
