@@ -916,18 +916,16 @@ $(document).ready(function() {
     initAutoFilter();
     
     // 页面加载完成后显示当前筛选状态
-    $(document).ready(function() {
-        var hasFilters = $('#dateFrom').val() || $('#dateTo').val() || $('#isSettled').val() || 
-                        $('#userId').val() || $('#sortBy').val();
-        
-        if (hasFilters) {
-            // 高亮筛选区域，表示当前有筛选条件
-            $('.filter-section').addClass('border border-primary').css('background-color', '#f8f9ff');
-        }
-        
-        // 更新导出链接的参数
-        updateExportLinks();
-    });
+    var hasFilters = $('#dateFrom').val() || $('#dateTo').val() || $('#isSettled').val() || 
+                    $('#userId').val() || $('#sortBy').val();
+    
+    if (hasFilters) {
+        // 高亮筛选区域，表示当前有筛选条件
+        $('.filter-section').addClass('border border-primary').css('background-color', '#f8f9ff');
+    }
+    
+    // 更新导出链接的参数
+    updateExportLinks();
     
     // 更新导出链接参数
     function updateExportLinks() {

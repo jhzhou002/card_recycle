@@ -42,7 +42,12 @@ def user_login(request):
                 # 清除session中的验证码
                 if 'captcha' in request.session:
                     del request.session['captcha']
-                return redirect('home')
+                
+                # 管理员登录后直接跳转到管理后台
+                if user.is_staff:
+                    return redirect('admin_dashboard')
+                else:
+                    return redirect('home')
             else:
                 messages.error(request, '用户名或密码错误')
                 # 清除session中的验证码
