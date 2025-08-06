@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
-from .models import Category, Package, Submission, Store, BottleCapSubmission, Notification
+from .models import Category, Package, Submission, Store, BottleCapSubmission, Notification, Tutorial
 from .forms import SubmissionForm, BottleCapSubmissionForm
 from utils.qiniu_util import generate_qiniu_token, upload_data_to_qiniu
 import json
@@ -1746,3 +1746,180 @@ def profile(request):
         'stats': stats,
     }
     return render(request, 'recycling/profile.html', context)
+
+
+# ==================== 教程功能 ====================
+
+def tutorials(request):
+    """教程列表页面"""
+    # 获取所有已发布的教程
+    tutorials_queryset = Tutorial.objects.filter(status='published').order_by('-published_at')
+    
+    # 获取推荐教程
+    featured_tutorials = tutorials_queryset.filter(is_featured=True)[:3]
+    
+    # 获取所有教程（用于筛选）
+    all_tutorials = tutorials_queryset
+    
+    # 获取所有类别
+    categories = Category.objects.all().order_by('name')
+    
+    context = {
+        'tutorials': all_tutorials,
+        'featured_tutorials': featured_tutorials,
+        'categories': categories,
+        'tutorials_count': all_tutorials.count(),
+    }
+    
+    return render(request, 'recycling/tutorials.html', context)
+
+
+def tutorial_detail(request, tutorial_id):
+    """教程详情页面"""
+    tutorial = get_object_or_404(Tutorial, id=tutorial_id, status='published')
+    
+    # 增加浏览次数
+    tutorial.increment_views()
+    
+    # 获取相关教程（同类别的其他教程）
+    related_tutorials = Tutorial.objects.filter(
+        category=tutorial.category,
+        status='published'
+    ).exclude(id=tutorial.id)[:5]
+    
+    # 获取教程统计
+    total_tutorials = Tutorial.objects.filter(status='published').count()
+    category_tutorials = Tutorial.objects.filter(
+        category=tutorial.category,
+        status='published'
+    ).count()
+    
+    # 处理Markdown内容
+    import markdown
+    from django.utils.safestring import mark_safe
+    
+    try:
+        # 尝试渲染Markdown，如果失败则使用原始内容
+        md = markdown.Markdown(extensions=['extra', 'codehilite', 'toc'])
+        html_content = md.convert(tutorial.content)
+        tutorial.content = mark_safe(html_content)
+    except:
+        # 如果markdown处理失败，使用原始内容
+        pass
+    
+    context = {
+        'tutorial': tutorial,
+        'related_tutorials': related_tutorials,
+        'total_tutorials': total_tutorials,
+        'category_tutorials': category_tutorials,
+    }
+    
+    return render(request, 'recycling/tutorial_detail.html', context)
+
+
+# ==================== 管理员教程管理 ====================
+
+@staff_member_required
+def admin_tutorials(request):
+    """管理员教程管理列表"""
+    tutorials = Tutorial.objects.all().select_related('category', 'author').order_by('-updated_at')
+    categories = Category.objects.all().order_by('name')
+    
+    context = {
+        'tutorials': tutorials,
+        'categories': categories,
+    }
+    
+    return render(request, 'recycling/admin_tutorials.html', context)
+
+
+@staff_member_required
+def admin_tutorial_edit(request, tutorial_id=None):
+    """编辑/新增教程"""
+    if tutorial_id:
+        tutorial = get_object_or_404(Tutorial, id=tutorial_id)
+    else:
+        tutorial = None
+    
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        category_id = request.POST.get('category')
+        content = request.POST.get('content', '').strip()
+        summary = request.POST.get('summary', '').strip()
+        cover_image = request.POST.get('cover_image', '').strip()
+        status = request.POST.get('status', 'draft')
+        is_featured = request.POST.get('is_featured') == 'on'
+        
+        # 表单验证
+        if not title or not category_id or not content or not summary:
+            messages.error(request, '请填写所有必填字段')
+            return redirect(request.path)
+        
+        try:
+            category = get_object_or_404(Category, id=category_id)
+            
+            if tutorial:
+                # 更新教程
+                tutorial.title = title
+                tutorial.category = category
+                tutorial.content = content
+                tutorial.summary = summary
+                tutorial.cover_image = cover_image
+                tutorial.status = status
+                tutorial.is_featured = is_featured
+                
+                # 如果状态改为已发布且之前未发布过，设置发布时间
+                if status == 'published' and not tutorial.published_at:
+                    from django.utils import timezone
+                    tutorial.published_at = timezone.now()
+                
+                tutorial.save()
+                messages.success(request, '教程更新成功')
+                
+            else:
+                # 创建教程
+                tutorial = Tutorial.objects.create(
+                    title=title,
+                    category=category,
+                    content=content,
+                    summary=summary,
+                    cover_image=cover_image,
+                    status=status,
+                    is_featured=is_featured,
+                    author=request.user
+                )
+                
+                # 如果直接发布，设置发布时间
+                if status == 'published':
+                    from django.utils import timezone
+                    tutorial.published_at = timezone.now()
+                    tutorial.save()
+                
+                messages.success(request, '教程创建成功')
+            
+            return redirect('admin_tutorials')
+            
+        except Exception as e:
+            messages.error(request, f'操作失败：{str(e)}')
+    
+    # GET请求，显示编辑表单
+    categories = Category.objects.all().order_by('name')
+    
+    context = {
+        'tutorial': tutorial,
+        'categories': categories,
+    }
+    
+    return render(request, 'recycling/admin_tutorial_edit.html', context)
+
+
+@staff_member_required
+def admin_tutorial_delete(request, tutorial_id):
+    """删除教程"""
+    if request.method == 'POST':
+        tutorial = get_object_or_404(Tutorial, id=tutorial_id)
+        title = tutorial.title
+        tutorial.delete()
+        messages.success(request, f'教程 "{title}" 已删除')
+    
+    return redirect('admin_tutorials')

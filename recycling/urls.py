@@ -51,4 +51,14 @@ urlpatterns = [
     
     # 门店管理路由
     path('admin-stores/', views.admin_stores, name='admin_stores'),
+    
+    # 教程相关路由
+    path('tutorials/', views.tutorials, name='tutorials'),
+    path('tutorials/<int:tutorial_id>/', views.tutorial_detail, name='tutorial_detail'),
+    
+    # 管理员教程管理路由
+    path('admin-tutorials/', views.admin_tutorials, name='admin_tutorials'),
+    path('admin-tutorials/add/', views.admin_tutorial_edit, name='admin_tutorial_add'),
+    path('admin-tutorials/<int:tutorial_id>/edit/', views.admin_tutorial_edit, name='admin_tutorial_edit'),
+    path('admin-tutorials/<int:tutorial_id>/delete/', views.admin_tutorial_delete, name='admin_tutorial_delete'),
 ]

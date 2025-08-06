@@ -327,6 +327,12 @@
                 通知管理
             </a>
         </div>
+        <div class="nav-item">
+            <a href="{% url 'admin_tutorials' %}" class="nav-link {% if 'admin_tutorial' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="fas fa-graduation-cap"></i>
+                教程管理
+            </a>
+        </div>
     </nav>
 
     <!-- 主内容区域 -->

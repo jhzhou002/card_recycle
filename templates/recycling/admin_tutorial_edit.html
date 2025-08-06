@@ -1,0 +1,660 @@
+{% extends 'recycling/admin_base.html' %}
+
+{% block title %}{% if tutorial %}编辑教程{% else %}新增教程{% endif %}{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'admin_tutorials' %}">教程管理</a></li>
+<li class="breadcrumb-item active">{% if tutorial %}编辑教程{% else %}新增教程{% endif %}</li>
+{% endblock %}
+
+{% block extra_css %}
+<!-- Editor.md CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/editor.md/1.5.0/css/editormd.min.css" />
+<style>
+.cover-image-preview {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.markdown-import-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.markdown-import-area:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.markdown-import-area.dragover {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.editor-toolbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.template-card {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.template-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" id="tutorialForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- 左侧主要信息 -->
+                            <div class="col-lg-8">
+                                <!-- 标题 -->
+                                <div class="mb-3">
+                                    <label for="title" class="form-label fw-bold">教程标题 <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="title" name="title" 
+                                           value="{% if tutorial %}{{ tutorial.title }}{% endif %}" 
+                                           placeholder="请输入教程标题" required>
+                                </div>
+                                
+                                <!-- 摘要 -->
+                                <div class="mb-3">
+                                    <label for="summary" class="form-label fw-bold">教程摘要 <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="summary" name="summary" rows="3" 
+                                              placeholder="请输入教程摘要，建议100-300字" required>{% if tutorial %}{{ tutorial.summary }}{% endif %}</textarea>
+                                    <div class="form-text">
+                                        <span id="summaryCount">{% if tutorial %}{{ tutorial.summary|length }}{% else %}0{% endif %}</span>/300 字
+                                    </div>
+                                </div>
+                                
+                                <!-- Markdown 文档导入 -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Markdown 文档导入</label>
+                                    <div class="markdown-import-area" id="markdownImport">
+                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                        <p class="mb-2">点击选择或拖拽 .md 文件到此处</p>
+                                        <small class="text-muted">支持拖拽上传，自动解析 Markdown 格式</small>
+                                        <input type="file" id="markdownFile" accept=".md,.markdown,.txt" style="display: none;">
+                                    </div>
+                                </div>
+                                
+                                <!-- 教程内容编辑器 -->
+                                <div class="mb-4">
+                                    <label for="content" class="form-label fw-bold">教程内容 <span class="text-danger">*</span></label>
+                                    
+                                    <!-- 编辑器工具栏 -->
+                                    <div class="editor-toolbar">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('basic')">
+                                            <i class="fas fa-file-alt"></i> 基础模板
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('steps')">
+                                            <i class="fas fa-list-ol"></i> 步骤模板
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('faq')">
+                                            <i class="fas fa-question-circle"></i> 问答模板
+                                        </button>
+                                        <div class="ms-auto">
+                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="togglePreview()">
+                                                <i class="fas fa-eye"></i> 预览
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Markdown 编辑器 -->
+                                    <div id="editormd">
+                                        <textarea style="display:none;" name="content">{% if tutorial %}{{ tutorial.content }}{% endif %}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 右侧辅助信息 -->
+                            <div class="col-lg-4">
+                                <!-- 发布设置 -->
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-cog me-2"></i>发布设置</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- 类别 -->
+                                        <div class="mb-3">
+                                            <label for="category" class="form-label fw-bold">所属类别 <span class="text-danger">*</span></label>
+                                            <select class="form-control" id="category" name="category" required>
+                                                <option value="">请选择类别</option>
+                                                {% for category in categories %}
+                                                <option value="{{ category.id }}" 
+                                                        {% if tutorial and tutorial.category.id == category.id %}selected{% endif %}>
+                                                    {{ category.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- 状态 -->
+                                        <div class="mb-3">
+                                            <label for="status" class="form-label fw-bold">状态</label>
+                                            <select class="form-control" id="status" name="status">
+                                                <option value="draft" {% if not tutorial or tutorial.status == 'draft' %}selected{% endif %}>草稿</option>
+                                                <option value="published" {% if tutorial and tutorial.status == 'published' %}selected{% endif %}>发布</option>
+                                                <option value="archived" {% if tutorial and tutorial.status == 'archived' %}selected{% endif %}>归档</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- 推荐 -->
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured" 
+                                                       {% if tutorial and tutorial.is_featured %}checked{% endif %}>
+                                                <label class="form-check-label fw-bold" for="is_featured">
+                                                    <i class="fas fa-star text-warning me-1"></i>设为推荐
+                                                </label>
+                                                <div class="form-text">推荐教程会在首页显示</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 封面图片 -->
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-image me-2"></i>封面图片</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <input type="url" class="form-control" id="cover_image" name="cover_image" 
+                                                   value="{% if tutorial %}{{ tutorial.cover_image }}{% endif %}" 
+                                                   placeholder="输入图片URL">
+                                        </div>
+                                        {% if tutorial and tutorial.cover_image %}
+                                        <div class="text-center">
+                                            <img id="coverPreview" src="{{ tutorial.cover_image }}" alt="封面预览" class="cover-image-preview">
+                                        </div>
+                                        {% else %}
+                                        <div id="coverPreview" class="text-center text-muted" style="display: none;">
+                                            <img alt="封面预览" class="cover-image-preview">
+                                        </div>
+                                        {% endif %}
+                                        <small class="form-text text-muted">建议尺寸: 400x300 像素</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- 教程统计 -->
+                                {% if tutorial %}
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>教程统计</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row text-center">
+                                            <div class="col-6">
+                                                <div class="border-end">
+                                                    <div class="h5 text-primary mb-1">{{ tutorial.views }}</div>
+                                                    <small class="text-muted">浏览次数</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="h5 text-success mb-1">{{ tutorial.created_at|timesince }}</div>
+                                                <small class="text-muted">创建时间</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- 提交按钮 -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'admin_tutorials' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> 返回
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="saveDraft()">
+                                    <i class="fas fa-save"></i> 保存草稿
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-check"></i> {% if tutorial %}更新教程{% else %}创建教程{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 模板选择模态框 -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">选择教程模板</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card template-card" onclick="useTemplate('basic')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
+                                <h6>基础模板</h6>
+                                <small class="text-muted">包含标题、介绍、内容结构</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card template-card" onclick="useTemplate('steps')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-list-ol fa-2x text-success mb-2"></i>
+                                <h6>步骤模板</h6>
+                                <small class="text-muted">适合操作教程，包含详细步骤</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card template-card" onclick="useTemplate('faq')">
+                            <div class="card-body text-center">
+                                <i class="fas fa-question-circle fa-2x text-warning mb-2"></i>
+                                <h6>问答模板</h6>
+                                <small class="text-muted">常见问题解答格式</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Editor.md JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/editor.md/1.5.0/editormd.min.js"></script>
+<script>
+let editor;
+let isPreviewMode = false;
+
+$(document).ready(function() {
+    // 初始化编辑器
+    initEditor();
+    
+    // 摘要字数统计
+    $('#summary').on('input', function() {
+        const length = $(this).val().length;
+        $('#summaryCount').text(length);
+        if (length > 300) {
+            $('#summaryCount').addClass('text-danger');
+        } else {
+            $('#summaryCount').removeClass('text-danger');
+        }
+    });
+    
+    // 封面图片预览
+    $('#cover_image').on('input', function() {
+        const url = $(this).val();
+        if (url) {
+            $('#coverPreview img').attr('src', url);
+            $('#coverPreview').show();
+        } else {
+            $('#coverPreview').hide();
+        }
+    });
+    
+    // Markdown 文件导入
+    setupMarkdownImport();
+});
+
+// 初始化编辑器
+function initEditor() {
+    editor = editormd("editormd", {
+        width: "100%",
+        height: 600,
+        syncScrolling: "single",
+        path: "https://cdnjs.cloudflare.com/ajax/libs/editor.md/1.5.0/lib/",
+        placeholder: "请输入教程内容，支持 Markdown 语法...",
+        emoji: true,
+        taskList: true,
+        tex: true,
+        flowChart: true,
+        sequenceDiagram: true,
+        toolbarIcons : function() {
+            return [
+                "undo", "redo", "|", 
+                "bold", "del", "italic", "quote", "ucwords", "uppercase", "lowercase", "|", 
+                "h1", "h2", "h3", "h4", "h5", "h6", "|",
+                "list-ul", "list-ol", "hr", "|",
+                "link", "reference-link", "image", "code", "preformatted-text", "code-block", "table", "datetime", "emoji", "|",
+                "watch", "preview", "fullscreen", "clear", "search"
+            ]
+        },
+        lang: {
+            name : "zh-cn",
+            description : "开源在线Markdown编辑器",
+            tocTitle    : "目录",
+            toolbar : {
+                undo             : "撤销（Ctrl+Z）",
+                redo             : "重做（Ctrl+Y）",
+                bold             : "粗体",
+                del              : "删除线",
+                italic           : "斜体",
+                quote            : "引用",
+                ucwords          : "将每个单词首字母转成大写",
+                uppercase        : "将所选转换成大写",
+                lowercase        : "将所选转换成小写",
+                h1               : "标题1",
+                h2               : "标题2",
+                h3               : "标题3",
+                h4               : "标题4",
+                h5               : "标题5",
+                h6               : "标题6",
+                "list-ul"        : "无序列表",
+                "list-ol"        : "有序列表",
+                hr               : "横线",
+                link             : "链接",
+                "reference-link" : "引用链接",
+                image            : "添加图片",
+                code             : "行内代码",
+                "preformatted-text" : "预格式文本 / 代码块（缩进风格）",
+                "code-block"     : "代码块（多语言风格）",
+                table            : "添加表格",
+                datetime         : "日期时间",
+                emoji            : "Emoji表情",
+                "html-entities"  : "HTML实体字符",
+                pagebreak        : "插入分页符",
+                watch            : "关闭实时预览",
+                unwatch          : "开启实时预览",
+                preview          : "全窗口预览HTML",
+                fullscreen       : "全屏（按ESC还原）",
+                clear            : "清空",
+                search           : "搜索",
+                help             : "使用帮助"
+            }
+        },
+        onload: function() {
+            console.log('Editor loaded');
+        }
+    });
+}
+
+// 设置 Markdown 文档导入
+function setupMarkdownImport() {
+    const importArea = $('#markdownImport');
+    const fileInput = $('#markdownFile');
+    
+    // 点击导入
+    importArea.on('click', function() {
+        fileInput.click();
+    });
+    
+    // 文件选择
+    fileInput.on('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            readMarkdownFile(file);
+        }
+    });
+    
+    // 拖拽导入
+    importArea.on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+    
+    importArea.on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+    
+    importArea.on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            readMarkdownFile(files[0]);
+        }
+    });
+}
+
+// 读取 Markdown 文件
+function readMarkdownFile(file) {
+    if (!file.name.match(/\.(md|markdown|txt)$/i)) {
+        alert('请选择 .md 或 .markdown 文件');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        
+        // 尝试解析标题和内容
+        const lines = content.split('\n');
+        let title = '';
+        let summary = '';
+        let bodyContent = content;
+        
+        // 查找第一个 # 标题作为教程标题
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith('# ')) {
+                title = line.substring(2).trim();
+                // 移除标题行
+                lines.splice(i, 1);
+                bodyContent = lines.join('\n');
+                break;
+            }
+        }
+        
+        // 生成摘要（取前200个字符）
+        const plainText = bodyContent.replace(/[#*`\[\]]/g, '').trim();
+        summary = plainText.substring(0, 200) + (plainText.length > 200 ? '...' : '');
+        
+        // 填充表单
+        if (title) {
+            $('#title').val(title);
+        }
+        if (summary) {
+            $('#summary').val(summary).trigger('input');
+        }
+        
+        // 设置编辑器内容
+        editor.setMarkdown(bodyContent);
+        
+        // 提示
+        toastr.success('Markdown 文件导入成功');
+    };
+    
+    reader.readAsText(file);
+}
+
+// 插入模板
+function insertTemplate(type) {
+    let template = '';
+    
+    switch(type) {
+        case 'basic':
+            template = `# 教程标题
+
+## 简介
+
+在这里介绍本教程的目标和适用场景。
+
+## 前提条件
+
+- 条件1
+- 条件2
+- 条件3
+
+## 主要内容
+
+### 第一部分
+
+详细介绍第一部分内容...
+
+### 第二部分
+
+详细介绍第二部分内容...
+
+## 总结
+
+总结本教程的要点...
+
+## 延伸阅读
+
+- [相关链接1](https://example.com)
+- [相关链接2](https://example.com)
+`;
+            break;
+            
+        case 'steps':
+            template = `# 操作教程
+
+## 概述
+
+本教程将指导您完成...
+
+## 步骤详解
+
+### 步骤1：准备工作
+
+1. 首先...
+2. 然后...
+3. 接下来...
+
+> **注意：** 重要提示信息
+
+### 步骤2：核心操作
+
+1. 打开...
+2. 点击...
+3. 输入...
+
+\`\`\`bash
+# 示例代码
+command example
+\`\`\`
+
+### 步骤3：验证结果
+
+1. 检查...
+2. 确认...
+
+## 常见问题
+
+**Q: 如果遇到错误怎么办？**
+A: 请检查...
+
+**Q: 为什么没有效果？**
+A: 可能的原因是...
+
+## 完成
+
+恭喜！您已经成功完成了...
+`;
+            break;
+            
+        case 'faq':
+            template = `# 常见问题解答
+
+## 基础问题
+
+### Q1: 这是什么？
+**A:** 详细回答...
+
+### Q2: 如何使用？
+**A:** 使用方法如下：
+1. 第一步
+2. 第二步
+3. 第三步
+
+## 高级问题
+
+### Q3: 如何解决复杂问题？
+**A:** 解决方案：
+
+- 方案1：...
+- 方案2：...
+- 方案3：...
+
+### Q4: 有什么注意事项？
+**A:** 需要注意：
+
+> ⚠️ **重要提醒：** 在操作前请务必...
+
+## 技术问题
+
+### Q5: 如何排查错误？
+**A:** 排查步骤：
+
+\`\`\`
+错误信息示例
+\`\`\`
+
+解决方法：...
+
+## 联系支持
+
+如果以上解答不能解决您的问题，请...
+`;
+            break;
+    }
+    
+    editor.setMarkdown(template);
+    $('#templateModal').modal('hide');
+}
+
+// 切换预览模式
+function togglePreview() {
+    if (isPreviewMode) {
+        editor.watch();
+        $('#togglePreview i').removeClass('fa-edit').addClass('fa-eye');
+        isPreviewMode = false;
+    } else {
+        editor.unwatch();
+        $('#togglePreview i').removeClass('fa-eye').addClass('fa-edit');
+        isPreviewMode = true;
+    }
+}
+
+// 保存草稿
+function saveDraft() {
+    $('#status').val('draft');
+    $('#tutorialForm').submit();
+}
+
+// 使用模板
+function useTemplate(type) {
+    if (editor.getMarkdown().trim() !== '') {
+        if (!confirm('当前编辑器有内容，确定要替换为模板内容吗？')) {
+            return;
+        }
+    }
+    insertTemplate(type);
+}
+</script>
+
+<!-- Toast 通知 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+{% endblock %}

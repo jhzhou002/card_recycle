@@ -1,0 +1,192 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}卡券教程 - 卡券回收平台{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-graduation-cap text-primary me-3 fa-2x"></i>
+                <div>
+                    <h2 class="mb-1">卡券教程</h2>
+                    <p class="text-muted mb-0">学习卡券回收的技巧和方法</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 筛选器 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <label for="categoryFilter" class="form-label mb-0 me-3 fw-bold">
+                                    <i class="fas fa-filter me-1"></i>筛选类别：
+                                </label>
+                                <select class="form-select" id="categoryFilter" style="width: auto;">
+                                    <option value="">全部类别</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="text-muted">
+                                <i class="fas fa-book me-1"></i>
+                                共 <span id="tutorialCount">{{ tutorials_count }}</span> 篇教程
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 推荐教程 -->
+    {% if featured_tutorials %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-star text-warning me-2"></i>推荐教程
+            </h4>
+            <div class="row">
+                {% for tutorial in featured_tutorials %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-warning">
+                        <div class="position-relative">
+                            {% if tutorial.cover_image %}
+                            <img src="{{ tutorial.cover_image }}" class="card-img-top" alt="{{ tutorial.title }}" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                            <div class="card-img-top bg-gradient-warning d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-image fa-3x text-white opacity-50"></i>
+                            </div>
+                            {% endif %}
+                            <span class="position-absolute top-0 start-0 badge bg-warning text-dark m-2">
+                                <i class="fas fa-star me-1"></i>推荐
+                            </span>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <div class="mb-2">
+                                <span class="badge bg-primary">{{ tutorial.category.name }}</span>
+                            </div>
+                            <h5 class="card-title">{{ tutorial.title }}</h5>
+                            <p class="card-text text-muted flex-grow-1">{{ tutorial.summary }}</p>
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <small class="text-muted">
+                                    <i class="fas fa-eye me-1"></i>{{ tutorial.views }} 浏览
+                                </small>
+                                <a href="{% url 'tutorial_detail' tutorial.id %}" class="btn btn-outline-warning btn-sm">
+                                    阅读教程 <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- 所有教程 -->
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-list me-2"></i>全部教程
+            </h4>
+            <div id="tutorialsList">
+                {% if tutorials %}
+                <div class="row">
+                    {% for tutorial in tutorials %}
+                    <div class="col-md-6 col-lg-4 mb-4 tutorial-item" data-category="{{ tutorial.category.id }}">
+                        <div class="card h-100">
+                            <div class="position-relative">
+                                {% if tutorial.cover_image %}
+                                <img src="{{ tutorial.cover_image }}" class="card-img-top" alt="{{ tutorial.title }}" style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                                {% endif %}
+                                <span class="position-absolute top-0 end-0 badge bg-secondary m-2">
+                                    {{ tutorial.published_at|date:"M d" }}
+                                </span>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <div class="mb-2">
+                                    <span class="badge bg-primary">{{ tutorial.category.name }}</span>
+                                </div>
+                                <h5 class="card-title">{{ tutorial.title }}</h5>
+                                <p class="card-text text-muted flex-grow-1">{{ tutorial.summary }}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <small class="text-muted">
+                                        <i class="fas fa-eye me-1"></i>{{ tutorial.views }} 浏览
+                                    </small>
+                                    <a href="{% url 'tutorial_detail' tutorial.id %}" class="btn btn-outline-primary btn-sm">
+                                        阅读教程 <i class="fas fa-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">暂无教程</h5>
+                    <p class="text-muted">敬请期待更多精彩教程</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 类别筛选功能
+    $('#categoryFilter').on('change', function() {
+        const selectedCategory = $(this).val();
+        let visibleCount = 0;
+        
+        $('.tutorial-item').each(function() {
+            const tutorialCategory = $(this).data('category');
+            
+            if (selectedCategory === '' || tutorialCategory == selectedCategory) {
+                $(this).show();
+                visibleCount++;
+            } else {
+                $(this).hide();
+            }
+        });
+        
+        // 更新计数
+        $('#tutorialCount').text(visibleCount);
+        
+        // 如果没有匹配的教程，显示提示
+        if (visibleCount === 0 && selectedCategory !== '') {
+            if ($('#noResultsMessage').length === 0) {
+                $('#tutorialsList .row').append(`
+                    <div id="noResultsMessage" class="col-12 text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">未找到相关教程</h5>
+                        <p class="text-muted">请尝试选择其他类别</p>
+                    </div>
+                `);
+            }
+        } else {
+            $('#noResultsMessage').remove();
+        }
+    });
+});
+</script>
+{% endblock %}

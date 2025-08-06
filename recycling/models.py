@@ -141,3 +141,38 @@ class Notification(models.Model):
     
     def __str__(self):
         return f'{self.title} - {"启用" if self.is_active else "停用"}'
+
+
+class Tutorial(models.Model):
+    """教程文章模型"""
+    STATUS_CHOICES = [
+        ('draft', '草稿'),
+        ('published', '已发布'),
+        ('archived', '已归档'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name='教程标题')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='所属类别')
+    content = models.TextField(verbose_name='教程内容', help_text='支持Markdown格式')
+    summary = models.CharField(max_length=300, verbose_name='教程摘要')
+    cover_image = models.URLField(blank=True, verbose_name='封面图片')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name='状态')
+    is_featured = models.BooleanField(default=False, verbose_name='是否推荐')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='作者')
+    views = models.PositiveIntegerField(default=0, verbose_name='浏览次数')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
+    published_at = models.DateTimeField(null=True, blank=True, verbose_name='发布时间')
+    
+    class Meta:
+        verbose_name = '教程文章'
+        verbose_name_plural = '教程文章'
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f'{self.title} - {self.get_status_display()}'
+    
+    def increment_views(self):
+        """增加浏览次数"""
+        self.views += 1
+        self.save(update_fields=['views'])
