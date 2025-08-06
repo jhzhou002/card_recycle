@@ -310,20 +310,17 @@
         </div>
     </footer>
 
-    <script src="{% static 'js/jquery-3.6.0.min.js' %}" onerror="this.onerror=null; this.src='https://code.jquery.com/jquery-3.6.0.min.js'; console.log('使用CDN备用jQuery')"></script>
+    <!-- 优先使用CDN jQuery，确保快速加载 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" 
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" 
+            crossorigin="anonymous"
+            onerror="this.onerror=null; this.src='{% static \"js/jquery-3.6.0.min.js\" %}'; console.log('CDN失败，使用本地jQuery')"></script>
     <script>
-    // 确保jQuery已加载
-    if (typeof $ === 'undefined') {
-        console.error('jQuery加载失败，正在尝试CDN备用方案');
-        // 动态创建script标签加载jQuery
-        var script = document.createElement('script');
-        script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
-        script.onload = function() {
-            console.log('jQuery已从CDN成功加载');
-        };
-        document.head.appendChild(script);
+    // 验证jQuery加载
+    if (typeof $ !== 'undefined') {
+        console.log('jQuery加载成功，版本：' + $.fn.jquery);
     } else {
-        console.log('jQuery已成功加载，版本：' + $.fn.jquery);
+        console.error('jQuery加载失败');
     }
     </script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
