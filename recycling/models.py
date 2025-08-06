@@ -123,11 +123,12 @@ class Notification(models.Model):
     target_page = models.CharField(
         max_length=50, 
         choices=[
+            ('home', '首页'),
             ('bottle_cap', '瓶盖提交页面'),
             ('card_submit', '卡券提交页面'),
             ('all_pages', '所有页面'),
         ],
-        default='bottle_cap',
+        default='home',
         verbose_name='显示页面'
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')

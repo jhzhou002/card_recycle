@@ -3,6 +3,35 @@
 {% block title %}首页 - 卡券回收平台{% endblock %}
 
 {% block content %}
+<!-- 首页通知 -->
+{% if notifications %}
+<div class="row mb-4">
+    <div class="col-12">
+        {% for notification in notifications %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-start">
+                <div class="me-3">
+                    <i class="fas fa-bullhorn fa-lg"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading mb-2">{{ notification.title }}</h6>
+                    <div class="notification-content">
+                        {{ notification.content|safe }}
+                    </div>
+                    <hr class="my-2">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        发布时间：{{ notification.updated_at|date:"Y-m-d H:i" }}
+                    </small>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 <div class="row">
     <div class="col-md-8">
         <div class="jumbotron bg-primary text-white p-5 rounded">

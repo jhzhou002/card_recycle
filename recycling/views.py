@@ -19,7 +19,16 @@ import base64
 
 def home(request):
     """首页"""
-    return render(request, 'recycling/home.html')
+    # 获取首页通知
+    notifications = Notification.objects.filter(
+        is_active=True,
+        target_page__in=['home', 'all_pages']
+    ).order_by('-updated_at')
+    
+    context = {
+        'notifications': notifications
+    }
+    return render(request, 'recycling/home.html', context)
 
 
 def user_login(request):
