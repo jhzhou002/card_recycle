@@ -24,7 +24,7 @@ urlpatterns = [
     path('', include('recycling.urls')),
 ]
 
-# 开发环境下提供媒体文件访问
+# 开发环境下提供静态文件和媒体文件访问
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Django在开发环境下会自动从STATICFILES_DIRS提供静态文件
