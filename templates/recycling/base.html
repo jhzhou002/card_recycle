@@ -235,10 +235,7 @@
                         <a class="nav-link" href="{% url 'submit_bottle_cap' %}">瓶盖提交</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'my_submissions' %}">我的记录</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'my_bottle_caps' %}">瓶盖记录</a>
+                        <a class="nav-link" href="{% url 'my_submissions' %}">提交记录</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'profile' %}">个人中心</a>
@@ -257,22 +254,11 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user"></i> {{ user.username }}
-                            <small class="text-light ms-1">(ID:{{ user.id }})</small>
                         </a>
                         <ul class="dropdown-menu">
-                            <li><h6 class="dropdown-header">
-                                <i class="fas fa-id-card"></i> 用户信息
-                            </h6></li>
-                            <li><span class="dropdown-item-text">
-                                <small>用户ID: {{ user.id }}</small><br>
-                                <small>用户名: {{ user.username }}</small>
-                            </span></li>
-                            <li><hr class="dropdown-divider"></li>
-                            {% if user.is_staff %}
-                            <li><a class="dropdown-item" href="/admin/">管理后台</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                            <li><a class="dropdown-item" href="{% url 'logout' %}">退出登录</a></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                            </a></li>
                         </ul>
                     </li>
                     {% else %}

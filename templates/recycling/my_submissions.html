@@ -1,105 +1,266 @@
 {% extends 'recycling/base.html' %}
 
-{% block title %}我的提交记录 - 卡券回收平台{% endblock %}
+{% block title %}提交记录 - 卡券回收平台{% endblock %}
 
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <h4><i class="fas fa-list"></i> 我的提交记录</h4>
+        <div class="row align-items-center">
+            <div class="col">
+                <h4><i class="fas fa-list"></i> 提交记录</h4>
+            </div>
+            <div class="col-auto">
+                <!-- 筛选选项 -->
+                <div class="btn-group" role="group">
+                    <a href="?type=all" class="btn btn-sm {% if submission_type == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        全部
+                    </a>
+                    <a href="?type=card" class="btn btn-sm {% if submission_type == 'card' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        卡券记录
+                    </a>
+                    <a href="?type=bottle_cap" class="btn btn-sm {% if submission_type == 'bottle_cap' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        瓶盖记录
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="card-body">
-        {% if page_obj %}
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>编号</th>
-                        <th>类别</th>
-                        <th class="d-none-mobile">套餐</th>
-                        <th class="d-none-mobile">卡号</th>
-                        <th class="d-none-mobile">佣金</th>
-                        <th>状态</th>
-                        <th class="d-none-mobile">提交时间</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for submission in page_obj %}
-                    <tr>
-                        <td>{{ submission.id }}</td>
-                        <td>
-                            {{ submission.category.name }}
-                            <div class="d-block d-sm-none">
-                                <small class="text-muted">{{ submission.package.name }}</small><br>
-                                <small class="text-success">￥{{ submission.commission }}</small>
-                            </div>
-                        </td>
-                        <td class="d-none-mobile">{{ submission.package.name }}</td>
-                        <td class="d-none-mobile">{{ submission.card_number|truncatechars:10 }}</td>
-                        <td class="d-none-mobile">￥{{ submission.commission }}</td>
-                        <td>
-                            {% if submission.status == 'pending' %}
-                            <span class="badge bg-warning">{{ submission.get_status_display }}</span>
-                            {% elif submission.status == 'approved' %}
-                            <span class="badge bg-success">{{ submission.get_status_display }}</span>
-                            {% elif submission.status == 'rejected' %}
-                            <span class="badge bg-danger">{{ submission.get_status_display }}</span>
-                            {% else %}
-                            <span class="badge bg-info">{{ submission.get_status_display }}</span>
-                            {% endif %}
-                            <div class="d-block d-sm-none">
-                                <small class="text-muted">{{ submission.submitted_at|date:"m-d H:i" }}</small>
-                            </div>
-                        </td>
-                        <td class="d-none-mobile">{{ submission.submitted_at|date:"Y-m-d H:i" }}</td>
-                        <td>
-                            <a href="{% url 'submission_detail' submission.id %}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">查看</span>
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Tab 导航 -->
+        <ul class="nav nav-tabs mb-3" id="recordTabs" role="tablist">
+            {% if submission_type == 'all' or submission_type == 'card' %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if submission_type != 'bottle_cap' %}active{% endif %}" 
+                        id="card-tab" data-bs-toggle="tab" data-bs-target="#card-records" 
+                        type="button" role="tab">
+                    <i class="fas fa-credit-card me-1"></i>卡券记录 
+                    <span class="badge bg-secondary ms-1">{{ submissions_page_obj.paginator.count }}</span>
+                </button>
+            </li>
+            {% endif %}
+            {% if submission_type == 'all' or submission_type == 'bottle_cap' %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if submission_type == 'bottle_cap' %}active{% endif %}" 
+                        id="bottle-cap-tab" data-bs-toggle="tab" data-bs-target="#bottle-cap-records" 
+                        type="button" role="tab">
+                    <i class="fas fa-bottle-water me-1"></i>瓶盖记录 
+                    <span class="badge bg-secondary ms-1">{{ bottle_caps_page_obj.paginator.count }}</span>
+                </button>
+            </li>
+            {% endif %}
+        </ul>
+
+        <!-- Tab 内容 -->
+        <div class="tab-content" id="recordTabsContent">
+            <!-- 卡券记录 -->
+            {% if submission_type == 'all' or submission_type == 'card' %}
+            <div class="tab-pane fade {% if submission_type != 'bottle_cap' %}show active{% endif %}" 
+                 id="card-records" role="tabpanel">
+                {% if submissions_page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>编号</th>
+                                <th>类别</th>
+                                <th class="d-none-mobile">套餐</th>
+                                <th class="d-none-mobile">卡号</th>
+                                <th class="d-none-mobile">佣金</th>
+                                <th>状态</th>
+                                <th class="d-none-mobile">提交时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for submission in submissions_page_obj %}
+                            <tr>
+                                <td>{{ submission.id }}</td>
+                                <td>
+                                    {{ submission.category.name }}
+                                    <div class="d-block d-sm-none">
+                                        <small class="text-muted">{{ submission.package.name }}</small><br>
+                                        <small class="text-success">￥{{ submission.commission }}</small>
+                                    </div>
+                                </td>
+                                <td class="d-none-mobile">{{ submission.package.name }}</td>
+                                <td class="d-none-mobile">{{ submission.card_number|truncatechars:10 }}</td>
+                                <td class="d-none-mobile">￥{{ submission.commission }}</td>
+                                <td>
+                                    {% if submission.status == 'pending' %}
+                                    <span class="badge bg-warning">{{ submission.get_status_display }}</span>
+                                    {% elif submission.status == 'approved' %}
+                                    <span class="badge bg-success">{{ submission.get_status_display }}</span>
+                                    {% elif submission.status == 'rejected' %}
+                                    <span class="badge bg-danger">{{ submission.get_status_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ submission.get_status_display }}</span>
+                                    {% endif %}
+                                    <div class="d-block d-sm-none">
+                                        <small class="text-muted">{{ submission.submitted_at|date:"m-d H:i" }}</small>
+                                    </div>
+                                </td>
+                                <td class="d-none-mobile">{{ submission.submitted_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'submission_detail' submission.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">查看</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 卡券记录分页 -->
+                {% if submissions_page_obj.has_other_pages %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if submissions_page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&submissions_page={{ submissions_page_obj.previous_page_number }}">上一页</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in submissions_page_obj.paginator.page_range %}
+                        {% if submissions_page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&submissions_page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if submissions_page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&submissions_page={{ submissions_page_obj.next_page_number }}">下一页</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
+                    <h5>暂无卡券提交记录</h5>
+                    <p class="text-muted">您还没有提交任何卡券</p>
+                    <a href="{% url 'submit_card' %}" class="btn btn-primary">立即提交</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <!-- 瓶盖记录 -->
+            {% if submission_type == 'all' or submission_type == 'bottle_cap' %}
+            <div class="tab-pane fade {% if submission_type == 'bottle_cap' %}show active{% endif %}" 
+                 id="bottle-cap-records" role="tabpanel">
+                {% if bottle_caps_page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>编号</th>
+                                <th>用户</th>
+                                <th class="d-none-mobile">类型</th>
+                                <th class="d-none-mobile">数量</th>
+                                <th>状态</th>
+                                <th class="d-none-mobile">提交时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bottle_cap in bottle_caps_page_obj %}
+                            <tr>
+                                <td>{{ bottle_cap.id }}</td>
+                                <td>
+                                    {{ bottle_cap.user.username }}
+                                    <div class="d-block d-sm-none">
+                                        <small class="text-muted">{{ bottle_cap.bottle_cap_type }}</small><br>
+                                        <small class="text-info">{{ bottle_cap.quantity }}个</small>
+                                    </div>
+                                </td>
+                                <td class="d-none-mobile">{{ bottle_cap.bottle_cap_type }}</td>
+                                <td class="d-none-mobile">{{ bottle_cap.quantity }}个</td>
+                                <td>
+                                    {% if bottle_cap.status == 'pending' %}
+                                    <span class="badge bg-warning">{{ bottle_cap.get_status_display }}</span>
+                                    {% elif bottle_cap.status == 'approved' %}
+                                    <span class="badge bg-success">{{ bottle_cap.get_status_display }}</span>
+                                    {% elif bottle_cap.status == 'rejected' %}
+                                    <span class="badge bg-danger">{{ bottle_cap.get_status_display }}</span>
+                                    {% else %}
+                                    <span class="badge bg-info">{{ bottle_cap.get_status_display }}</span>
+                                    {% endif %}
+                                    <div class="d-block d-sm-none">
+                                        <small class="text-muted">{{ bottle_cap.submitted_at|date:"m-d H:i" }}</small>
+                                    </div>
+                                </td>
+                                <td class="d-none-mobile">{{ bottle_cap.submitted_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'bottle_cap_detail' bottle_cap.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">查看</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 瓶盖记录分页 -->
+                {% if bottle_caps_page_obj.has_other_pages %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if bottle_caps_page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ bottle_caps_page_obj.previous_page_number }}">上一页</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in bottle_caps_page_obj.paginator.page_range %}
+                        {% if bottle_caps_page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if bottle_caps_page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ bottle_caps_page_obj.next_page_number }}">下一页</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bottle-water fa-3x text-muted mb-3"></i>
+                    <h5>暂无瓶盖提交记录</h5>
+                    <p class="text-muted">您还没有提交任何瓶盖</p>
+                    <a href="{% url 'submit_bottle_cap' %}" class="btn btn-primary">立即提交</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
         
-        <!-- 分页 -->
-        {% if page_obj.has_other_pages %}
-        <nav>
-            <ul class="pagination justify-content-center">
-                {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
-                </li>
-                {% endif %}
-                
-                {% for num in page_obj.paginator.page_range %}
-                {% if page_obj.number == num %}
-                <li class="page-item active">
-                    <span class="page-link">{{ num }}</span>
-                </li>
-                {% else %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                </li>
-                {% endif %}
-                {% endfor %}
-                
-                {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
-                </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
-        
-        {% else %}
+        <!-- 如果没有任何记录 -->
+        {% if not submissions_page_obj and not bottle_caps_page_obj %}
         <div class="text-center py-5">
             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
             <h5>暂无提交记录</h5>
-            <p class="text-muted">您还没有提交任何卡券</p>
-            <a href="{% url 'submit_card' %}" class="btn btn-primary">立即提交</a>
+            <p class="text-muted">您还没有提交任何记录</p>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+                <a href="{% url 'submit_card' %}" class="btn btn-primary">提交卡券</a>
+                <a href="{% url 'submit_bottle_cap' %}" class="btn btn-outline-primary">提交瓶盖</a>
+            </div>
         </div>
         {% endif %}
     </div>

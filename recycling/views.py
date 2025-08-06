@@ -125,12 +125,38 @@ def submit_card(request):
 
 @login_required
 def my_submissions(request):
-    """我的提交记录"""
-    submissions = Submission.objects.filter(user=request.user)
-    paginator = Paginator(submissions, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    return render(request, 'recycling/my_submissions.html', {'page_obj': page_obj})
+    """我的提交记录（包括卡券和瓶盖）"""
+    # 获取提交类型筛选
+    submission_type = request.GET.get('type', 'all')
+    
+    # 根据类型筛选记录
+    if submission_type == 'card':
+        submissions = Submission.objects.filter(user=request.user).order_by('-submitted_at')
+        bottle_caps = BottleCapSubmission.objects.none()
+    elif submission_type == 'bottle_cap':
+        submissions = Submission.objects.none()
+        bottle_caps = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at')
+    else:
+        submissions = Submission.objects.filter(user=request.user).order_by('-submitted_at')
+        bottle_caps = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at')
+    
+    # 分页处理卡券记录
+    submissions_paginator = Paginator(submissions, 10)
+    submissions_page_number = request.GET.get('submissions_page')
+    submissions_page_obj = submissions_paginator.get_page(submissions_page_number)
+    
+    # 分页处理瓶盖记录
+    bottle_caps_paginator = Paginator(bottle_caps, 10)
+    bottle_caps_page_number = request.GET.get('bottle_caps_page')
+    bottle_caps_page_obj = bottle_caps_paginator.get_page(bottle_caps_page_number)
+    
+    context = {
+        'submissions_page_obj': submissions_page_obj,
+        'bottle_caps_page_obj': bottle_caps_page_obj,
+        'submission_type': submission_type,
+    }
+    
+    return render(request, 'recycling/my_submissions.html', context)
 
 
 @login_required
