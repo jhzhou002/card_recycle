@@ -39,4 +39,13 @@ urlpatterns = [
     path('admin-notifications/add/', views.admin_notification_edit, name='admin_notification_add'),
     path('admin-notifications/<int:notification_id>/edit/', views.admin_notification_edit, name='admin_notification_edit'),
     path('admin-notifications/<int:notification_id>/delete/', views.admin_notification_delete, name='admin_notification_delete'),
+    
+    # 卡券类别管理路由
+    path('admin-categories/', views.admin_categories, name='admin_categories'),
+    
+    # 套餐管理路由
+    path('admin-packages/', views.admin_packages, name='admin_packages'),
+    
+    # 门店管理路由
+    path('admin-stores/', views.admin_stores, name='admin_stores'),
 ]

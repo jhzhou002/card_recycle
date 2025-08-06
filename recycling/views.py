@@ -1322,3 +1322,280 @@ def admin_bottle_caps_batch_update(request):
             messages.error(request, '请选择要更新的记录')
     
     return redirect('admin_bottle_caps')
+
+
+# ==================== 卡券类别管理 ====================
+
+@staff_member_required
+def admin_categories(request):
+    """卡券类别管理"""
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        
+        if action == 'edit':
+            # 编辑类别
+            category_id = request.POST.get('category_id')
+            name = request.POST.get('name', '').strip()
+            
+            if not name:
+                return JsonResponse({'success': False, 'message': '类别名称不能为空'})
+            
+            try:
+                category = get_object_or_404(Category, id=category_id)
+                category.name = name
+                category.save()
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        elif action == 'delete':
+            # 删除类别
+            category_id = request.POST.get('category_id')
+            
+            try:
+                category = get_object_or_404(Category, id=category_id)
+                category.delete()
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        else:
+            # 添加类别
+            name = request.POST.get('name', '').strip()
+            
+            if not name:
+                return JsonResponse({'success': False, 'message': '类别名称不能为空'})
+            
+            try:
+                Category.objects.create(name=name)
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+    
+    # GET请求，显示类别列表
+    categories = Category.objects.all().order_by('id')
+    context = {
+        'categories': categories,
+        'total_count': categories.count(),
+    }
+    return render(request, 'recycling/admin_categories.html', context)
+
+
+# ==================== 套餐管理 ====================
+
+@staff_member_required
+def admin_packages(request):
+    """套餐管理"""
+    if request.method == 'GET' and request.GET.get('action') == 'get_package':
+        # 获取套餐详细信息
+        package_id = request.GET.get('package_id')
+        try:
+            package = get_object_or_404(Package, id=package_id)
+            return JsonResponse({
+                'success': True,
+                'package': {
+                    'id': package.id,
+                    'name': package.name,
+                    'category': package.category.id,
+                    'commission': str(package.commission),
+                    'stores': list(package.applicable_stores.values_list('id', flat=True))
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    elif request.method == 'POST':
+        action = request.POST.get('action', '')
+        
+        if action == 'edit':
+            # 编辑套餐
+            package_id = request.POST.get('package_id')
+            name = request.POST.get('name', '').strip()
+            category_id = request.POST.get('category')
+            commission = request.POST.get('commission')
+            store_ids = request.POST.getlist('stores')
+            
+            if not name or not category_id or not commission:
+                return JsonResponse({'success': False, 'message': '请填写完整信息'})
+            
+            try:
+                package = get_object_or_404(Package, id=package_id)
+                category = get_object_or_404(Category, id=category_id)
+                
+                package.name = name
+                package.category = category
+                package.commission = float(commission)
+                package.save()
+                
+                # 更新适用门店
+                if store_ids:
+                    stores = Store.objects.filter(id__in=store_ids)
+                    package.applicable_stores.set(stores)
+                else:
+                    package.applicable_stores.clear()
+                
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        elif action == 'delete':
+            # 删除套餐
+            package_id = request.POST.get('package_id')
+            
+            try:
+                package = get_object_or_404(Package, id=package_id)
+                package.delete()
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        else:
+            # 添加套餐
+            name = request.POST.get('name', '').strip()
+            category_id = request.POST.get('category')
+            commission = request.POST.get('commission')
+            store_ids = request.POST.getlist('stores')
+            
+            if not name or not category_id or not commission:
+                return JsonResponse({'success': False, 'message': '请填写完整信息'})
+            
+            try:
+                category = get_object_or_404(Category, id=category_id)
+                package = Package.objects.create(
+                    name=name,
+                    category=category,
+                    commission=float(commission)
+                )
+                
+                # 设置适用门店
+                if store_ids:
+                    stores = Store.objects.filter(id__in=store_ids)
+                    package.applicable_stores.set(stores)
+                
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+    
+    # GET请求，显示套餐列表
+    packages = Package.objects.select_related('category').prefetch_related('applicable_stores').order_by('id')
+    categories = Category.objects.all().order_by('id')
+    stores = Store.objects.filter(is_active=True).order_by('store_number')
+    
+    context = {
+        'packages': packages,
+        'categories': categories,
+        'stores': stores,
+        'total_count': packages.count(),
+    }
+    return render(request, 'recycling/admin_packages.html', context)
+
+
+# ==================== 门店管理 ====================
+
+@staff_member_required
+def admin_stores(request):
+    """门店管理"""
+    if request.method == 'GET' and request.GET.get('action') == 'get_store':
+        # 获取门店详细信息
+        store_id = request.GET.get('store_id')
+        try:
+            store = get_object_or_404(Store, id=store_id)
+            return JsonResponse({
+                'success': True,
+                'store': {
+                    'id': store.id,
+                    'store_number': store.store_number,
+                    'name': store.name,
+                    'is_active': store.is_active
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
+    
+    elif request.method == 'POST':
+        action = request.POST.get('action', '')
+        
+        if action == 'edit':
+            # 编辑门店
+            store_id = request.POST.get('store_id')
+            store_number = request.POST.get('store_number', '').strip()
+            name = request.POST.get('name', '').strip()
+            is_active = request.POST.get('is_active') == 'true'
+            
+            if not store_number or not name:
+                return JsonResponse({'success': False, 'message': '请填写完整信息'})
+            
+            try:
+                store = get_object_or_404(Store, id=store_id)
+                
+                # 检查门店编号是否重复
+                if Store.objects.exclude(id=store.id).filter(store_number=store_number).exists():
+                    return JsonResponse({'success': False, 'message': '门店编号已存在'})
+                
+                store.store_number = store_number
+                store.name = name
+                store.is_active = is_active
+                store.save()
+                
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        elif action == 'delete':
+            # 删除门店
+            store_id = request.POST.get('store_id')
+            
+            try:
+                store = get_object_or_404(Store, id=store_id)
+                store.delete()
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        elif action == 'toggle_status':
+            # 切换门店状态
+            store_id = request.POST.get('store_id')
+            is_active = request.POST.get('is_active') == 'true'
+            
+            try:
+                store = get_object_or_404(Store, id=store_id)
+                store.is_active = is_active
+                store.save()
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        else:
+            # 添加门店
+            store_number = request.POST.get('store_number', '').strip()
+            name = request.POST.get('name', '').strip()
+            is_active = request.POST.get('is_active') == 'true'
+            
+            if not store_number or not name:
+                return JsonResponse({'success': False, 'message': '请填写完整信息'})
+            
+            try:
+                # 检查门店编号是否重复
+                if Store.objects.filter(store_number=store_number).exists():
+                    return JsonResponse({'success': False, 'message': '门店编号已存在'})
+                
+                Store.objects.create(
+                    store_number=store_number,
+                    name=name,
+                    is_active=is_active
+                )
+                
+                return JsonResponse({'success': True})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+    
+    # GET请求，显示门店列表
+    stores = Store.objects.all().order_by('store_number')
+    active_stores = stores.filter(is_active=True)
+    
+    context = {
+        'stores': stores,
+        'total_count': stores.count(),
+        'active_count': active_stores.count(),
+    }
+    return render(request, 'recycling/admin_stores.html', context)
