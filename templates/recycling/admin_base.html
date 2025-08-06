@@ -369,13 +369,20 @@
         </div>
     </main>
 
-    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    <!-- jQuery优先从CDN加载，提高可靠性 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" 
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" 
+            crossorigin="anonymous"></script>
     <script>
-    // 全局jQuery检查
+    // 如果CDN加载失败，尝试加载本地文件
     if (typeof $ === 'undefined') {
-        console.error('jQuery未能正确加载，请检查静态文件配置');
-        // 尝试从CDN加载jQuery作为备用
-        document.write('<script src="https://code.jquery.com/jquery-3.6.0.min.js"><\/script>');
+        console.warn('CDN jQuery加载失败，尝试加载本地文件');
+        var script = document.createElement('script');
+        script.src = '{% static "js/jquery-3.6.0.min.js" %}';
+        script.onerror = function() {
+            console.error('本地jQuery文件也无法加载，某些功能可能无法正常使用');
+        };
+        document.head.appendChild(script);
     }
     </script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
