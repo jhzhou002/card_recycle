@@ -62,8 +62,30 @@
     </div>
 </div>
 
-<!-- 通知弹窗模态框 -->
-{% if notifications %}
+<!-- 客服联系 -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h5 class="card-title text-primary">
+                    <i class="fas fa-headset me-2"></i>需要帮助？联系客服
+                </h5>
+                <p class="card-text mb-3">如有任何问题，欢迎联系我们的客服团队</p>
+                <div class="d-flex justify-content-center align-items-center">
+                    <div class="me-4">
+                        <i class="fab fa-weixin fa-2x text-success me-2"></i>
+                        <strong>客服微信：</strong>
+                        <code class="bg-light text-success px-2 py-1 rounded">AaLG66888</code>
+                    </div>
+                    <small class="text-muted">工作时间：周一至周日 9:00-18:00</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 通知弹窗模态框（仅登录用户） -->
+{% if user.is_authenticated and notifications %}
 {% for notification in notifications %}
 <div class="modal fade" id="notificationModal{{ notification.id }}" tabindex="-1" aria-labelledby="notificationModalLabel{{ notification.id }}" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -79,16 +101,11 @@
                 <div class="notification-content">
                     {{ notification.content|safe }}
                 </div>
-                {% if user.is_authenticated %}
-                <hr>
-                <div class="text-end">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="dismissNotification({{ notification.id }})">
-                        不再显示
-                    </button>
-                </div>
-                {% endif %}
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="dismissNotification({{ notification.id }})">
+                    <i class="fas fa-times-circle me-1"></i>不再显示
+                </button>
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
                     <i class="fas fa-check me-1"></i>我知道了
                 </button>
@@ -101,17 +118,12 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if notifications %}
+{% if user.is_authenticated and notifications %}
 <script>
 $(document).ready(function() {
-    {% if user.is_authenticated %}
-    // 登录用户：获取该用户已关闭的通知列表（与用户ID绑定）
+    // 获取该用户已关闭的通知列表（与用户ID绑定）
     let storageKey = 'dismissedNotifications_{{ user.id }}';
     let dismissedNotifications = JSON.parse(localStorage.getItem(storageKey) || '[]');
-    {% else %}
-    // 访客用户：使用会话临时存储
-    let dismissedNotifications = JSON.parse(sessionStorage.getItem('dismissedNotifications_guest') || '[]');
-    {% endif %}
     
     // 依次显示未被关闭的通知
     let notificationsToShow = [];
@@ -145,22 +157,13 @@ $(document).ready(function() {
 
 // 不再显示通知
 function dismissNotification(notificationId) {
-    {% if user.is_authenticated %}
-    // 登录用户：永久存储到localStorage
+    // 永久存储到localStorage
     let storageKey = 'dismissedNotifications_{{ user.id }}';
     let dismissedNotifications = JSON.parse(localStorage.getItem(storageKey) || '[]');
     if (!dismissedNotifications.includes(notificationId)) {
         dismissedNotifications.push(notificationId);
         localStorage.setItem(storageKey, JSON.stringify(dismissedNotifications));
     }
-    {% else %}
-    // 访客用户：临时存储到sessionStorage
-    let dismissedNotifications = JSON.parse(sessionStorage.getItem('dismissedNotifications_guest') || '[]');
-    if (!dismissedNotifications.includes(notificationId)) {
-        dismissedNotifications.push(notificationId);
-        sessionStorage.setItem('dismissedNotifications_guest', JSON.stringify(dismissedNotifications));
-    }
-    {% endif %}
     $('#notificationModal' + notificationId).modal('hide');
 }
 </script>
