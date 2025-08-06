@@ -3,35 +3,6 @@
 {% block title %}首页 - 卡券回收平台{% endblock %}
 
 {% block content %}
-<!-- 首页通知 -->
-{% if notifications %}
-<div class="row mb-4">
-    <div class="col-12">
-        {% for notification in notifications %}
-        <div class="alert alert-info alert-dismissible fade show" role="alert">
-            <div class="d-flex align-items-start">
-                <div class="me-3">
-                    <i class="fas fa-bullhorn fa-lg"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <h6 class="alert-heading mb-2">{{ notification.title }}</h6>
-                    <div class="notification-content">
-                        {{ notification.content|safe }}
-                    </div>
-                    <hr class="my-2">
-                    <small class="text-muted">
-                        <i class="fas fa-clock me-1"></i>
-                        发布时间：{{ notification.updated_at|date:"Y-m-d H:i" }}
-                    </small>
-                </div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
 <div class="row">
     <div class="col-md-8">
         <div class="jumbotron bg-primary text-white p-5 rounded">
@@ -90,4 +61,93 @@
         </div>
     </div>
 </div>
+
+<!-- 通知弹窗模态框 -->
+{% if notifications %}
+{% for notification in notifications %}
+<div class="modal fade" id="notificationModal{{ notification.id }}" tabindex="-1" aria-labelledby="notificationModalLabel{{ notification.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-bullhorn me-2"></i>
+                    <h5 class="modal-title mb-0" id="notificationModalLabel{{ notification.id }}">{{ notification.title }}</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="notification-content">
+                    {{ notification.content|safe }}
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        发布时间：{{ notification.updated_at|date:"Y-m-d H:i" }}
+                    </small>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="dismissNotification({{ notification.id }})">
+                        不再显示
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    <i class="fas fa-check me-1"></i>我知道了
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if notifications %}
+<script>
+$(document).ready(function() {
+    // 获取已关闭的通知列表
+    let dismissedNotifications = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+    
+    // 依次显示未被关闭的通知
+    let notificationsToShow = [];
+    {% for notification in notifications %}
+    if (!dismissedNotifications.includes({{ notification.id }})) {
+        notificationsToShow.push({{ notification.id }});
+    }
+    {% endfor %}
+    
+    // 显示通知（每次显示一个）
+    let currentIndex = 0;
+    function showNextNotification() {
+        if (currentIndex < notificationsToShow.length) {
+            let notificationId = notificationsToShow[currentIndex];
+            $('#notificationModal' + notificationId).modal('show');
+            
+            // 监听当前模态框关闭事件
+            $('#notificationModal' + notificationId).on('hidden.bs.modal', function() {
+                currentIndex++;
+                // 延迟200ms显示下一个通知，避免太快
+                setTimeout(showNextNotification, 200);
+            });
+        }
+    }
+    
+    // 如果有通知要显示，延迟500ms开始显示
+    if (notificationsToShow.length > 0) {
+        setTimeout(showNextNotification, 500);
+    }
+});
+
+// 不再显示通知
+function dismissNotification(notificationId) {
+    let dismissedNotifications = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+    if (!dismissedNotifications.includes(notificationId)) {
+        dismissedNotifications.push(notificationId);
+        localStorage.setItem('dismissedNotifications', JSON.stringify(dismissedNotifications));
+    }
+    $('#notificationModal' + notificationId).modal('hide');
+}
+</script>
+{% endif %}
 {% endblock %}
