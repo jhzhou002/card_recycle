@@ -40,16 +40,22 @@
                     </div>
                     
                     <div class="row">
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                             <div class="mb-3">
                                 <label for="{{ form.card_number.id_for_label }}" class="form-label">卡号 <small class="text-muted">(可选)</small></label>
                                 {{ form.card_number }}
                             </div>
                         </div>
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-4">
                             <div class="mb-3">
                                 <label for="{{ form.card_secret.id_for_label }}" class="form-label">密码 <small class="text-muted">(可选)</small></label>
                                 {{ form.card_secret }}
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.redemption_code.id_for_label }}" class="form-label">兑换码 <small class="text-muted">(可选)</small></label>
+                                {{ form.redemption_code }}
                             </div>
                         </div>
                     </div>
@@ -57,7 +63,7 @@
                     <div class="mb-3">
                         <label for="imageFile" class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
                         <div class="form-text mb-2">
-                            <small class="text-info">注意：卡号密码和核销码图片至少需要提供一项</small>
+                            <small class="text-info">注意：卡号密码、兑换码和核销码图片至少需要提供一项</small>
                         </div>
                         {{ form.image }}
                         <input type="file" class="form-control" id="imageFile" accept="image/jpeg,image/png,image/jpg" style="display: none;">
@@ -116,10 +122,27 @@ if (typeof $ === 'undefined') {
 }
 
 $(document).ready(function() {
-    // 类别选择变化时更新套餐
+    // 类别选择变化时更新套餐和门店字段可见性
     $('#category').change(function() {
         var categoryId = $(this).val();
         if (categoryId) {
+            // 获取类别信息
+            $.get('/api/categories/', {category_id: categoryId})
+                .done(function(categoryData) {
+                    // 控制门店字段显示
+                    var storeField = $('#store').closest('.col-12');
+                    if (categoryData.show_store_field) {
+                        storeField.show();
+                    } else {
+                        storeField.hide();
+                        $('#store').val(''); // 清空门店选择
+                    }
+                })
+                .fail(function() {
+                    console.error('获取类别信息失败');
+                });
+            
+            // 加载套餐
             $.get('/api/packages/', {category_id: categoryId})
                 .done(function(data) {
                     var packageSelect = $('#package');
@@ -136,6 +159,8 @@ $(document).ready(function() {
         } else {
             $('#package').empty().append('<option value="">请先选择类别</option>');
             $('#commissionInfo').text('请先选择类别');
+            // 显示门店字段（默认显示）
+            $('#store').closest('.col-12').show();
         }
     });
     

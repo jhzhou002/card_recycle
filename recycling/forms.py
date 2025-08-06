@@ -7,13 +7,14 @@ class SubmissionForm(forms.ModelForm):
     
     class Meta:
         model = Submission
-        fields = ['category', 'package', 'store', 'card_number', 'card_secret', 'image', 'expire_date', 'telephone']
+        fields = ['category', 'package', 'store', 'card_number', 'card_secret', 'redemption_code', 'image', 'expire_date', 'telephone']
         widgets = {
             'category': forms.Select(attrs={'class': 'form-control', 'id': 'category'}),
             'package': forms.Select(attrs={'class': 'form-control', 'id': 'package'}),
             'store': forms.Select(attrs={'class': 'form-control', 'id': 'store'}),
             'card_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入卡号（可选）'}),
             'card_secret': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入密码（可选）'}),
+            'redemption_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入兑换码（可选）'}),
             'image': forms.HiddenInput(),
             'expire_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'telephone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '请输入联系电话'}),
@@ -27,6 +28,13 @@ class SubmissionForm(forms.ModelForm):
         if 'category' in self.data:
             try:
                 category_id = int(self.data.get('category'))
+                category = Category.objects.get(id=category_id)
+                
+                # 根据类别控制门店字段是否显示
+                if not category.show_store_field:
+                    self.fields['store'].widget = forms.HiddenInput()
+                    self.fields['store'].required = False
+                
                 self.fields['package'].queryset = Package.objects.filter(category_id=category_id)
                 
                 # 如果已选择套餐，加载对应的门店
@@ -45,6 +53,11 @@ class SubmissionForm(forms.ModelForm):
             except (ValueError, TypeError):
                 pass
         elif self.instance.pk:
+            # 根据现有实例的类别控制门店字段显示
+            if self.instance.category and not self.instance.category.show_store_field:
+                self.fields['store'].widget = forms.HiddenInput()
+                self.fields['store'].required = False
+                
             self.fields['package'].queryset = self.instance.category.package_set.all()
             if self.instance.package and self.instance.package.applicable_stores.exists():
                 self.fields['store'].queryset = self.instance.package.applicable_stores.filter(is_active=True)
@@ -58,6 +71,7 @@ class SubmissionForm(forms.ModelForm):
         store = cleaned_data.get('store')
         card_number = cleaned_data.get('card_number', '').strip()
         card_secret = cleaned_data.get('card_secret', '').strip()
+        redemption_code = cleaned_data.get('redemption_code', '').strip()
         image = cleaned_data.get('image')
         
         # 验证套餐是否属于选择的类别
@@ -65,14 +79,14 @@ class SubmissionForm(forms.ModelForm):
             if package.category != category:
                 raise forms.ValidationError('选择的套餐不属于该类别')
         
-        # 验证门店是否适用于选择的套餐
-        if package and store:
+        # 验证门店是否适用于选择的套餐（仅当类别显示门店字段时）
+        if category and category.show_store_field and package and store:
             if package.applicable_stores.exists() and store not in package.applicable_stores.all():
                 raise forms.ValidationError('选择的门店不适用于该套餐')
         
-        # 验证至少要有卡号密码或图片中的一个
-        if not card_number and not card_secret and not image:
-            raise forms.ValidationError('请至少填写卡号密码或上传核销码图片')
+        # 验证至少要有卡号密码、兑换码或图片中的一个
+        if not card_number and not card_secret and not redemption_code and not image:
+            raise forms.ValidationError('请至少填写卡号密码、兑换码或上传核销码图片')
         
         return cleaned_data
     

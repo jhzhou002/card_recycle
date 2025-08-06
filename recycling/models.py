@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 class Category(models.Model):
     """卡券类别"""
     name = models.CharField(max_length=100, verbose_name='类别名称')
+    show_store_field = models.BooleanField(default=True, verbose_name='显示门店选择字段')
     
     class Meta:
         verbose_name = '卡券类别'
@@ -72,6 +73,7 @@ class Submission(models.Model):
     commission = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='佣金')
     card_number = models.CharField(max_length=200, blank=True, verbose_name='卡号')
     card_secret = models.CharField(max_length=200, blank=True, verbose_name='密码')
+    redemption_code = models.CharField(max_length=200, blank=True, verbose_name='兑换码')
     image = models.URLField(blank=True, verbose_name='核销码图片')
     expire_date = models.DateField(verbose_name='过期时间')
     telephone = models.CharField(max_length=20, verbose_name='联系电话')

@@ -140,6 +140,22 @@ def get_packages(request):
     return JsonResponse(data, safe=False)
 
 
+def get_categories(request):
+    """获取类别信息"""
+    category_id = request.GET.get('category_id')
+    if category_id:
+        try:
+            category = Category.objects.get(id=category_id)
+            return JsonResponse({
+                'id': category.id,
+                'name': category.name,
+                'show_store_field': category.show_store_field
+            })
+        except Category.DoesNotExist:
+            return JsonResponse({'error': '类别不存在'}, status=404)
+    return JsonResponse({'error': '缺少类别ID'}, status=400)
+
+
 @login_required
 def get_stores(request):
     """获取门店列表"""
@@ -1336,6 +1352,7 @@ def admin_categories(request):
             # 编辑类别
             category_id = request.POST.get('category_id')
             name = request.POST.get('name', '').strip()
+            show_store_field = request.POST.get('show_store_field') == 'true'
             
             if not name:
                 return JsonResponse({'success': False, 'message': '类别名称不能为空'})
@@ -1343,6 +1360,7 @@ def admin_categories(request):
             try:
                 category = get_object_or_404(Category, id=category_id)
                 category.name = name
+                category.show_store_field = show_store_field
                 category.save()
                 return JsonResponse({'success': True})
             except Exception as e:
@@ -1362,12 +1380,13 @@ def admin_categories(request):
         else:
             # 添加类别
             name = request.POST.get('name', '').strip()
+            show_store_field = request.POST.get('show_store_field') == 'true'
             
             if not name:
                 return JsonResponse({'success': False, 'message': '类别名称不能为空'})
             
             try:
-                Category.objects.create(name=name)
+                Category.objects.create(name=name, show_store_field=show_store_field)
                 return JsonResponse({'success': True})
             except Exception as e:
                 return JsonResponse({'success': False, 'message': str(e)})
