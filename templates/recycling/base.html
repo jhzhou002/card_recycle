@@ -265,10 +265,13 @@
                                 <small>用户名: {{ user.username }}</small>
                             </span></li>
                             <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'profile' %}">
+                                <i class="fas fa-user-circle me-2"></i>个人中心
+                            </a></li>
                             {% if user.is_staff %}
                             <li><a class="dropdown-item" href="/admin/">管理后台</a></li>
-                            <li><hr class="dropdown-divider"></li>
                             {% endif %}
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'logout' %}">退出登录</a></li>
                         </ul>
                     </li>

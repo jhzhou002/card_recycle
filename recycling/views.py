@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.forms import UserCreationForm
@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView
 from django.core.paginator import Paginator
+from django.db.models import Q, Count
 from .models import Category, Package, Submission, Store, BottleCapSubmission, Notification
 from .forms import SubmissionForm, BottleCapSubmissionForm
 from utils.qiniu_util import generate_qiniu_token, upload_data_to_qiniu
@@ -1626,3 +1627,80 @@ def admin_stores(request):
         'active_count': active_stores.count(),
     }
     return render(request, 'recycling/admin_stores.html', context)
+
+
+# ==================== 个人中心 ====================
+
+@login_required
+def profile(request):
+    """个人中心"""
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        
+        if action == 'edit_profile':
+            # 编辑个人资料
+            first_name = request.POST.get('first_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            
+            try:
+                # 检查邮箱是否已被其他用户使用
+                if email and email != request.user.email:
+                    from django.contrib.auth.models import User
+                    if User.objects.filter(email=email).exclude(id=request.user.id).exists():
+                        return JsonResponse({'success': False, 'message': '该邮箱已被其他用户使用'})
+                
+                # 更新用户信息
+                request.user.first_name = first_name
+                if email:
+                    request.user.email = email
+                request.user.save()
+                
+                return JsonResponse({'success': True, 'message': '资料更新成功'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+        
+        elif action == 'change_password':
+            # 修改密码
+            current_password = request.POST.get('current_password', '')
+            new_password = request.POST.get('new_password', '')
+            confirm_password = request.POST.get('confirm_password', '')
+            
+            # 验证当前密码
+            if not request.user.check_password(current_password):
+                return JsonResponse({'success': False, 'message': '当前密码错误'})
+            
+            # 验证新密码
+            if len(new_password) < 8:
+                return JsonResponse({'success': False, 'message': '新密码至少需要8位字符'})
+            
+            if new_password != confirm_password:
+                return JsonResponse({'success': False, 'message': '两次输入的密码不一致'})
+            
+            try:
+                # 更新密码
+                request.user.set_password(new_password)
+                request.user.save()
+                
+                # 更新session，避免用户被自动登出
+                update_session_auth_hash(request, request.user)
+                
+                return JsonResponse({'success': True, 'message': '密码修改成功'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'message': str(e)})
+    
+    # GET请求，显示个人中心页面
+    # 获取用户统计信息
+    user_submissions = Submission.objects.filter(user=request.user)
+    user_bottle_caps = BottleCapSubmission.objects.filter(user=request.user)
+    
+    stats = {
+        'total_submissions': user_submissions.count() + user_bottle_caps.count(),
+        'approved_submissions': user_submissions.filter(status='approved').count(),
+        'card_submissions': user_submissions.count(),
+        'bottle_cap_submissions': user_bottle_caps.count(),
+    }
+    
+    context = {
+        'stats': stats,
+    }
+    return render(request, 'recycling/profile.html', context)
