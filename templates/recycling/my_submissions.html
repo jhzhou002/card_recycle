@@ -67,6 +67,7 @@
                                 <th class="d-none-mobile">卡号</th>
                                 <th class="d-none-mobile">佣金</th>
                                 <th>状态</th>
+                                <th class="d-none-mobile">管理员备注</th>
                                 <th class="d-none-mobile">提交时间</th>
                                 <th>操作</th>
                             </tr>
@@ -97,7 +98,19 @@
                                     {% endif %}
                                     <div class="d-block d-sm-none">
                                         <small class="text-muted">{{ submission.submitted_at|date:"m-d H:i" }}</small>
+                                        {% if submission.admin_remark %}
+                                        <br><small class="text-info">备注: {{ submission.admin_remark|truncatechars:20 }}</small>
+                                        {% endif %}
                                     </div>
+                                </td>
+                                <td class="d-none-mobile">
+                                    {% if submission.admin_remark %}
+                                    <span class="text-muted" title="{{ submission.admin_remark }}">
+                                        {{ submission.admin_remark|truncatechars:30 }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
                                 </td>
                                 <td class="d-none-mobile">{{ submission.submitted_at|date:"Y-m-d H:i" }}</td>
                                 <td>
@@ -162,10 +175,9 @@
                         <thead>
                             <tr>
                                 <th>编号</th>
-                                <th>用户</th>
-                                <th class="d-none-mobile">类型</th>
-                                <th class="d-none-mobile">数量</th>
+                                <th>数量</th>
                                 <th>状态</th>
+                                <th class="d-none-mobile">管理员备注</th>
                                 <th class="d-none-mobile">提交时间</th>
                                 <th>操作</th>
                             </tr>
@@ -175,27 +187,34 @@
                             <tr>
                                 <td>{{ bottle_cap.id }}</td>
                                 <td>
-                                    {{ bottle_cap.user.username }}
+                                    <span class="text-info">{{ bottle_cap.get_qr_code_count }}个瓶盖</span>
                                     <div class="d-block d-sm-none">
-                                        <small class="text-muted">{{ bottle_cap.bottle_cap_type }}</small><br>
-                                        <small class="text-info">{{ bottle_cap.quantity }}个</small>
+                                        {% if bottle_cap.is_settled %}
+                                        <small class="badge bg-success">已结算</small>
+                                        {% else %}
+                                        <small class="badge bg-warning">待结算</small>
+                                        {% endif %}
+                                        <br><small class="text-muted">{{ bottle_cap.submitted_at|date:"m-d H:i" }}</small>
+                                        {% if bottle_cap.admin_remark %}
+                                        <br><small class="text-info">备注: {{ bottle_cap.admin_remark|truncatechars:15 }}</small>
+                                        {% endif %}
                                     </div>
                                 </td>
-                                <td class="d-none-mobile">{{ bottle_cap.bottle_cap_type }}</td>
-                                <td class="d-none-mobile">{{ bottle_cap.quantity }}个</td>
                                 <td>
-                                    {% if bottle_cap.status == 'pending' %}
-                                    <span class="badge bg-warning">{{ bottle_cap.get_status_display }}</span>
-                                    {% elif bottle_cap.status == 'approved' %}
-                                    <span class="badge bg-success">{{ bottle_cap.get_status_display }}</span>
-                                    {% elif bottle_cap.status == 'rejected' %}
-                                    <span class="badge bg-danger">{{ bottle_cap.get_status_display }}</span>
+                                    {% if bottle_cap.is_settled %}
+                                    <span class="badge bg-success">已结算</span>
                                     {% else %}
-                                    <span class="badge bg-info">{{ bottle_cap.get_status_display }}</span>
+                                    <span class="badge bg-warning">待结算</span>
                                     {% endif %}
-                                    <div class="d-block d-sm-none">
-                                        <small class="text-muted">{{ bottle_cap.submitted_at|date:"m-d H:i" }}</small>
-                                    </div>
+                                </td>
+                                <td class="d-none-mobile">
+                                    {% if bottle_cap.admin_remark %}
+                                    <span class="text-muted" title="{{ bottle_cap.admin_remark }}">
+                                        {{ bottle_cap.admin_remark|truncatechars:30 }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
                                 </td>
                                 <td class="d-none-mobile">{{ bottle_cap.submitted_at|date:"Y-m-d H:i" }}</td>
                                 <td>
