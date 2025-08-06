@@ -313,14 +313,22 @@
     <!-- 优先使用CDN jQuery，确保快速加载 -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" 
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" 
-            crossorigin="anonymous"
-            onerror="this.onerror=null; this.src='{% static \"js/jquery-3.6.0.min.js\" %}'; console.log('CDN失败，使用本地jQuery')"></script>
+            crossorigin="anonymous"></script>
     <script>
-    // 验证jQuery加载
-    if (typeof $ !== 'undefined') {
-        console.log('jQuery加载成功，版本：' + $.fn.jquery);
+    // 检测jQuery是否加载成功，失败则使用本地备用
+    if (typeof $ === 'undefined') {
+        console.log('CDN jQuery加载失败，使用本地备用');
+        var localScript = document.createElement('script');
+        localScript.src = '{% static "js/jquery-3.6.0.min.js" %}';
+        localScript.onload = function() {
+            console.log('本地jQuery加载成功，版本：' + $.fn.jquery);
+        };
+        localScript.onerror = function() {
+            console.error('本地jQuery也加载失败');
+        };
+        document.head.appendChild(localScript);
     } else {
-        console.error('jQuery加载失败');
+        console.log('CDN jQuery加载成功，版本：' + $.fn.jquery);
     }
     </script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
