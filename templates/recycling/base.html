@@ -228,9 +228,7 @@
                         <a class="nav-link" href="{% url 'home' %}">首页</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tutorials' %}">
-                            <i class="fas fa-graduation-cap"></i> 卡券教程
-                        </a>
+                        <a class="nav-link" href="{% url 'tutorials' %}">卡券教程</a>
                     </li>
                     {% if user.is_authenticated and not user.is_staff %}
                     <li class="nav-item">
