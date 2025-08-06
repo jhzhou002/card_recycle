@@ -199,15 +199,82 @@
                                 </td>
                                 <td class="d-none-mobile">{{ bottle_cap.submitted_at|date:"Y-m-d H:i" }}</td>
                                 <td>
-                                    <a href="{% url 'bottle_cap_detail' bottle_cap.id %}" class="btn btn-sm btn-outline-primary">
+                                    <button class="btn btn-sm btn-outline-info" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#bottleCapModal{{ bottle_cap.id }}">
                                         <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">查看</span>
-                                    </a>
+                                    </button>
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- 瓶盖详情模态框 -->
+                {% for bottle_cap in bottle_caps_page_obj %}
+                <div class="modal fade" id="bottleCapModal{{ bottle_cap.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-bottle-water me-2"></i>瓶盖记录详情 #{{ bottle_cap.id }}
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row mb-3">
+                                    <div class="col-sm-4"><strong>提交用户：</strong></div>
+                                    <div class="col-sm-8">{{ bottle_cap.user.username }}</div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-4"><strong>瓶盖类型：</strong></div>
+                                    <div class="col-sm-8">{{ bottle_cap.bottle_cap_type }}</div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-4"><strong>数量：</strong></div>
+                                    <div class="col-sm-8">{{ bottle_cap.quantity }}个</div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-4"><strong>状态：</strong></div>
+                                    <div class="col-sm-8">
+                                        {% if bottle_cap.status == 'pending' %}
+                                        <span class="badge bg-warning">{{ bottle_cap.get_status_display }}</span>
+                                        {% elif bottle_cap.status == 'approved' %}
+                                        <span class="badge bg-success">{{ bottle_cap.get_status_display }}</span>
+                                        {% elif bottle_cap.status == 'rejected' %}
+                                        <span class="badge bg-danger">{{ bottle_cap.get_status_display }}</span>
+                                        {% else %}
+                                        <span class="badge bg-info">{{ bottle_cap.get_status_display }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-sm-4"><strong>提交时间：</strong></div>
+                                    <div class="col-sm-8">{{ bottle_cap.submitted_at|date:"Y-m-d H:i:s" }}</div>
+                                </div>
+                                {% if bottle_cap.image %}
+                                <div class="row mb-3">
+                                    <div class="col-sm-4"><strong>图片：</strong></div>
+                                    <div class="col-sm-8">
+                                        <img src="{{ bottle_cap.image.url }}" class="img-thumbnail" style="max-height: 200px;" alt="瓶盖图片">
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% if bottle_cap.notes %}
+                                <div class="row mb-3">
+                                    <div class="col-sm-4"><strong>备注：</strong></div>
+                                    <div class="col-sm-8">{{ bottle_cap.notes }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
                 
                 <!-- 瓶盖记录分页 -->
                 {% if bottle_caps_page_obj.has_other_pages %}
