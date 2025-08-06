@@ -174,3 +174,9 @@ CORS_ALLOWED_ORIGINS = [
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# 会话配置
+SESSION_COOKIE_AGE = 60 * 60  # 60分钟（3600秒）
+SESSION_SAVE_EVERY_REQUEST = True  # 每次请求都更新会话过期时间
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # 浏览器关闭时会话过期
+SESSION_COOKIE_NAME = 'card_recycle_sessionid'  # 自定义会话cookie名称

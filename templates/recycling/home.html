@@ -79,16 +79,14 @@
                 <div class="notification-content">
                     {{ notification.content|safe }}
                 </div>
+                {% if user.is_authenticated %}
                 <hr>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
-                        <i class="fas fa-clock me-1"></i>
-                        发布时间：{{ notification.updated_at|date:"Y-m-d H:i" }}
-                    </small>
+                <div class="text-end">
                     <button type="button" class="btn btn-sm btn-outline-secondary" onclick="dismissNotification({{ notification.id }})">
                         不再显示
                     </button>
                 </div>
+                {% endif %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
@@ -106,8 +104,14 @@
 {% if notifications %}
 <script>
 $(document).ready(function() {
-    // 获取已关闭的通知列表
-    let dismissedNotifications = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+    {% if user.is_authenticated %}
+    // 登录用户：获取该用户已关闭的通知列表（与用户ID绑定）
+    let storageKey = 'dismissedNotifications_{{ user.id }}';
+    let dismissedNotifications = JSON.parse(localStorage.getItem(storageKey) || '[]');
+    {% else %}
+    // 访客用户：使用会话临时存储
+    let dismissedNotifications = JSON.parse(sessionStorage.getItem('dismissedNotifications_guest') || '[]');
+    {% endif %}
     
     // 依次显示未被关闭的通知
     let notificationsToShow = [];
@@ -141,11 +145,22 @@ $(document).ready(function() {
 
 // 不再显示通知
 function dismissNotification(notificationId) {
-    let dismissedNotifications = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
+    {% if user.is_authenticated %}
+    // 登录用户：永久存储到localStorage
+    let storageKey = 'dismissedNotifications_{{ user.id }}';
+    let dismissedNotifications = JSON.parse(localStorage.getItem(storageKey) || '[]');
     if (!dismissedNotifications.includes(notificationId)) {
         dismissedNotifications.push(notificationId);
-        localStorage.setItem('dismissedNotifications', JSON.stringify(dismissedNotifications));
+        localStorage.setItem(storageKey, JSON.stringify(dismissedNotifications));
     }
+    {% else %}
+    // 访客用户：临时存储到sessionStorage
+    let dismissedNotifications = JSON.parse(sessionStorage.getItem('dismissedNotifications_guest') || '[]');
+    if (!dismissedNotifications.includes(notificationId)) {
+        dismissedNotifications.push(notificationId);
+        sessionStorage.setItem('dismissedNotifications_guest', JSON.stringify(dismissedNotifications));
+    }
+    {% endif %}
     $('#notificationModal' + notificationId).modal('hide');
 }
 </script>
