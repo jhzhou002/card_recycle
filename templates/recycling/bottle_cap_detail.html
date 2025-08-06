@@ -1,0 +1,142 @@
+{% extends 'recycling/base.html' %}
+
+{% block title %}瓶盖提交详情 - 卡券回收平台{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2><i class="fas fa-bottle-water"></i> 瓶盖提交详情 #{{ bottle_cap.id }}</h2>
+            <a href="{% url 'my_submissions' %}?type=bottle_cap" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回列表
+            </a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-bottle-water"></i> 瓶盖信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>瓶盖类型：</strong>
+                        <p class="mb-0">{{ bottle_cap.bottle_cap_type }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>数量：</strong>
+                        <p class="mb-0 text-info">{{ bottle_cap.quantity }}个</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <strong>提交用户：</strong>
+                        <p class="mb-0">{{ bottle_cap.user.username }}</p>
+                    </div>
+                </div>
+                
+                {% if bottle_cap.description %}
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <strong>描述信息：</strong>
+                        <p class="mb-0">{{ bottle_cap.description }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if bottle_cap.image %}
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <strong>瓶盖图片：</strong>
+                        <div class="mt-2">
+                            <img src="{{ bottle_cap.image }}" class="img-fluid rounded" style="max-width: 400px; max-height: 300px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i> 图片加载失败
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <a href="{{ bottle_cap.image }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>查看原图
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if bottle_cap.notes %}
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <strong>管理员备注：</strong>
+                        <div class="alert alert-info mt-2">
+                            {{ bottle_cap.notes }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info"></i> 状态信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>当前状态：</strong>
+                    <div class="mt-2">
+                        {% if bottle_cap.status == 'pending' %}
+                        <span class="badge bg-warning fs-6">{{ bottle_cap.get_status_display }}</span>
+                        {% elif bottle_cap.status == 'approved' %}
+                        <span class="badge bg-success fs-6">{{ bottle_cap.get_status_display }}</span>
+                        {% elif bottle_cap.status == 'rejected' %}
+                        <span class="badge bg-danger fs-6">{{ bottle_cap.get_status_display }}</span>
+                        {% else %}
+                        <span class="badge bg-info fs-6">{{ bottle_cap.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>提交时间：</strong>
+                    <p class="mb-0">{{ bottle_cap.submitted_at|date:"Y-m-d H:i:s" }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <strong>更新时间：</strong>
+                    <p class="mb-0">{{ bottle_cap.updated_at|date:"Y-m-d H:i:s" }}</p>
+                </div>
+                
+                <div class="alert alert-light">
+                    <h6><i class="fas fa-lightbulb"></i> 状态说明</h6>
+                    <ul class="small mb-0">
+                        <li><span class="badge bg-warning">待审核</span> - 等待管理员审核</li>
+                        <li><span class="badge bg-success">已通过</span> - 审核通过，等待结算</li>
+                        <li><span class="badge bg-danger">已拒绝</span> - 审核未通过</li>
+                        <li><span class="badge bg-info">已结算</span> - 已完成结算</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6><i class="fas fa-phone"></i> 需要帮助？</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">如有疑问，请联系客服</p>
+                <p class="small mb-0">
+                    <i class="fas fa-envelope"></i> support@example.com<br>
+                    <i class="fas fa-phone"></i> 400-123-4567
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

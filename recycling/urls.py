@@ -10,6 +10,7 @@ urlpatterns = [
     path('submit/', views.submit_card, name='submit_card'),
     path('my-submissions/', views.my_submissions, name='my_submissions'),
     path('submission/<int:submission_id>/', views.submission_detail, name='submission_detail'),
+    path('bottle-cap/<int:bottle_cap_id>/', views.bottle_cap_detail, name='bottle_cap_detail'),
     path('api/packages/', views.get_packages, name='get_packages'),
     path('api/categories/', views.get_categories, name='get_categories'),
     path('api/stores/', views.get_stores, name='get_stores'),

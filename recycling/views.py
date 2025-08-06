@@ -167,6 +167,13 @@ def submission_detail(request, submission_id):
 
 
 @login_required
+def bottle_cap_detail(request, bottle_cap_id):
+    """查看瓶盖记录详情"""
+    bottle_cap = get_object_or_404(BottleCapSubmission, id=bottle_cap_id, user=request.user)
+    return render(request, 'recycling/bottle_cap_detail.html', {'bottle_cap': bottle_cap})
+
+
+@login_required
 def get_packages(request):
     """获取套餐列表"""
     category_id = request.GET.get('category_id')
