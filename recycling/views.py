@@ -108,9 +108,17 @@ def submit_card(request):
                         messages.error(request, f'{field_name}: {error}')
     else:
         form = SubmissionForm()
+    
+    # 获取针对卡券提交页面的通知
+    notifications = Notification.objects.filter(
+        is_active=True,
+        target_page__in=['card_submit', 'all_pages']
+    ).order_by('-updated_at')
+    
     return render(request, 'recycling/submit_card.html', {
         'form': form,
-        'categories': categories
+        'categories': categories,
+        'notifications': notifications
     })
 
 

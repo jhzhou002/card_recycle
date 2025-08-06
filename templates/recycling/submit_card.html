@@ -3,6 +3,38 @@
 {% block title %}提交卡券 - 卡券回收平台{% endblock %}
 
 {% block content %}
+<!-- 系统通知模态框 -->
+{% if notifications %}
+    {% for notification in notifications %}
+    <div class="modal fade" id="notificationModal{{ forloop.counter }}" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-bell me-2"></i>{{ notification.title }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="notification-content">
+                        {{ notification.content|safe }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    {% if forloop.counter < notifications|length %}
+                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal" data-next-notification="{{ forloop.counter|add:1 }}">
+                        <i class="fas fa-chevron-right me-1"></i>下一条
+                    </button>
+                    {% endif %}
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-1"></i>我知道了
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
@@ -385,16 +417,95 @@ $(document).ready(function() {
             return false;
         }
         
-        // 验证卡号密码和图片至少一项
+        // 验证卡号密码、兑换码和图片至少一项
         var hasCardInfo = $('#id_card_number').val().trim() || $('#id_card_secret').val().trim();
+        var hasRedemptionCode = $('#id_redemption_code').val().trim();
         var hasImage = uploadedImageUrl || $('#id_image').val();
         
-        if (!hasCardInfo && !hasImage) {
-            alert('请至少填写卡号密码或上传核销码图片');
+        if (!hasCardInfo && !hasRedemptionCode && !hasImage) {
+            alert('请至少填写卡号密码、兑换码或上传核销码图片');
             e.preventDefault();
             return false;
         }
     });
+    
+    // 显示系统通知
+    {% if notifications %}
+    var currentNotification = 1;
+    var totalNotifications = {{ notifications|length }};
+    
+    function showNotification(notificationNum) {
+        if ($('#notificationModal' + notificationNum).length > 0) {
+            console.log('显示通知弹窗 ' + notificationNum);
+            $('#notificationModal' + notificationNum).modal('show');
+        }
+    }
+    
+    // 处理"下一条"按钮
+    $('[data-next-notification]').click(function() {
+        var nextNum = $(this).data('next-notification');
+        setTimeout(function() {
+            showNotification(nextNum);
+        }, 300);
+    });
+    
+    // 页面加载完成后显示第一个通知
+    $(document).ready(function() {
+        setTimeout(function() {
+            showNotification(1);
+        }, 500);
+    });
+    
+    // 移动端兜底显示
+    setTimeout(function() {
+        if (!$('#notificationModal1').hasClass('show')) {
+            console.log('兜底显示第一个通知');
+            showNotification(1);
+        }
+    }, 2000);
+    {% endif %}
 });
 </script>
+
+{% if notifications %}
+<style>
+.notification-content {
+    line-height: 1.6;
+}
+.notification-content p {
+    margin-bottom: 1rem;
+}
+.notification-content ul, .notification-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+/* 移动端通知弹窗优化 */
+@media (max-width: 768px) {
+    [id^="notificationModal"] .modal-dialog {
+        margin: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    [id^="notificationModal"] .modal-content {
+        border-radius: 8px;
+    }
+    
+    [id^="notificationModal"] .modal-body {
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    /* 确保在移动端能正常显示 */
+    [id^="notificationModal"] {
+        padding-right: 0 !important;
+    }
+    
+    [id^="notificationModal"] .modal-backdrop {
+        position: fixed;
+    }
+}
+</style>
+{% endif %}
 {% endblock %}
