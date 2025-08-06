@@ -240,6 +240,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'my_bottle_caps' %}">瓶盖记录</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'profile' %}">个人中心</a>
+                    </li>
                     {% endif %}
                     {% if user.is_staff %}
                     <li class="nav-item">
@@ -265,13 +268,10 @@
                                 <small>用户名: {{ user.username }}</small>
                             </span></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'profile' %}">
-                                <i class="fas fa-user-circle me-2"></i>个人中心
-                            </a></li>
                             {% if user.is_staff %}
                             <li><a class="dropdown-item" href="/admin/">管理后台</a></li>
-                            {% endif %}
                             <li><hr class="dropdown-divider"></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{% url 'logout' %}">退出登录</a></li>
                         </ul>
                     </li>
