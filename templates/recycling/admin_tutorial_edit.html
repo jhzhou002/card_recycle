@@ -7,13 +7,6 @@
 {% endblock %}
 
 {% block extra_css %}
-<!-- Editor.md CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/css/editormd.min.css" />
-<!-- TinyMCE (Rich Text Editor) -->
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-<!-- Quill Rich Text Editor (backup) -->
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <style>
 .cover-image-preview {
     max-width: 200px;
@@ -45,21 +38,50 @@
 .editor-toolbar {
     background: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
-    padding: 0.5rem;
+    padding: 0.75rem;
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    flex-wrap: wrap;
 }
 
-.template-card {
-    cursor: pointer;
-    transition: all 0.3s;
+.content-editor {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    min-height: 500px;
 }
 
-.template-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+#contentTextarea {
+    border: none;
+    resize: vertical;
+    font-family: 'Monaco', 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
 }
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    padding: 12px 16px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success { background-color: #28a745; }
+.notification.error { background-color: #dc3545; }
+.notification.warning { background-color: #ffc107; color: #212529; }
+.notification.info { background-color: #17a2b8; }
 </style>
 {% endblock %}
 
@@ -111,41 +133,25 @@
                                     <!-- 编辑器工具栏 -->
                                     <div class="editor-toolbar">
                                         <div class="btn-group me-3" role="group">
-                                            <input type="radio" class="btn-check" name="editorMode" id="markdownMode" value="markdown" checked>
-                                            <label class="btn btn-sm btn-outline-primary" for="markdownMode">
-                                                <i class="fab fa-markdown"></i> Markdown
-                                            </label>
-                                            <input type="radio" class="btn-check" name="editorMode" id="richTextMode" value="richtext">
-                                            <label class="btn btn-sm btn-outline-primary" for="richTextMode">
-                                                <i class="fas fa-edit"></i> 富文本
-                                            </label>
-                                        </div>
-                                        
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('basic')">
-                                            <i class="fas fa-file-alt"></i> 基础模板
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('steps')">
-                                            <i class="fas fa-list-ol"></i> 步骤模板
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('faq')">
-                                            <i class="fas fa-question-circle"></i> 问答模板
-                                        </button>
-                                        <div class="ms-auto">
-                                            <button type="button" class="btn btn-sm btn-outline-info" onclick="togglePreview()">
-                                                <i class="fas fa-eye"></i> 预览
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('basic')">
+                                                <i class="fas fa-file-alt"></i> 基础模板
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('steps')">
+                                                <i class="fas fa-list-ol"></i> 步骤模板
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertTemplate('faq')">
+                                                <i class="fas fa-question-circle"></i> 问答模板
                                             </button>
                                         </div>
+                                        <div class="ms-auto">
+                                            <small class="text-muted">支持 Markdown 语法</small>
+                                        </div>
                                     </div>
                                     
-                                    <!-- Markdown 编辑器 -->
-                                    <div id="editormd" class="editor-container">
-                                        <textarea style="display:none;" name="content" id="markdownContent">{% if tutorial %}{{ tutorial.content }}{% endif %}</textarea>
-                                    </div>
-                                    
-                                    <!-- 富文本编辑器 -->
-                                    <div id="richtextEditor" class="editor-container" style="display: none;">
-                                        <div id="quillEditor" style="height: 600px;"></div>
-                                        <textarea name="richtext_content" id="richtextContent" style="display: none;">{% if tutorial %}{{ tutorial.content }}{% endif %}</textarea>
+                                    <!-- 内容编辑器 -->
+                                    <div class="content-editor">
+                                        <textarea class="form-control" name="content" id="contentTextarea" 
+                                                  rows="25" placeholder="请输入教程内容，支持 Markdown 语法...">{% if tutorial %}{{ tutorial.content }}{% endif %}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -207,15 +213,13 @@
                                                    value="{% if tutorial %}{{ tutorial.cover_image }}{% endif %}" 
                                                    placeholder="输入图片URL">
                                         </div>
-                                        {% if tutorial and tutorial.cover_image %}
-                                        <div class="text-center">
-                                            <img id="coverPreview" src="{{ tutorial.cover_image }}" alt="封面预览" class="cover-image-preview">
-                                        </div>
-                                        {% else %}
-                                        <div id="coverPreview" class="text-center text-muted" style="display: none;">
+                                        <div id="coverPreview" class="text-center" {% if not tutorial or not tutorial.cover_image %}style="display: none;"{% endif %}>
+                                            {% if tutorial and tutorial.cover_image %}
+                                            <img src="{{ tutorial.cover_image }}" alt="封面预览" class="cover-image-preview">
+                                            {% else %}
                                             <img alt="封面预览" class="cover-image-preview">
+                                            {% endif %}
                                         </div>
-                                        {% endif %}
                                         <small class="form-text text-muted">建议尺寸: 400x300 像素</small>
                                     </div>
                                 </div>
@@ -265,315 +269,167 @@
         </div>
     </div>
 </div>
-
-<!-- 模板选择模态框 -->
-<div class="modal fade" id="templateModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">选择教程模板</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="card template-card" onclick="useTemplate('basic')">
-                            <div class="card-body text-center">
-                                <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
-                                <h6>基础模板</h6>
-                                <small class="text-muted">包含标题、介绍、内容结构</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card template-card" onclick="useTemplate('steps')">
-                            <div class="card-body text-center">
-                                <i class="fas fa-list-ol fa-2x text-success mb-2"></i>
-                                <h6>步骤模板</h6>
-                                <small class="text-muted">适合操作教程，包含详细步骤</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="card template-card" onclick="useTemplate('faq')">
-                            <div class="card-body text-center">
-                                <i class="fas fa-question-circle fa-2x text-warning mb-2"></i>
-                                <h6>问答模板</h6>
-                                <small class="text-muted">常见问题解答格式</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- Editor.md JavaScript -->
-<script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/editormd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/prettify.min.js"></script>
 <script>
-let editor;
-let quillEditor;
-let isPreviewMode = false;
-let currentEditorMode = 'markdown';
+// 全局变量
+let isInitialized = false;
 
-// 确保jQuery加载完成后再初始化
-function initializePage() {
-    // 检查jQuery是否可用
-    if (typeof $ === 'undefined') {
-        console.error('jQuery未加载，延迟初始化');
-        setTimeout(initializePage, 500);
-        return;
-    }
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    if (isInitialized) return;
+    isInitialized = true;
     
-    $(document).ready(function() {
-        // 初始化编辑器
-        initEditors();
-        
-        // 编辑器模式切换
-        $('input[name="editorMode"]').on('change', function() {
-            switchEditorMode($(this).val());
-        });
-        
-        // 摘要字数统计
-        $('#summary').on('input', function() {
-            const length = $(this).val().length;
-            $('#summaryCount').text(length);
-            if (length > 300) {
-                $('#summaryCount').addClass('text-danger');
-            } else {
-                $('#summaryCount').removeClass('text-danger');
-            }
-        });
-        
-        // 封面图片预览
-        $('#cover_image').on('input', function() {
-            const url = $(this).val();
-            if (url) {
-                $('#coverPreview img').attr('src', url);
-                $('#coverPreview').show();
-            } else {
-                $('#coverPreview').hide();
-            }
-        });
-        
-        // Markdown 文件导入
-        setupMarkdownImport();
-        
-        // 表单提交处理
-        $('#tutorialForm').on('submit', function() {
-            syncEditorContent();
-        });
-    });
-}
+    // 初始化所有功能
+    initSummaryCounter();
+    initCoverPreview();
+    initMarkdownImport();
+    
+    console.log('教程编辑页面初始化完成');
+});
 
-// 启动初始化
-initializePage();
-
-// 通用通知函数
+// 通知函数
 function showNotification(message, type = 'info') {
-    // 创建通知元素
     const notification = document.createElement('div');
-    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
     
-    // 添加到页面
     document.body.appendChild(notification);
     
-    // 3秒后自动消失
+    // 显示动画
+    setTimeout(() => notification.classList.add('show'), 100);
+    
+    // 自动隐藏
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
+        notification.classList.remove('show');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
     }, 3000);
 }
 
-// 初始化所有编辑器
-function initEditors() {
-    // 尝试初始化 Markdown 编辑器
-    initMarkdownEditor();
+// 摘要字数统计
+function initSummaryCounter() {
+    const summaryInput = document.getElementById('summary');
+    const summaryCount = document.getElementById('summaryCount');
     
-    // 初始化富文本编辑器
-    initRichTextEditor();
-}
-
-// 初始化 Markdown 编辑器
-function initMarkdownEditor() {
-    try {
-        // 检查 editormd 是否可用
-        if (typeof editormd === 'undefined') {
-            console.warn('Editor.md 未加载，将使用简单文本框');
-            $('#editormd').html('<textarea class="form-control" name="content" rows="20" placeholder="请输入 Markdown 内容...">' + $('#markdownContent').val() + '</textarea>');
-            return;
+    if (!summaryInput || !summaryCount) return;
+    
+    summaryInput.addEventListener('input', function() {
+        const length = this.value.length;
+        summaryCount.textContent = length;
+        
+        if (length > 300) {
+            summaryCount.className = 'text-danger';
+        } else {
+            summaryCount.className = '';
         }
-        
-        editor = editormd("editormd", {
-            width: "100%",
-            height: 600,
-            syncScrolling: "single",
-            path: "https://cdn.jsdelivr.net/npm/editor.md@1.5.0/lib/",
-            placeholder: "请输入教程内容，支持 Markdown 语法...",
-            emoji: true,
-            taskList: true,
-            tex: false, // 禁用数学公式以提高兼容性
-            flowChart: false,
-            sequenceDiagram: false,
-            toolbarIcons: [
-                "undo", "redo", "|", 
-                "bold", "del", "italic", "quote", "|", 
-                "h1", "h2", "h3", "h4", "h5", "h6", "|",
-                "list-ul", "list-ol", "hr", "|",
-                "link", "image", "code", "code-block", "table", "|",
-                "watch", "preview", "fullscreen", "clear", "search"
-            ],
-            lang: {
-                name: "zh-cn",
-                description: "Markdown编辑器"
-            },
-            onload: function() {
-                console.log('Markdown Editor loaded successfully');
-            },
-            onchange: function() {
-                // 自动保存内容
-                syncEditorContent();
-            }
-        });
-    } catch (error) {
-        console.error('Markdown编辑器初始化失败:', error);
-        // 降级到简单文本框
-        $('#editormd').html('<textarea class="form-control" name="content" rows="20" placeholder="请输入 Markdown 内容...">' + $('#markdownContent').val() + '</textarea>');
-    }
+    });
 }
 
-// 初始化富文本编辑器
-function initRichTextEditor() {
-    try {
-        if (typeof Quill !== 'undefined') {
-            quillEditor = new Quill('#quillEditor', {
-                theme: 'snow',
-                modules: {
-                    toolbar: [
-                        [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'color': [] }, { 'background': [] }],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'indent': '-1'}, { 'indent': '+1' }],
-                        [{ 'align': [] }],
-                        ['link', 'image', 'code-block'],
-                        ['clean']
-                    ]
-                },
-                placeholder: '请输入教程内容...'
-            });
+// 封面图片预览
+function initCoverPreview() {
+    const coverInput = document.getElementById('cover_image');
+    const coverPreview = document.getElementById('coverPreview');
+    const coverImg = coverPreview.querySelector('img');
+    
+    if (!coverInput || !coverPreview || !coverImg) return;
+    
+    coverInput.addEventListener('input', function() {
+        const url = this.value.trim();
+        if (url) {
+            coverImg.src = url;
+            coverPreview.style.display = 'block';
             
-            // 设置初始内容
-            const initialContent = $('#richtextContent').val();
-            if (initialContent) {
-                quillEditor.root.innerHTML = initialContent;
-            }
+            // 检查图片是否能正常加载
+            coverImg.onload = function() {
+                showNotification('封面图片预览更新成功', 'success');
+            };
             
-            // 监听内容变化
-            quillEditor.on('text-change', function() {
-                syncEditorContent();
-            });
-            
-            console.log('富文本编辑器初始化成功');
+            coverImg.onerror = function() {
+                showNotification('图片链接无效或无法访问', 'warning');
+            };
+        } else {
+            coverPreview.style.display = 'none';
         }
-    } catch (error) {
-        console.error('富文本编辑器初始化失败:', error);
-    }
+    });
 }
 
-// 设置 Markdown 文档导入
-function setupMarkdownImport() {
-    try {
-        const importArea = $('#markdownImport');
-        const fileInput = $('#markdownFile');
-        
-        if (importArea.length === 0 || fileInput.length === 0) {
-            console.warn('Markdown导入元素未找到，跳过初始化');
-            return;
+// Markdown文件导入
+function initMarkdownImport() {
+    const importArea = document.getElementById('markdownImport');
+    const fileInput = document.getElementById('markdownFile');
+    
+    if (!importArea || !fileInput) return;
+    
+    // 点击上传
+    importArea.addEventListener('click', function() {
+        fileInput.click();
+    });
+    
+    // 文件选择
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            readMarkdownFile(file);
         }
+    });
+    
+    // 拖拽上传
+    importArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    importArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    
+    importArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
         
-        // 点击导入
-        importArea.on('click', function() {
-            fileInput.click();
-        });
-        
-        // 文件选择
-        fileInput.on('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                readMarkdownFile(file);
-            }
-        });
-        
-        // 拖拽导入
-        importArea.on('dragover', function(e) {
-            e.preventDefault();
-            $(this).addClass('dragover');
-        });
-        
-        importArea.on('dragleave', function(e) {
-            e.preventDefault();
-            $(this).removeClass('dragover');
-        });
-        
-        importArea.on('drop', function(e) {
-            e.preventDefault();
-            $(this).removeClass('dragover');
-            
-            const files = e.originalEvent.dataTransfer.files;
-            if (files.length > 0) {
-                readMarkdownFile(files[0]);
-            }
-        });
-        
-        console.log('Markdown导入功能初始化完成');
-    } catch (error) {
-        console.error('Markdown导入功能初始化失败:', error);
-    }
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            readMarkdownFile(files[0]);
+        }
+    });
 }
 
-// 读取 Markdown 文件
+// 读取Markdown文件
 function readMarkdownFile(file) {
     if (!file.name.match(/\.(md|markdown|txt)$/i)) {
-        showNotification('请选择 .md 或 .markdown 文件', 'warning');
+        showNotification('请选择 .md、.markdown 或 .txt 文件', 'warning');
         return;
     }
     
     const reader = new FileReader();
+    
     reader.onload = function(e) {
         try {
             const content = e.target.result;
-            
-            // 尝试解析标题和内容
             const lines = content.split('\n');
+            
             let title = '';
             let summary = '';
             let bodyContent = content;
             
-            // 查找第一个 # 标题作为教程标题
+            // 查找第一个 # 标题
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (line.startsWith('# ')) {
                     title = line.substring(2).trim();
-                    // 移除标题行
                     lines.splice(i, 1);
                     bodyContent = lines.join('\n');
                     break;
                 }
             }
             
-            // 生成摘要（取前200个字符）
+            // 生成摘要
             const plainText = bodyContent.replace(/[#*`\[\]]/g, '').trim();
             summary = plainText.substring(0, 200) + (plainText.length > 200 ? '...' : '');
             
@@ -582,63 +438,50 @@ function readMarkdownFile(file) {
                 const titleInput = document.getElementById('title');
                 if (titleInput) titleInput.value = title;
             }
+            
             if (summary) {
                 const summaryInput = document.getElementById('summary');
                 if (summaryInput) {
                     summaryInput.value = summary;
-                    // 触发输入事件更新计数器
-                    const event = new Event('input', { bubbles: true });
-                    summaryInput.dispatchEvent(event);
+                    // 触发字数统计更新
+                    summaryInput.dispatchEvent(new Event('input'));
                 }
             }
             
-            // 设置编辑器内容
-            if (currentEditorMode === 'markdown') {
-                if (editor && editor.setMarkdown) {
-                    editor.setMarkdown(bodyContent);
-                } else {
-                    // 降级处理
-                    const textarea = document.querySelector('#editormd textarea, textarea[name="content"]');
-                    if (textarea) textarea.value = bodyContent;
-                }
-            } else if (currentEditorMode === 'richtext' && quillEditor) {
-                // 将Markdown转换为HTML（简单处理）
-                const htmlContent = markdownToHtml(bodyContent);
-                quillEditor.root.innerHTML = htmlContent;
+            // 设置内容
+            const contentTextarea = document.getElementById('contentTextarea');
+            if (contentTextarea) {
+                contentTextarea.value = bodyContent;
             }
             
-            // 提示
             showNotification('Markdown 文件导入成功', 'success');
+            
         } catch (error) {
             console.error('文件读取失败:', error);
-            showNotification('文件导入失败，请检查文件格式', 'danger');
+            showNotification('文件导入失败，请检查文件格式', 'error');
         }
     };
     
     reader.onerror = function() {
-        showNotification('文件读取失败', 'danger');
+        showNotification('文件读取失败', 'error');
     };
     
-    reader.readAsText(file);
-}
-
-// 简单的Markdown转HTML函数
-function markdownToHtml(markdown) {
-    return markdown
-        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-        .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-        .replace(/\*(.*)\*/gim, '<em>$1</em>')
-        .replace(/^\* (.*$)/gim, '<li>$1</li>')
-        .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
-        .replace(/\n/g, '<br>');
+    reader.readAsText(file, 'UTF-8');
 }
 
 // 插入模板
 function insertTemplate(type) {
+    const contentTextarea = document.getElementById('contentTextarea');
+    if (!contentTextarea) return;
+    
+    const currentContent = contentTextarea.value.trim();
+    if (currentContent !== '') {
+        if (!confirm('当前编辑器有内容，确定要替换为模板内容吗？')) {
+            return;
+        }
+    }
+    
     let template = '';
-    let richTemplate = '';
     
     switch(type) {
         case 'basic':
@@ -673,27 +516,6 @@ function insertTemplate(type) {
 - [相关链接1](https://example.com)
 - [相关链接2](https://example.com)
 `;
-            richTemplate = `<h1>教程标题</h1>
-<h2>简介</h2>
-<p>在这里介绍本教程的目标和适用场景。</p>
-<h2>前提条件</h2>
-<ul>
-<li>条件1</li>
-<li>条件2</li>
-<li>条件3</li>
-</ul>
-<h2>主要内容</h2>
-<h3>第一部分</h3>
-<p>详细介绍第一部分内容...</p>
-<h3>第二部分</h3>
-<p>详细介绍第二部分内容...</p>
-<h2>总结</h2>
-<p>总结本教程的要点...</p>
-<h2>延伸阅读</h2>
-<ul>
-<li><a href="https://example.com">相关链接1</a></li>
-<li><a href="https://example.com">相关链接2</a></li>
-</ul>`;
             break;
             
         case 'steps':
@@ -741,35 +563,6 @@ A: 可能的原因是...
 
 恭喜！您已经成功完成了...
 `;
-            richTemplate = `<h1>操作教程</h1>
-<h2>概述</h2>
-<p>本教程将指导您完成...</p>
-<h2>步骤详解</h2>
-<h3>步骤1：准备工作</h3>
-<ol>
-<li>首先...</li>
-<li>然后...</li>
-<li>接下来...</li>
-</ol>
-<blockquote><strong>注意：</strong> 重要提示信息</blockquote>
-<h3>步骤2：核心操作</h3>
-<ol>
-<li>打开...</li>
-<li>点击...</li>
-<li>输入...</li>
-</ol>
-<pre><code># 示例代码
-command example</code></pre>
-<h3>步骤3：验证结果</h3>
-<ol>
-<li>检查...</li>
-<li>确认...</li>
-</ol>
-<h2>常见问题</h2>
-<p><strong>Q: 如果遇到错误怎么办？</strong><br>A: 请检查...</p>
-<p><strong>Q: 为什么没有效果？</strong><br>A: 可能的原因是...</p>
-<h2>完成</h2>
-<p>恭喜！您已经成功完成了...</p>`;
             break;
             
         case 'faq':
@@ -815,133 +608,20 @@ command example</code></pre>
 
 如果以上解答不能解决您的问题，请...
 `;
-            richTemplate = `<h1>常见问题解答</h1>
-<h2>基础问题</h2>
-<h3>Q1: 这是什么？</h3>
-<p><strong>A:</strong> 详细回答...</p>
-<h3>Q2: 如何使用？</h3>
-<p><strong>A:</strong> 使用方法如下：</p>
-<ol>
-<li>第一步</li>
-<li>第二步</li>
-<li>第三步</li>
-</ol>
-<h2>高级问题</h2>
-<h3>Q3: 如何解决复杂问题？</h3>
-<p><strong>A:</strong> 解决方案：</p>
-<ul>
-<li>方案1：...</li>
-<li>方案2：...</li>
-<li>方案3：...</li>
-</ul>
-<h3>Q4: 有什么注意事项？</h3>
-<p><strong>A:</strong> 需要注意：</p>
-<blockquote>⚠️ <strong>重要提醒：</strong> 在操作前请务必...</blockquote>
-<h2>技术问题</h2>
-<h3>Q5: 如何排查错误？</h3>
-<p><strong>A:</strong> 排查步骤：</p>
-<pre><code>错误信息示例</code></pre>
-<p>解决方法：...</p>
-<h2>联系支持</h2>
-<p>如果以上解答不能解决您的问题，请...</p>`;
             break;
     }
     
-    if (currentEditorMode === 'markdown') {
-        if (editor && editor.setMarkdown) {
-            editor.setMarkdown(template);
-        } else {
-            $('#editormd textarea').val(template);
-        }
-    } else if (currentEditorMode === 'richtext' && quillEditor) {
-        quillEditor.root.innerHTML = richTemplate;
-    }
-    
-    $('#templateModal').modal('hide');
-}
-
-// 切换预览模式
-function togglePreview() {
-    if (isPreviewMode) {
-        editor.watch();
-        $('#togglePreview i').removeClass('fa-edit').addClass('fa-eye');
-        isPreviewMode = false;
-    } else {
-        editor.unwatch();
-        $('#togglePreview i').removeClass('fa-eye').addClass('fa-edit');
-        isPreviewMode = true;
-    }
+    contentTextarea.value = template;
+    showNotification(`${type === 'basic' ? '基础' : type === 'steps' ? '步骤' : '问答'}模板已插入`, 'success');
 }
 
 // 保存草稿
 function saveDraft() {
-    $('#status').val('draft');
-    $('#tutorialForm').submit();
-}
-
-// 编辑器模式切换
-function switchEditorMode(mode) {
-    currentEditorMode = mode;
-    
-    if (mode === 'markdown') {
-        $('#editormd').show();
-        $('#richtextEditor').hide();
-        syncEditorContent();
-    } else if (mode === 'richtext') {
-        $('#editormd').hide();
-        $('#richtextEditor').show();
-        syncEditorContent();
+    const statusSelect = document.getElementById('status');
+    if (statusSelect) {
+        statusSelect.value = 'draft';
     }
-}
-
-// 同步编辑器内容
-function syncEditorContent() {
-    try {
-        if (currentEditorMode === 'markdown') {
-            let content = '';
-            if (editor && editor.getMarkdown) {
-                content = editor.getMarkdown();
-            } else {
-                // 降级处理
-                content = $('#editormd textarea[name="content"]').val() || '';
-            }
-            $('input[name="content"]').remove(); // 移除可能存在的input
-            if ($('textarea[name="content"]').length === 0) {
-                $('#tutorialForm').append('<textarea name="content" style="display:none;"></textarea>');
-            }
-            $('textarea[name="content"]').val(content);
-        } else if (currentEditorMode === 'richtext' && quillEditor) {
-            const content = quillEditor.root.innerHTML;
-            $('#richtextContent').val(content);
-            $('input[name="content"]').remove(); // 移除可能存在的input
-            if ($('textarea[name="content"]').length === 0) {
-                $('#tutorialForm').append('<textarea name="content" style="display:none;"></textarea>');
-            }
-            $('textarea[name="content"]').val(content);
-        }
-    } catch (error) {
-        console.error('内容同步失败:', error);
-    }
-}
-
-// 使用模板
-function useTemplate(type) {
-    let currentContent = '';
-    
-    if (currentEditorMode === 'markdown') {
-        currentContent = editor && editor.getMarkdown ? editor.getMarkdown() : '';
-    } else {
-        currentContent = quillEditor ? quillEditor.root.innerHTML : '';
-    }
-    
-    if (currentContent.trim() !== '') {
-        if (!confirm('当前编辑器有内容，确定要替换为模板内容吗？')) {
-            return;
-        }
-    }
-    insertTemplate(type);
+    document.getElementById('tutorialForm').submit();
 }
 </script>
-
-<!-- 自定义通知系统已集成 -->
 {% endblock %}
