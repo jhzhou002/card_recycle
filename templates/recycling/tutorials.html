@@ -7,6 +7,9 @@
 .tutorial-card {
     transition: all 0.3s ease;
     border: 1px solid #dee2e6;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
 }
 
 .tutorial-card:hover {
@@ -160,7 +163,7 @@
             <div id="tutorialsList">
                 {% if tutorials %}
                 {% for tutorial in tutorials %}
-                <div class="mb-3 tutorial-item" data-category="{{ tutorial.category.id }}">
+                <div class="tutorial-item" data-category="{{ tutorial.category.id }}">
                     <div class="card tutorial-card" data-url="{% url 'tutorial_detail' tutorial.id %}" style="cursor: pointer;">
                         <div class="row g-0">
                             <div class="col-md-3">

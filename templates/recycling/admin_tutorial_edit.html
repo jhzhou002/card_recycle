@@ -285,6 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initSummaryCounter();
     initCoverPreview();
     initMarkdownImport();
+    initPasteImageSupport();
     
     console.log('教程编辑页面初始化完成');
 });
@@ -622,6 +623,103 @@ function saveDraft() {
         statusSelect.value = 'draft';
     }
     document.getElementById('tutorialForm').submit();
+}
+
+// 初始化粘贴图片支持
+function initPasteImageSupport() {
+    const contentTextarea = document.getElementById('contentTextarea');
+    
+    if (!contentTextarea) return;
+    
+    contentTextarea.addEventListener('paste', function(e) {
+        const items = e.clipboardData.items;
+        
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            
+            // 检查是否为图片
+            if (item.type.indexOf('image') !== -1) {
+                e.preventDefault();
+                
+                const file = item.getAsFile();
+                uploadPastedImage(file, contentTextarea);
+                break;
+            }
+        }
+    });
+    
+    // 添加拖拽支持
+    contentTextarea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.backgroundColor = '#f0f8ff';
+    });
+    
+    contentTextarea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.backgroundColor = '';
+    });
+    
+    contentTextarea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.backgroundColor = '';
+        
+        const files = e.dataTransfer.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            
+            if (file.type.indexOf('image') !== -1) {
+                uploadPastedImage(file, contentTextarea);
+            }
+        }
+    });
+}
+
+// 上传粘贴的图片
+function uploadPastedImage(file, textarea) {
+    // 显示上传中提示
+    showNotification('正在上传图片...', 'info');
+    
+    // 创建FormData
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // 获取CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // 上传到七牛云
+    fetch('/api/upload-image/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 获取当前光标位置
+            const cursorPos = textarea.selectionStart;
+            const textBefore = textarea.value.substring(0, cursorPos);
+            const textAfter = textarea.value.substring(cursorPos);
+            
+            // 插入图片Markdown语法
+            const imageMarkdown = `\n![图片描述](${data.url})\n`;
+            textarea.value = textBefore + imageMarkdown + textAfter;
+            
+            // 设置新的光标位置
+            const newPos = cursorPos + imageMarkdown.length;
+            textarea.setSelectionRange(newPos, newPos);
+            
+            showNotification('图片上传成功', 'success');
+        } else {
+            showNotification('图片上传失败：' + (data.error || '未知错误'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('上传错误:', error);
+        showNotification('图片上传失败：网络错误', 'error');
+    });
 }
 </script>
 {% endblock %}

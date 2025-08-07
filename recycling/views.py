@@ -1790,18 +1790,23 @@ def tutorials(request):
 
 def tutorial_detail(request, tutorial_id):
     """教程详情页面"""
-    tutorial = get_object_or_404(Tutorial, id=tutorial_id, status='published')
+    # 如果是管理员，可以查看所有状态的教程；普通用户只能查看已发布的教程
+    if request.user.is_staff:
+        tutorial = get_object_or_404(Tutorial, id=tutorial_id)
+    else:
+        tutorial = get_object_or_404(Tutorial, id=tutorial_id, status='published')
     
-    # 增加浏览次数
-    tutorial.increment_views()
+    # 只有已发布的教程才增加浏览次数
+    if tutorial.status == 'published':
+        tutorial.increment_views()
     
-    # 获取相关教程（同类别的其他教程）
+    # 获取相关教程（同类别的其他已发布教程）
     related_tutorials = Tutorial.objects.filter(
         category=tutorial.category,
         status='published'
     ).exclude(id=tutorial.id)[:5]
     
-    # 获取教程统计
+    # 获取教程统计（只统计已发布的教程）
     total_tutorials = Tutorial.objects.filter(status='published').count()
     category_tutorials = Tutorial.objects.filter(
         category=tutorial.category,

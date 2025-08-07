@@ -72,14 +72,42 @@
 }
 
 .tutorial-content img {
-    max-width: 100% !important;
+    max-width: calc(100% - 2px) !important;
     width: auto !important;
     height: auto !important;
     border-radius: 8px;
-    margin: 1.5rem 0;
-    box-sizing: border-box;
-    display: block;
+    margin: 1.5rem auto;
+    box-sizing: border-box !important;
+    display: block !important;
     object-fit: contain;
+    padding: 0 !important;
+    border: none !important;
+    outline: none !important;
+}
+
+.tutorial-content figure {
+    max-width: 100% !important;
+    margin: 1.5rem auto !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+}
+
+.tutorial-content figure img {
+    margin: 0 !important;
+}
+
+/* 针对可能的图片容器 */
+.tutorial-content p img,
+.tutorial-content div img,
+.tutorial-content span img {
+    max-width: calc(100% - 4px) !important;
+}
+
+/* 强制覆盖任何内联样式 */
+.tutorial-content *[style*="width"] img {
+    width: auto !important;
+    max-width: calc(100% - 4px) !important;
 }
 
 .tutorial-content table {
@@ -125,6 +153,16 @@
                                 {% if tutorial.is_featured %}
                                 <span class="badge bg-warning text-dark">
                                     <i class="fas fa-star me-1"></i>推荐
+                                </span>
+                                {% endif %}
+                                {% if tutorial.status == 'draft' %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-eye me-1"></i>草稿预览
+                                </span>
+                                {% endif %}
+                                {% if tutorial.status == 'archived' %}
+                                <span class="badge bg-dark">
+                                    <i class="fas fa-archive me-1"></i>已归档
                                 </span>
                                 {% endif %}
                             </div>
