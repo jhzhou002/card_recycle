@@ -28,19 +28,9 @@
     <div class="card-body">
         <!-- Tab 导航 -->
         <ul class="nav nav-tabs mb-3" id="recordTabs" role="tablist">
-            {% if submission_type == 'all' or submission_type == 'card' %}
-            <li class="nav-item" role="presentation">
-                <button class="nav-link {% if submission_type != 'bottle_cap' %}active{% endif %}" 
-                        id="card-tab" data-bs-toggle="tab" data-bs-target="#card-records" 
-                        type="button" role="tab">
-                    <i class="fas fa-credit-card me-1"></i>卡券记录 
-                    <span class="badge bg-secondary ms-1">{{ submissions_page_obj.paginator.count }}</span>
-                </button>
-            </li>
-            {% endif %}
             {% if submission_type == 'all' or submission_type == 'bottle_cap' %}
             <li class="nav-item" role="presentation">
-                <button class="nav-link {% if submission_type == 'bottle_cap' %}active{% endif %}" 
+                <button class="nav-link {% if submission_type != 'card' %}active{% endif %}" 
                         id="bottle-cap-tab" data-bs-toggle="tab" data-bs-target="#bottle-cap-records" 
                         type="button" role="tab">
                     <i class="fas fa-bottle-water me-1"></i>瓶盖记录 
@@ -48,13 +38,127 @@
                 </button>
             </li>
             {% endif %}
+            {% if submission_type == 'all' or submission_type == 'card' %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link {% if submission_type == 'card' %}active{% endif %}" 
+                        id="card-tab" data-bs-toggle="tab" data-bs-target="#card-records" 
+                        type="button" role="tab">
+                    <i class="fas fa-credit-card me-1"></i>卡券记录 
+                    <span class="badge bg-secondary ms-1">{{ submissions_page_obj.paginator.count }}</span>
+                </button>
+            </li>
+            {% endif %}
         </ul>
 
         <!-- Tab 内容 -->
         <div class="tab-content" id="recordTabsContent">
+            <!-- 瓶盖记录 -->
+            {% if submission_type == 'all' or submission_type == 'bottle_cap' %}
+            <div class="tab-pane fade {% if submission_type != 'card' %}show active{% endif %}" 
+                 id="bottle-cap-records" role="tabpanel">
+                {% if bottle_caps_page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>编号</th>
+                                <th>数量</th>
+                                <th>状态</th>
+                                <th class="d-none-mobile">管理员备注</th>
+                                <th class="d-none-mobile">提交时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bottle_cap in bottle_caps_page_obj %}
+                            <tr>
+                                <td>{{ bottle_cap.id }}</td>
+                                <td>
+                                    <span class="text-info">{{ bottle_cap.get_qr_code_count }}</span>
+                                    <div class="d-block d-sm-none">
+                                        {% if bottle_cap.is_settled %}
+                                        <small class="badge bg-success">已结算</small>
+                                        {% else %}
+                                        <small class="badge bg-warning">待结算</small>
+                                        {% endif %}
+                                        <br><small class="text-muted">{{ bottle_cap.submitted_at|date:"m-d H:i" }}</small>
+                                        {% if bottle_cap.admin_remark %}
+                                        <br><small class="text-info">备注: {{ bottle_cap.admin_remark|truncatechars:15 }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if bottle_cap.is_settled %}
+                                    <span class="badge bg-success">已结算</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">待结算</span>
+                                    {% endif %}
+                                </td>
+                                <td class="d-none-mobile">
+                                    {% if bottle_cap.admin_remark %}
+                                    <span class="text-muted" title="{{ bottle_cap.admin_remark }}">
+                                        {{ bottle_cap.admin_remark|truncatechars:30 }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="d-none-mobile">{{ bottle_cap.submitted_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'bottle_cap_detail' bottle_cap.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">查看</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 瓶盖记录分页 -->
+                {% if bottle_caps_page_obj.has_other_pages %}
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if bottle_caps_page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ bottle_caps_page_obj.previous_page_number }}">上一页</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in bottle_caps_page_obj.paginator.page_range %}
+                        {% if bottle_caps_page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if bottle_caps_page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ bottle_caps_page_obj.next_page_number }}">下一页</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bottle-water fa-3x text-muted mb-3"></i>
+                    <h5>暂无瓶盖提交记录</h5>
+                    <p class="text-muted">您还没有提交任何瓶盖</p>
+                    <a href="{% url 'submit_bottle_cap' %}" class="btn btn-primary">立即提交</a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
             <!-- 卡券记录 -->
             {% if submission_type == 'all' or submission_type == 'card' %}
-            <div class="tab-pane fade {% if submission_type != 'bottle_cap' %}show active{% endif %}" 
+            <div class="tab-pane fade {% if submission_type == 'card' %}show active{% endif %}" 
                  id="card-records" role="tabpanel">
                 {% if submissions_page_obj %}
                 <div class="table-responsive">
@@ -160,110 +264,6 @@
                     <h5>暂无卡券提交记录</h5>
                     <p class="text-muted">您还没有提交任何卡券</p>
                     <a href="{% url 'submit_card' %}" class="btn btn-primary">立即提交</a>
-                </div>
-                {% endif %}
-            </div>
-            {% endif %}
-            
-            <!-- 瓶盖记录 -->
-            {% if submission_type == 'all' or submission_type == 'bottle_cap' %}
-            <div class="tab-pane fade {% if submission_type == 'bottle_cap' %}show active{% endif %}" 
-                 id="bottle-cap-records" role="tabpanel">
-                {% if bottle_caps_page_obj %}
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>编号</th>
-                                <th>数量</th>
-                                <th>状态</th>
-                                <th class="d-none-mobile">管理员备注</th>
-                                <th class="d-none-mobile">提交时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for bottle_cap in bottle_caps_page_obj %}
-                            <tr>
-                                <td>{{ bottle_cap.id }}</td>
-                                <td>
-                                    <span class="text-info">{{ bottle_cap.get_qr_code_count }}</span>
-                                    <div class="d-block d-sm-none">
-                                        {% if bottle_cap.is_settled %}
-                                        <small class="badge bg-success">已结算</small>
-                                        {% else %}
-                                        <small class="badge bg-warning">待结算</small>
-                                        {% endif %}
-                                        <br><small class="text-muted">{{ bottle_cap.submitted_at|date:"m-d H:i" }}</small>
-                                        {% if bottle_cap.admin_remark %}
-                                        <br><small class="text-info">备注: {{ bottle_cap.admin_remark|truncatechars:15 }}</small>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if bottle_cap.is_settled %}
-                                    <span class="badge bg-success">已结算</span>
-                                    {% else %}
-                                    <span class="badge bg-warning">待结算</span>
-                                    {% endif %}
-                                </td>
-                                <td class="d-none-mobile">
-                                    {% if bottle_cap.admin_remark %}
-                                    <span class="text-muted" title="{{ bottle_cap.admin_remark }}">
-                                        {{ bottle_cap.admin_remark|truncatechars:30 }}
-                                    </span>
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td class="d-none-mobile">{{ bottle_cap.submitted_at|date:"Y-m-d H:i" }}</td>
-                                <td>
-                                    <a href="{% url 'bottle_cap_detail' bottle_cap.id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i> <span class="d-none d-sm-inline">查看</span>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- 瓶盖记录分页 -->
-                {% if bottle_caps_page_obj.has_other_pages %}
-                <nav>
-                    <ul class="pagination justify-content-center">
-                        {% if bottle_caps_page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ bottle_caps_page_obj.previous_page_number }}">上一页</a>
-                        </li>
-                        {% endif %}
-                        
-                        {% for num in bottle_caps_page_obj.paginator.page_range %}
-                        {% if bottle_caps_page_obj.number == num %}
-                        <li class="page-item active">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                        {% else %}
-                        <li class="page-item">
-                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ num }}">{{ num }}</a>
-                        </li>
-                        {% endif %}
-                        {% endfor %}
-                        
-                        {% if bottle_caps_page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?type={{ submission_type }}&bottle_caps_page={{ bottle_caps_page_obj.next_page_number }}">下一页</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-bottle-water fa-3x text-muted mb-3"></i>
-                    <h5>暂无瓶盖提交记录</h5>
-                    <p class="text-muted">您还没有提交任何瓶盖</p>
-                    <a href="{% url 'submit_bottle_cap' %}" class="btn btn-primary">立即提交</a>
                 </div>
                 {% endif %}
             </div>
