@@ -102,41 +102,124 @@
             </h4>
             <div id="tutorialsList">
                 {% if tutorials %}
-                <div class="row">
-                    {% for tutorial in tutorials %}
-                    <div class="col-md-6 col-lg-4 mb-4 tutorial-item" data-category="{{ tutorial.category.id }}">
-                        <div class="card h-100">
-                            <div class="position-relative">
-                                {% if tutorial.cover_image %}
-                                <img src="{{ tutorial.cover_image }}" class="card-img-top" alt="{{ tutorial.title }}" style="height: 200px; object-fit: cover;">
-                                {% else %}
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
-                                    <i class="fas fa-image fa-3x text-muted"></i>
+                {% for tutorial in tutorials %}
+                <div class="mb-3 tutorial-item" data-category="{{ tutorial.category.id }}">
+                    <div class="card">
+                        <div class="row g-0">
+                            <div class="col-md-3">
+                                <div class="position-relative h-100">
+                                    {% if tutorial.cover_image %}
+                                    <img src="{{ tutorial.cover_image }}" class="img-fluid rounded-start h-100" alt="{{ tutorial.title }}" style="object-fit: cover; min-height: 150px;">
+                                    {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center rounded-start h-100" style="min-height: 150px;">
+                                        <i class="fas fa-image fa-2x text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <span class="position-absolute top-0 end-0 badge bg-secondary m-2">
+                                        {{ tutorial.published_at|date:"M d" }}
+                                    </span>
                                 </div>
-                                {% endif %}
-                                <span class="position-absolute top-0 end-0 badge bg-secondary m-2">
-                                    {{ tutorial.published_at|date:"M d" }}
-                                </span>
                             </div>
-                            <div class="card-body d-flex flex-column">
-                                <div class="mb-2">
-                                    <span class="badge bg-primary">{{ tutorial.category.name }}</span>
-                                </div>
-                                <h5 class="card-title">{{ tutorial.title }}</h5>
-                                <p class="card-text text-muted flex-grow-1">{{ tutorial.summary }}</p>
-                                <div class="d-flex justify-content-between align-items-center mt-auto">
-                                    <small class="text-muted">
-                                        <i class="fas fa-eye me-1"></i>{{ tutorial.views }} 浏览
-                                    </small>
-                                    <a href="{% url 'tutorial_detail' tutorial.id %}" class="btn btn-outline-primary btn-sm">
-                                        阅读教程 <i class="fas fa-arrow-right ms-1"></i>
-                                    </a>
+                            <div class="col-md-9">
+                                <div class="card-body h-100 d-flex flex-column">
+                                    <div class="d-flex align-items-start justify-content-between mb-2">
+                                        <span class="badge bg-primary">{{ tutorial.category.name }}</span>
+                                        <small class="text-muted">
+                                            <i class="fas fa-eye me-1"></i>{{ tutorial.views }} 浏览
+                                        </small>
+                                    </div>
+                                    <h5 class="card-title mb-2">{{ tutorial.title }}</h5>
+                                    <p class="card-text text-muted flex-grow-1 mb-3">{{ tutorial.summary|truncatechars:120 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>{{ tutorial.published_at|date:"Y年m月d日" }}
+                                        </small>
+                                        <a href="{% url 'tutorial_detail' tutorial.id %}" class="btn btn-outline-primary btn-sm">
+                                            阅读教程 <i class="fas fa-arrow-right ms-1"></i>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
+                {% endfor %}
+                
+                <!-- 分页导航 -->
+                {% if tutorials.has_other_pages %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="教程分页">
+                        <ul class="pagination">
+                            {% if tutorials.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tutorials.previous_page_number }}" aria-label="上一页">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-label="上一页">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </span>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in tutorials.paginator.page_range %}
+                            {% if tutorials.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% elif num > tutorials.number|add:'-3' and num < tutorials.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% elif num == 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1">1</a>
+                            </li>
+                            {% if tutorials.number > 4 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            {% elif num == tutorials.paginator.num_pages %}
+                            {% if tutorials.number < tutorials.paginator.num_pages|add:'-3' %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tutorials.paginator.num_pages }}">{{ tutorials.paginator.num_pages }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                            
+                            {% if tutorials.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tutorials.next_page_number }}" aria-label="下一页">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link" aria-label="下一页">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                
+                <!-- 分页信息 -->
+                <div class="text-center mt-2">
+                    <small class="text-muted">
+                        显示第 {{ tutorials.start_index }} - {{ tutorials.end_index }} 条，共 {{ tutorials.paginator.count }} 条教程
+                        （第 {{ tutorials.number }} 页，共 {{ tutorials.paginator.num_pages }} 页）
+                    </small>
+                </div>
+                {% endif %}
+                
                 {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
@@ -175,8 +258,8 @@ $(document).ready(function() {
         // 如果没有匹配的教程，显示提示
         if (visibleCount === 0 && selectedCategory !== '') {
             if ($('#noResultsMessage').length === 0) {
-                $('#tutorialsList .row').append(`
-                    <div id="noResultsMessage" class="col-12 text-center py-5">
+                $('#tutorialsList').append(`
+                    <div id="noResultsMessage" class="text-center py-5">
                         <i class="fas fa-search fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">未找到相关教程</h5>
                         <p class="text-muted">请尝试选择其他类别</p>

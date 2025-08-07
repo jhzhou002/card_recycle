@@ -1758,17 +1758,31 @@ def tutorials(request):
     # 获取推荐教程
     featured_tutorials = tutorials_queryset.filter(is_featured=True)[:3]
     
-    # 获取所有教程（用于筛选）
-    all_tutorials = tutorials_queryset
+    # 分页处理
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    
+    paginator = Paginator(tutorials_queryset, 10)  # 每页显示10条
+    page_number = request.GET.get('page')
+    
+    try:
+        tutorials_page = paginator.page(page_number)
+    except PageNotAnInteger:
+        # 如果页数不是整数，显示第一页
+        tutorials_page = paginator.page(1)
+    except EmptyPage:
+        # 如果页数超出范围，显示最后一页
+        tutorials_page = paginator.page(paginator.num_pages)
     
     # 获取所有类别
     categories = Category.objects.all().order_by('name')
     
     context = {
-        'tutorials': all_tutorials,
+        'tutorials': tutorials_page,
         'featured_tutorials': featured_tutorials,
         'categories': categories,
-        'tutorials_count': all_tutorials.count(),
+        'tutorials_count': tutorials_queryset.count(),
+        'paginator': paginator,
+        'page_obj': tutorials_page,
     }
     
     return render(request, 'recycling/tutorials.html', context)
