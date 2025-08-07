@@ -5,12 +5,82 @@
 <li class="breadcrumb-item active">教程管理</li>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.tutorial-card {
+    transition: all 0.3s ease;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+.tutorial-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #007bff;
+}
+
+.tutorial-card:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tutorial-card .card-title {
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+.tutorial-card:hover .card-title {
+    color: #007bff;
+}
+
+.tutorial-card .card-body {
+    position: relative;
+}
+
+.tutorial-card:hover .card-body::after {
+    content: '\f044';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #007bff;
+    opacity: 0.7;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50%) translateX(-10px);
+    }
+    to {
+        opacity: 0.7;
+        transform: translateY(-50%) translateX(0);
+    }
+}
+
+.admin-actions {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.tutorial-card:hover .admin-actions {
+    opacity: 1;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center">
             <h4 class="mb-0 me-3">教程管理</h4>
-            <span class="badge bg-info">共 {{ tutorials.count }} 篇</span>
+            <span class="badge bg-info" id="tutorialsCount">共 {{ tutorials.count }} 篇</span>
         </div>
         <a href="{% url 'admin_tutorial_add' %}" class="btn btn-primary">
             <i class="fas fa-plus"></i> 新增教程
@@ -52,98 +122,98 @@
         </div>
     </div>
     
-    {% if tutorials %}
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>标题</th>
-                    <th>类别</th>
-                    <th>状态</th>
-                    <th>作者</th>
-                    <th>浏览次数</th>
-                    <th>发布时间</th>
-                    <th>更新时间</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="tutorialsTableBody">
-                {% for tutorial in tutorials %}
-                <tr data-status="{{ tutorial.status }}" data-category="{{ tutorial.category.id }}" data-title="{{ tutorial.title|lower }}">
-                    <td>
-                        <div class="d-flex align-items-center">
+    <!-- 教程卡片列表 -->
+    <div id="tutorialsList">
+        {% if tutorials %}
+        {% for tutorial in tutorials %}
+        <div class="tutorial-item" data-status="{{ tutorial.status }}" data-category="{{ tutorial.category.id }}" data-title="{{ tutorial.title|lower }}">
+            <div class="card tutorial-card" data-url="{% url 'admin_tutorial_edit' tutorial.id %}">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        <div class="position-relative h-100">
                             {% if tutorial.cover_image %}
-                            <img src="{{ tutorial.cover_image }}" alt="封面" class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                            <img src="{{ tutorial.cover_image }}" class="img-fluid rounded-start h-100" alt="{{ tutorial.title }}" style="object-fit: cover; min-height: 150px;">
+                            {% else %}
+                            <div class="bg-light d-flex align-items-center justify-content-center rounded-start h-100" style="min-height: 150px;">
+                                <i class="fas fa-image fa-2x text-muted"></i>
+                            </div>
                             {% endif %}
-                            <div>
-                                <strong>{{ tutorial.title|truncatechars:40 }}</strong>
-                                {% if tutorial.is_featured %}
-                                <span class="badge bg-warning text-dark ms-1">
-                                    <i class="fas fa-star"></i>
-                                </span>
-                                {% endif %}
-                                <br>
-                                <small class="text-muted">{{ tutorial.summary|truncatechars:50 }}</small>
+                            <span class="position-absolute top-0 end-0 badge bg-secondary m-2">
+                                {{ tutorial.updated_at|date:"M d" }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="card-body h-100 d-flex flex-column">
+                            <div class="d-flex align-items-start justify-content-between mb-2">
+                                <div class="d-flex align-items-center flex-wrap">
+                                    <span class="badge bg-primary me-2">{{ tutorial.category.name }}</span>
+                                    {% if tutorial.status == 'published' %}
+                                        <span class="badge bg-success me-2">已发布</span>
+                                    {% elif tutorial.status == 'draft' %}
+                                        <span class="badge bg-warning me-2">草稿</span>
+                                    {% elif tutorial.status == 'archived' %}
+                                        <span class="badge bg-secondary me-2">已归档</span>
+                                    {% endif %}
+                                    {% if tutorial.is_featured %}
+                                    <span class="badge bg-warning text-dark me-2">
+                                        <i class="fas fa-star me-1"></i>推荐
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="admin-actions">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'tutorial_detail' tutorial.id %}" 
+                                           class="btn btn-sm btn-outline-info" 
+                                           target="_blank" 
+                                           title="预览"
+                                           onclick="event.stopPropagation();">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                onclick="event.stopPropagation(); confirmDelete({{ tutorial.id }}, '{{ tutorial.title }}');"
+                                                title="删除">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <h5 class="card-title mb-2">{{ tutorial.title }}</h5>
+                            <p class="card-text text-muted flex-grow-1 mb-3">{{ tutorial.summary|truncatechars:120 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center text-muted small">
+                                    <div class="me-4">
+                                        <i class="fas fa-user me-1"></i>
+                                        {{ tutorial.author.get_full_name|default:tutorial.author.username }}
+                                    </div>
+                                    <div class="me-4">
+                                        <i class="fas fa-eye me-1"></i>{{ tutorial.views }} 浏览
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {% if tutorial.published_at %}
+                                        {{ tutorial.published_at|date:"Y年m月d日" }}
+                                        {% else %}
+                                        未发布
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </td>
-                    <td>
-                        <span class="badge bg-primary">{{ tutorial.category.name }}</span>
-                    </td>
-                    <td>
-                        {% if tutorial.status == 'published' %}
-                            <span class="badge bg-success">已发布</span>
-                        {% elif tutorial.status == 'draft' %}
-                            <span class="badge bg-warning">草稿</span>
-                        {% elif tutorial.status == 'archived' %}
-                            <span class="badge bg-secondary">已归档</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ tutorial.author.get_full_name|default:tutorial.author.username }}</td>
-                    <td>
-                        <i class="fas fa-eye text-muted me-1"></i>{{ tutorial.views }}
-                    </td>
-                    <td>
-                        {% if tutorial.published_at %}
-                        {{ tutorial.published_at|date:"Y-m-d H:i" }}
-                        {% else %}
-                        <span class="text-muted">未发布</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ tutorial.updated_at|date:"Y-m-d H:i" }}</td>
-                    <td>
-                        <div class="btn-group">
-                            <a href="{% url 'tutorial_detail' tutorial.id %}" 
-                               class="btn btn-sm btn-outline-info" 
-                               target="_blank" 
-                               title="预览">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            <a href="{% url 'admin_tutorial_edit' tutorial.id %}" 
-                               class="btn btn-sm btn-outline-primary" 
-                               title="编辑">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <button type="button" 
-                                    class="btn btn-sm btn-outline-danger" 
-                                    onclick="confirmDelete({{ tutorial.id }}, '{{ tutorial.title }}')"
-                                    title="删除">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">暂无教程</h5>
+            <p class="text-muted">点击上方"新增教程"按钮创建第一篇教程</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="text-center py-5">
-        <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
-        <h5 class="text-muted">暂无教程</h5>
-        <p class="text-muted">点击上方"新增教程"按钮创建第一篇教程</p>
-    </div>
-    {% endif %}
 </div>
 
 <!-- 删除确认模态框 -->
@@ -156,7 +226,7 @@
             </div>
             <div class="modal-body">
                 <p>确定要删除教程 "<span id="deleteTitle"></span>" 吗？</p>
-                <p class="text-muted">此操作不可恢复。</p>
+                <p class="text-muted">此操作不可恢复。建议使用"归档"功能代替删除。</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -170,26 +240,27 @@
 </div>
 
 <script>
-// 删除确认
-function confirmDelete(tutorialId, title) {
-    $('#deleteTitle').text(title);
-    $('#deleteForm').attr('action', `/admin-tutorials/${tutorialId}/delete/`);
-    $('#deleteModal').modal('show');
-}
-
-// 筛选功能
 $(document).ready(function() {
+    // 教程卡片点击功能
+    $('.tutorial-card').on('click', function() {
+        const url = $(this).data('url');
+        if (url) {
+            window.location.href = url;
+        }
+    });
+    
+    // 筛选功能
     function filterTutorials() {
         const statusFilter = $('#statusFilter').val();
         const categoryFilter = $('#categoryFilter').val();
         const searchText = $('#searchInput').val().toLowerCase();
         
         let visibleCount = 0;
-        $('#tutorialsTableBody tr').each(function() {
-            const $row = $(this);
-            const status = $row.data('status');
-            const category = $row.data('category');
-            const title = $row.data('title');
+        $('.tutorial-item').each(function() {
+            const $item = $(this);
+            const status = $item.data('status');
+            const category = $item.data('category');
+            const title = $item.data('title');
             
             let show = true;
             
@@ -198,28 +269,51 @@ $(document).ready(function() {
             if (searchText && !title.includes(searchText)) show = false;
             
             if (show) {
-                $row.show();
+                $item.show();
                 visibleCount++;
             } else {
-                $row.hide();
+                $item.hide();
             }
         });
         
         // 更新统计
-        $('.badge.bg-info').text(`共 ${visibleCount} 篇`);
+        $('#tutorialsCount').text(`共 ${visibleCount} 篇`);
+        
+        // 如果没有匹配的教程，显示提示
+        if (visibleCount === 0 && (statusFilter || categoryFilter || searchText)) {
+            if ($('#noResultsMessage').length === 0) {
+                $('#tutorialsList').append(`
+                    <div id="noResultsMessage" class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">未找到匹配的教程</h5>
+                        <p class="text-muted">请尝试调整筛选条件</p>
+                    </div>
+                `);
+            }
+        } else {
+            $('#noResultsMessage').remove();
+        }
     }
     
     $('#statusFilter, #categoryFilter').on('change', filterTutorials);
     $('#searchInput').on('input', filterTutorials);
 });
 
+// 删除确认
+function confirmDelete(tutorialId, title) {
+    $('#deleteTitle').text(title);
+    $('#deleteForm').attr('action', `/admin-tutorials/${tutorialId}/delete/`);
+    $('#deleteModal').modal('show');
+}
+
 // 重置筛选器
 function resetFilters() {
     $('#statusFilter').val('');
     $('#categoryFilter').val('');
     $('#searchInput').val('');
-    $('#tutorialsTableBody tr').show();
-    $('.badge.bg-info').text(`共 {{ tutorials.count }} 篇`);
+    $('.tutorial-item').show();
+    $('#tutorialsCount').text(`共 {{ tutorials.count }} 篇`);
+    $('#noResultsMessage').remove();
 }
 </script>
 {% endblock %}
