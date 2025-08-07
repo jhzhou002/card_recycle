@@ -227,18 +227,18 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'home' %}">首页</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'tutorials' %}">卡券教程</a>
-                    </li>
                     {% if user.is_authenticated and not user.is_staff %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'submit_card' %}">提交卡券</a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'submit_bottle_cap' %}">瓶盖提交</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'submit_card' %}">提交卡券</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'my_submissions' %}">提交记录</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'tutorials' %}">卡券教程</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'profile' %}">个人中心</a>
