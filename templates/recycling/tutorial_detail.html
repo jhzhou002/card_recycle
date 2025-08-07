@@ -99,7 +99,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container-fluid px-3 px-md-4">
     <!-- 面包屑导航 -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -155,8 +155,8 @@
     </div>
     
     <!-- 教程内容 -->
-    <div class="row">
-        <div class="col-lg-8">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
             <div class="card">
                 <div class="card-body">
                     <div class="tutorial-content">
@@ -165,56 +165,43 @@
                 </div>
             </div>
             
-            <!-- 返回按钮 -->
-            <div class="text-center mt-4">
-                <a href="{% url 'tutorials' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-arrow-left me-1"></i>返回教程列表
-                </a>
+            <!-- 返回按钮和相关信息 -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <a href="{% url 'tutorials' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-1"></i>返回教程列表
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <!-- 相关教程简化显示 -->
+                    {% if related_tutorials %}
+                    <div class="text-md-end">
+                        <small class="text-muted me-2">相关教程：</small>
+                        {% for related in related_tutorials|slice:":2" %}
+                        <a href="{% url 'tutorial_detail' related.id %}" class="btn btn-sm btn-outline-secondary me-1">
+                            {{ related.title|truncatechars:20 }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-        
-        <!-- 侧边栏 -->
-        <div class="col-lg-4">
-            <!-- 相关教程 -->
-            {% if related_tutorials %}
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-lightbulb me-2"></i>相关教程
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    {% for related in related_tutorials %}
-                    <a href="{% url 'tutorial_detail' related.id %}" class="list-group-item list-group-item-action border-0">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ related.title|truncatechars:40 }}</h6>
-                            <small class="text-muted">{{ related.views }} 浏览</small>
-                        </div>
-                        <p class="mb-1 text-muted small">{{ related.summary|truncatechars:60 }}</p>
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-            
-            <!-- 教程统计 -->
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>教程统计
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
+    </div>
+    
+    <!-- 教程统计移至底部 -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <div class="row">
                         <div class="col-6">
-                            <div class="border-end">
-                                <div class="h4 text-primary mb-1">{{ total_tutorials }}</div>
-                                <small class="text-muted">总教程数</small>
-                            </div>
+                            <div class="h5 text-primary mb-1">{{ total_tutorials }}</div>
+                            <small class="text-muted">总教程数</small>
                         </div>
                         <div class="col-6">
-                            <div class="h4 text-success mb-1">{{ category_tutorials }}</div>
-                            <small class="text-muted">{{ tutorial.category.name }}类教程</small>
+                            <div class="h5 text-success mb-1">{{ category_tutorials }}</div>
+                            <small class="text-muted">{{ tutorial.category.name }}类</small>
                         </div>
                     </div>
                 </div>
