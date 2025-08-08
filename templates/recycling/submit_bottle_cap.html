@@ -121,14 +121,13 @@
 }
 </style>
 
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-1"><i class="fas fa-bottle me-2"></i>瓶盖二维码提交</h4>
-                    <p class="mb-0 small opacity-75">上传瓶盖二维码和收款码，系统将自动添加用户ID水印</p>
-                </div>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-bottle"></i> 瓶盖二维码提交</h4>
+                <p class="mb-0 text-muted">上传瓶盖二维码和收款码，系统将自动添加用户ID水印</p>
+            </div>
                 <div class="card-body">
                 <form method="post" id="bottleCapForm" enctype="multipart/form-data">
                     {% csrf_token %}

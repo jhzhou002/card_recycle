@@ -369,7 +369,7 @@
                /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
     
-    // 移动端优化功能
+    // 移动端优化功能 - 只在移动设备上激活
     if (isMobileDevice()) {
         $(document).ready(function() {
             // 1. 优化表单输入焦点管理
@@ -380,7 +380,7 @@
                 }, 300);
             });
             
-            // 2. 添加触摸反馈动画
+            // 2. 添加触摸反馈动画 - 仅移动设备
             $('.btn, .card, .nav-link, .dropdown-item').on('touchstart', function() {
                 $(this).addClass('mobile-touch-active');
             }).on('touchend touchcancel', function() {
