@@ -258,10 +258,19 @@
                                 </div>
                             </div>
                             {% if bottle_cap.admin_remark %}
-                            <div class="row">
+                            <div class="row mt-2">
                                 <div class="col-12">
                                     <small class="text-muted">管理员备注</small>
-                                    <div class="text-info">{{ bottle_cap.admin_remark }}</div>
+                                    <div class="text-warning bg-light p-2 rounded">
+                                        <i class="fas fa-comment-alt me-1"></i>{{ bottle_cap.admin_remark }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted">管理员备注</small>
+                                    <div class="text-muted fst-italic">暂无备注</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -321,6 +330,7 @@
             <div class="tab-pane fade {% if submission_type == 'card' %}show active{% endif %}" 
                  id="card-records" role="tabpanel">
                 {% if submissions_page_obj %}
+                <!-- 桌面端表格视图 -->
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -340,13 +350,7 @@
                             {% for submission in submissions_page_obj %}
                             <tr>
                                 <td>{{ submission.id }}</td>
-                                <td>
-                                    {{ submission.category.name }}
-                                    <div class="d-block d-sm-none">
-                                        <small class="text-muted">{{ submission.package.name }}</small><br>
-                                        <small class="text-success">￥{{ submission.commission }}</small>
-                                    </div>
-                                </td>
+                                <td>{{ submission.category.name }}</td>
                                 <td class="d-none-mobile">{{ submission.package.name }}</td>
                                 <td class="d-none-mobile">{{ submission.card_number|truncatechars:10 }}</td>
                                 <td class="d-none-mobile">￥{{ submission.commission }}</td>
@@ -360,12 +364,6 @@
                                     {% else %}
                                     <span class="badge bg-info">{{ submission.get_status_display }}</span>
                                     {% endif %}
-                                    <div class="d-block d-sm-none">
-                                        <small class="text-muted">{{ submission.submitted_at|date:"m-d H:i" }}</small>
-                                        {% if submission.admin_remark %}
-                                        <br><small class="text-info">备注: {{ submission.admin_remark|truncatechars:20 }}</small>
-                                        {% endif %}
-                                    </div>
                                 </td>
                                 <td class="d-none-mobile">
                                     {% if submission.admin_remark %}
@@ -386,6 +384,78 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- 移动端卡片视图 -->
+                <div class="mobile-records">
+                    {% for submission in submissions_page_obj %}
+                    <div class="mobile-record-card">
+                        <div class="mobile-record-header">
+                            <h6 class="mb-0">卡券记录 #{{ submission.id }}</h6>
+                            {% if submission.status == 'pending' %}
+                            <span class="badge bg-warning">{{ submission.get_status_display }}</span>
+                            {% elif submission.status == 'approved' %}
+                            <span class="badge bg-success">{{ submission.get_status_display }}</span>
+                            {% elif submission.status == 'rejected' %}
+                            <span class="badge bg-danger">{{ submission.get_status_display }}</span>
+                            {% else %}
+                            <span class="badge bg-info">{{ submission.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="mobile-record-content">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">卡券类别</small>
+                                    <div class="fw-bold">{{ submission.category.name }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">套餐佣金</small>
+                                    <div class="text-success fw-bold">￥{{ submission.commission }}</div>
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-6">
+                                    <small class="text-muted">套餐名称</small>
+                                    <div>{{ submission.package.name }}</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">提交时间</small>
+                                    <div>{{ submission.submitted_at|date:"m-d H:i" }}</div>
+                                </div>
+                            </div>
+                            {% if submission.card_number %}
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted">卡号</small>
+                                    <div class="text-primary">{{ submission.card_number|truncatechars:15 }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% if submission.admin_remark %}
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted">管理员备注</small>
+                                    <div class="text-warning bg-light p-2 rounded">
+                                        <i class="fas fa-comment-alt me-1"></i>{{ submission.admin_remark }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <small class="text-muted">管理员备注</small>
+                                    <div class="text-muted fst-italic">暂无备注</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mobile-record-actions">
+                            <a href="{% url 'submission_detail' submission.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>查看详情
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 
                 <!-- 卡券记录分页 -->
