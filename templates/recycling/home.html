@@ -4,29 +4,98 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-md-8">
-        <div class="jumbotron bg-primary text-white p-5 rounded">
-            <h1 class="display-4">欢迎来到卡券回收平台</h1>
+    <div class="col-12">
+        <div class="jumbotron bg-primary text-white p-4 p-md-5 rounded mb-4">
+            <h1 class="display-5 display-md-4">欢迎来到卡券回收平台</h1>
             <p class="lead">快速、安全、便捷的卡券回收服务</p>
-            {% if not user.is_authenticated %}
-            <a class="btn btn-light btn-lg" href="{% url 'register' %}" role="button">立即注册</a>
-            {% else %}
-            <a class="btn btn-light btn-lg" href="{% url 'submit_card' %}" role="button">提交卡券</a>
-            {% endif %}
+            <div class="d-flex flex-column flex-sm-row gap-2 mt-3">
+                {% if not user.is_authenticated %}
+                <a class="btn btn-light btn-lg flex-fill" href="{% url 'register' %}" role="button">
+                    <i class="fas fa-user-plus me-2"></i>立即注册
+                </a>
+                <a class="btn btn-outline-light btn-lg flex-fill" href="{% url 'login' %}" role="button">
+                    <i class="fas fa-sign-in-alt me-2"></i>用户登录
+                </a>
+                {% else %}
+                <a class="btn btn-light btn-lg flex-fill" href="{% url 'submit_card' %}" role="button">
+                    <i class="fas fa-credit-card me-2"></i>提交卡券
+                </a>
+                <a class="btn btn-outline-light btn-lg flex-fill" href="{% url 'submit_bottle_cap' %}" role="button">
+                    <i class="fas fa-image me-2"></i>瓶盖提交
+                </a>
+                {% endif %}
+            </div>
         </div>
     </div>
-    <div class="col-md-4">
+</div>
+
+<!-- 移动端快捷功能区 -->
+{% if user.is_authenticated %}
+<div class="row mb-4 d-md-none">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-3">
+                <h6 class="card-title mb-3">
+                    <i class="fas fa-tachometer-alt me-2 text-primary"></i>快捷操作
+                </h6>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="{% url 'my_submissions' %}" class="btn btn-outline-primary w-100 py-2">
+                            <i class="fas fa-list-alt d-block mb-1"></i>
+                            <small>我的记录</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'tutorials' %}" class="btn btn-outline-success w-100 py-2">
+                            <i class="fas fa-book-open d-block mb-1"></i>
+                            <small>卡券教程</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- 平台说明卡片 - 移动端优化 -->
+<div class="row mb-4">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h5><i class="fas fa-info-circle"></i> 平台说明</h5>
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>平台优势</h5>
             </div>
             <div class="card-body">
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-check text-success"></i> 支持多种卡券类型</li>
-                    <li><i class="fas fa-check text-success"></i> 快速审核处理</li>
-                    <li><i class="fas fa-check text-success"></i> 安全可靠的交易</li>
-                    <li><i class="fas fa-check text-success"></i> 实时状态跟踪</li>
-                </ul>
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                            <h6 class="small mb-1">安全可靠</h6>
+                            <small class="text-muted">专业团队审核</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                            <h6 class="small mb-1">快速处理</h6>
+                            <small class="text-muted">24小时内审核</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-tags fa-2x text-warning mb-2"></i>
+                            <h6 class="small mb-1">多种卡券</h6>
+                            <small class="text-muted">支持各类卡券</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-eye fa-2x text-info mb-2"></i>
+                            <h6 class="small mb-1">实时跟踪</h6>
+                            <small class="text-muted">状态实时更新</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -62,22 +131,32 @@
     </div>
 </div>
 
-<!-- 客服联系 -->
-<div class="row mt-5">
+<!-- 客服联系 - 移动端优化 -->
+<div class="row mb-4">
     <div class="col-12">
         <div class="card border-primary">
             <div class="card-body text-center">
-                <h5 class="card-title text-primary">
+                <h5 class="card-title text-primary mb-3">
                     <i class="fas fa-headset me-2"></i>需要帮助？联系客服
                 </h5>
                 <p class="card-text mb-3">如有任何问题，欢迎联系我们的客服团队</p>
-                <div class="d-flex justify-content-center align-items-center">
-                    <div class="me-4">
+                <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
+                    <div class="d-flex align-items-center">
                         <i class="fab fa-weixin fa-2x text-success me-2"></i>
-                        <strong>客服微信：</strong>
-                        <code class="bg-light text-success px-2 py-1 rounded">AaLG66888</code>
+                        <div class="text-start">
+                            <strong class="d-block">客服微信</strong>
+                            <code class="bg-light text-success px-2 py-1 rounded fs-6">AaLG66888</code>
+                        </div>
                     </div>
-                    <small class="text-muted">工作时间：周一至周日 9:00-18:00</small>
+                    <small class="text-muted text-center">
+                        <i class="fas fa-clock me-1"></i>工作时间：周一至周日 9:00-18:00
+                    </small>
+                </div>
+                <!-- 移动端一键复制按钮 -->
+                <div class="mt-3 d-md-none">
+                    <button class="btn btn-outline-success btn-sm" onclick="copyWechat()">
+                        <i class="fas fa-copy me-1"></i>复制微信号
+                    </button>
                 </div>
             </div>
         </div>
@@ -165,6 +244,59 @@ function dismissNotification(notificationId) {
         localStorage.setItem(storageKey, JSON.stringify(dismissedNotifications));
     }
     $('#notificationModal' + notificationId).modal('hide');
+}
+
+// 复制微信号功能（移动端）
+function copyWechat() {
+    const wechatId = 'AaLG66888';
+    if (navigator.clipboard && window.isSecureContext) {
+        // 现代浏览器
+        navigator.clipboard.writeText(wechatId).then(() => {
+            showToast('微信号已复制到剪贴板');
+        }).catch(() => {
+            fallbackCopy(wechatId);
+        });
+    } else {
+        // 兼容旧浏览器
+        fallbackCopy(wechatId);
+    }
+}
+
+// 兼容性复制方法
+function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+        document.execCommand('copy');
+        showToast('微信号已复制到剪贴板');
+    } catch (err) {
+        showToast('复制失败，请手动复制微信号：' + text);
+    }
+    
+    document.body.removeChild(textarea);
+}
+
+// 显示提示信息
+function showToast(message) {
+    // 创建临时提示元素
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-50 start-50 translate-middle bg-dark text-white px-3 py-2 rounded';
+    toast.style.zIndex = '9999';
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    // 2秒后移除
+    setTimeout(() => {
+        if (document.body.contains(toast)) {
+            document.body.removeChild(toast);
+        }
+    }, 2000);
 }
 </script>
 {% endif %}

@@ -49,6 +49,106 @@
     animation: slideIn 0.3s ease;
 }
 
+/* 移动端教程页面优化 */
+@media (max-width: 768px) {
+    .tutorial-card {
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+    
+    .tutorial-card .card-body {
+        padding: 1rem;
+    }
+    
+    .tutorial-card .card-title {
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+    
+    .tutorial-card .card-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+    
+    /* 移动端取消hover效果，优化点击体验 */
+    .tutorial-card:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .tutorial-card:hover .card-body::after {
+        display: none;
+    }
+    
+    /* 添加点击态反馈 */
+    .tutorial-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+    
+    /* 教程元信息优化 */
+    .tutorial-meta {
+        font-size: 0.8rem;
+    }
+    
+    .tutorial-meta .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
+    }
+}
+
+@media (max-width: 576px) {
+    .tutorial-card {
+        margin: 0.5rem;
+        border-radius: 0.75rem;
+    }
+    
+    .tutorial-card .card-body {
+        padding: 0.875rem;
+    }
+    
+    .tutorial-card .card-title {
+        font-size: 0.95rem;
+    }
+    
+    .tutorial-card .card-text {
+        font-size: 0.85rem;
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* 减少动画提高性能 */
+@media (prefers-reduced-motion: reduce) {
+    .tutorial-card {
+        transition: none;
+    }
+    
+    .tutorial-card:hover .card-body::after {
+        animation: none;
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .tutorial-card {
+        -webkit-tap-highlight-color: rgba(0, 123, 255, 0.1);
+    }
+    
+    .tutorial-card:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border-color: #dee2e6;
+    }
+    
+    .tutorial-card:hover .card-title {
+        color: #333;
+    }
+    
+    .tutorial-card:hover .card-body::after {
+        display: none;
+    }
+}
+
 @keyframes slideIn {
     from {
         opacity: 0;

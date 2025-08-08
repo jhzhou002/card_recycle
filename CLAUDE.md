@@ -30,6 +30,9 @@ python manage.py createsuperuser
 
 # 运行开发服务器
 python manage.py runserver
+
+# 创建初始测试数据
+python manage.py create_initial_data
 ```
 
 ### 数据库操作
@@ -37,19 +40,56 @@ python manage.py runserver
 # 重置数据库
 python manage.py flush
 
-# 导入初始数据
-python manage.py loaddata fixtures/initial_data.json
-
 # 收集静态文件
 python manage.py collectstatic
+
+# 生产环境使用特定配置
+python manage.py runserver --settings=card_recycle.settings_production
+```
+
+### 调试和测试
+```bash
+# 进入Django shell
+python manage.py shell
+
+# 检查项目配置
+python manage.py check
+
+# 查看数据库迁移状态
+python manage.py showmigrations
 ```
 
 ## 核心架构
 
-### 数据模型
-- **Category**: 卡券类别 (id, name)
-- **Package**: 套餐 (id, category_id, name, commission)
-- **Submission**: 提交记录 (用户提交的卡券信息，包含状态跟踪)
+### 数据模型关系
+```
+Category (卡券类别)
+├── show_store_field (控制是否显示门店选择)
+└── Package (套餐)
+    ├── commission (佣金金额)
+    └── applicable_stores (多对多关联门店)
+
+Store (门店)
+├── store_number (唯一编号)
+└── is_active (启用状态)
+
+User (用户)
+├── Submission (卡券提交记录)
+│   ├── status: pending → approved/rejected → settled
+│   └── admin_remark (管理员备注)
+└── BottleCapSubmission (瓶盖提交记录)
+    ├── qr_codes (JSON格式存储图片列表)
+    └── payment_code (收款码图片)
+
+Notification (系统通知)
+├── target_page (显示页面控制)
+└── content (支持HTML格式)
+
+Tutorial (教程文章)
+├── status: draft → published → archived
+├── content (Markdown格式)
+└── views (浏览次数统计)
+```
 
 ### 用户角色
 - **普通用户**: 提交卡券回收申请，查看个人提交记录
@@ -109,17 +149,38 @@ card_recycle/
 - 状态更新
 - 备注管理
 
-### API接口
-- `/api/packages/` - 根据类别获取套餐
-- `/api/qiniu-token/` - 获取七牛云上传token
-- `/api/upload-image/` - 上传图片到七牛云
+### 关键API接口
+- `GET /api/categories/` - 获取所有卡券类别
+- `GET /api/packages/?category_id=<id>` - 根据类别获取套餐列表
+- `GET /api/stores/?package_id=<id>` - 根据套餐获取适用门店
+- `GET /api/qiniu-token/` - 获取七牛云上传token (需要登录)
+- `POST /api/refresh-captcha/` - 刷新验证码
 
 ## 开发注意事项
 
-1. **图片上传**: 使用七牛云存储，前端上传前需要获取token
-2. **状态管理**: 提交记录状态变更需要管理员权限
-3. **权限控制**: 管理员功能使用 `@staff_member_required` 装饰器
-4. **响应式设计**: 使用Bootstrap确保移动端兼容
+### 关键技术点
+1. **图片上传流程**: 
+   - 前端获取七牛云token (`/api/qiniu-token/`)
+   - 直接上传到七牛云服务器
+   - 返回图片URL存储在数据库中
+
+2. **权限控制系统**:
+   - 用户功能: `@login_required` 装饰器
+   - 管理员功能: `@staff_member_required` 装饰器
+   - 管理员登录后自动跳转到管理后台
+
+3. **验证码机制**: 
+   - 数学运算验证码存储在session中
+   - 使用自定义验证码生成工具 (`utils/captcha.py`)
+
+4. **双提交系统**:
+   - 卡券提交 (Submission模型) - 传统卡券回收
+   - 瓶盖提交 (BottleCapSubmission模型) - 多图片瓶盖回收
+
+### 重要配置文件
+- `settings.py` - 开发环境配置
+- `settings_production.py` - 生产环境配置
+- `nginx.conf` - Nginx配置模板
 
 ## 部署信息
 

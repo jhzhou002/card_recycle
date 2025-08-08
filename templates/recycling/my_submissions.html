@@ -3,28 +3,154 @@
 {% block title %}提交记录 - 卡券回收平台{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <div class="row align-items-center">
-            <div class="col">
-                <h4><i class="fas fa-list"></i> 提交记录</h4>
-            </div>
-            <div class="col-auto">
+
+<style>
+/* 移动端记录页面优化 */
+@media (max-width: 768px) {
+    .card-header h4 {
+        font-size: 1.1rem;
+    }
+    
+    /* 移动端筛选按钮优化 */
+    .btn-group .btn {
+        font-size: 0.8rem;
+        padding: 0.375rem 0.5rem;
+    }
+    
+    /* Tab导航优化 */
+    .nav-tabs .nav-link {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* 表格优化 - 移动端卡片布局 */
+    .mobile-record-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: white;
+    }
+    
+    .mobile-record-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .mobile-record-content {
+        font-size: 0.9rem;
+    }
+    
+    .mobile-record-content .row {
+        margin-bottom: 0.5rem;
+    }
+    
+    .mobile-record-actions {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
+    /* 隐藏桌面端表格，显示移动端卡片 */
+    .table-responsive {
+        display: none !important;
+    }
+    
+    .mobile-records {
+        display: block !important;
+    }
+    
+    /* 徽章优化 */
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.35em 0.65em;
+    }
+    
+    /* 分页优化 */
+    .pagination {
+        margin-bottom: 0;
+    }
+    
+    .page-link {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card {
+        margin: 0.5rem;
+        border-radius: 0.75rem;
+    }
+    
+    .card-header, .card-body {
+        padding: 1rem;
+    }
+    
+    /* 超小屏幕筛选按钮堆叠 */
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 0.25rem;
+        border-radius: 0.375rem !important;
+    }
+    
+    /* Tab导航在小屏幕上的优化 */
+    .nav-tabs {
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .nav-tabs .nav-item {
+        margin-bottom: 0;
+        margin-right: 0.25rem;
+    }
+    
+    .nav-tabs .nav-link {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+        margin-right: 0;
+    }
+}
+
+/* 桌面端保持原有样式 */
+@media (min-width: 769px) {
+    .mobile-records {
+        display: none !important;
+    }
+    
+    .table-responsive {
+        display: block !important;
+    }
+}
+</style>
+
+<div class="container-fluid">
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between">
+                <h4 class="mb-2 mb-md-0"><i class="fas fa-list me-2"></i>提交记录</h4>
                 <!-- 筛选选项 -->
-                <div class="btn-group" role="group">
-                    <a href="?type=all" class="btn btn-sm {% if submission_type == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="?type=all" class="btn {% if submission_type == 'all' %}btn-light{% else %}btn-outline-light{% endif %}">
                         全部
                     </a>
-                    <a href="?type=card" class="btn btn-sm {% if submission_type == 'card' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <a href="?type=card" class="btn {% if submission_type == 'card' %}btn-light{% else %}btn-outline-light{% endif %}">
                         卡券记录
                     </a>
-                    <a href="?type=bottle_cap" class="btn btn-sm {% if submission_type == 'bottle_cap' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <a href="?type=bottle_cap" class="btn {% if submission_type == 'bottle_cap' %}btn-light{% else %}btn-outline-light{% endif %}">
                         瓶盖记录
                     </a>
                 </div>
             </div>
         </div>
-    </div>
     <div class="card-body">
         <!-- Tab 导航 -->
         <ul class="nav nav-tabs mb-3" id="recordTabs" role="tablist">
@@ -57,6 +183,7 @@
             <div class="tab-pane fade {% if submission_type != 'card' %}show active{% endif %}" 
                  id="bottle-cap-records" role="tabpanel">
                 {% if bottle_caps_page_obj %}
+                <!-- 桌面端表格视图 -->
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
@@ -75,17 +202,6 @@
                                 <td>{{ bottle_cap.id }}</td>
                                 <td>
                                     <span class="text-info">{{ bottle_cap.get_qr_code_count }}</span>
-                                    <div class="d-block d-sm-none">
-                                        {% if bottle_cap.is_settled %}
-                                        <small class="badge bg-success">已结算</small>
-                                        {% else %}
-                                        <small class="badge bg-warning">待结算</small>
-                                        {% endif %}
-                                        <br><small class="text-muted">{{ bottle_cap.submitted_at|date:"m-d H:i" }}</small>
-                                        {% if bottle_cap.admin_remark %}
-                                        <br><small class="text-info">备注: {{ bottle_cap.admin_remark|truncatechars:15 }}</small>
-                                        {% endif %}
-                                    </div>
                                 </td>
                                 <td>
                                     {% if bottle_cap.is_settled %}
@@ -113,6 +229,47 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- 移动端卡片视图 -->
+                <div class="mobile-records">
+                    {% for bottle_cap in bottle_caps_page_obj %}
+                    <div class="mobile-record-card">
+                        <div class="mobile-record-header">
+                            <h6 class="mb-0">瓶盖记录 #{{ bottle_cap.id }}</h6>
+                            {% if bottle_cap.is_settled %}
+                            <span class="badge bg-success">已结算</span>
+                            {% else %}
+                            <span class="badge bg-warning">待结算</span>
+                            {% endif %}
+                        </div>
+                        <div class="mobile-record-content">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted">二维码数量</small>
+                                    <div class="text-info fw-bold">{{ bottle_cap.get_qr_code_count }}张</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">提交时间</small>
+                                    <div>{{ bottle_cap.submitted_at|date:"m-d H:i" }}</div>
+                                </div>
+                            </div>
+                            {% if bottle_cap.admin_remark %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <small class="text-muted">管理员备注</small>
+                                    <div class="text-info">{{ bottle_cap.admin_remark }}</div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mobile-record-actions">
+                            <a href="{% url 'bottle_cap_detail' bottle_cap.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye me-1"></i>查看详情
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 
                 <!-- 瓶盖记录分页 -->

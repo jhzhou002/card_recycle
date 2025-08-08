@@ -62,7 +62,17 @@
             }
             
             .navbar-nav .nav-link {
-                padding: 0.5rem 1rem;
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            
+            .navbar-collapse {
+                margin-top: 0.5rem;
+            }
+            
+            /* 移动端导航菜单样式 */
+            .navbar-nav .nav-item:last-child .nav-link {
+                border-bottom: none;
             }
             
             /* 主要内容区域 */
@@ -210,6 +220,35 @@
             .table-responsive {
                 -webkit-overflow-scrolling: touch;
             }
+            
+            /* 表单输入优化 */
+            .form-control,
+            .form-select {
+                min-height: 44px;
+                font-size: 16px; /* 防止iOS Safari缩放 */
+            }
+            
+            /* 卡片点击区域优化 */
+            .card {
+                cursor: pointer;
+            }
+        }
+        
+        /* PWA支持 */
+        .standalone-mode {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* 减少动画以提高性能 */
+        @media (prefers-reduced-motion: reduce) {
+            .card {
+                transition: none;
+            }
+            
+            .alert {
+                animation: none;
+            }
         }
     </style>
 </head>
@@ -321,6 +360,181 @@
     }
     </script>
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    
+    <!-- 移动端特有交互优化脚本 -->
+    <script>
+    // 检测移动设备
+    function isMobileDevice() {
+        return window.matchMedia('(max-width: 768px)').matches || 
+               /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
+    // 移动端优化功能
+    if (isMobileDevice()) {
+        $(document).ready(function() {
+            // 1. 优化表单输入焦点管理
+            $('input, textarea, select').on('focus', function() {
+                // 滚动到输入框位置，避免被虚拟键盘遮挡
+                setTimeout(() => {
+                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            });
+            
+            // 2. 添加触摸反馈动画
+            $('.btn, .card, .nav-link, .dropdown-item').on('touchstart', function() {
+                $(this).addClass('mobile-touch-active');
+            }).on('touchend touchcancel', function() {
+                $(this).removeClass('mobile-touch-active');
+            });
+            
+            // 3. 优化长按菜单（防止意外触发）
+            $('img, .card').on('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            });
+            
+            // 4. 滑动返回顶部功能
+            let isScrolling = false;
+            let scrollTimeout;
+            
+            $(window).on('scroll', function() {
+                if (!isScrolling) {
+                    isScrolling = true;
+                    // 显示返回顶部按钮
+                    if ($(window).scrollTop() > 300) {
+                        showBackToTop();
+                    } else {
+                        hideBackToTop();
+                    }
+                }
+                
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(function() {
+                    isScrolling = false;
+                }, 100);
+            });
+            
+            // 5. 双击缩放防护
+            $('body').on('touchstart', function(e) {
+                if (e.touches && e.touches.length > 1) {
+                    e.preventDefault();
+                }
+            });
+            
+            let lastTouchEnd = 0;
+            $('body').on('touchend', function(e) {
+                let now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    e.preventDefault();
+                }
+                lastTouchEnd = now;
+            });
+            
+            // 6. 网络状态提示
+            if ('navigator' in window && 'onLine' in navigator) {
+                $(window).on('online', function() {
+                    showNetworkStatus('网络已连接', 'success');
+                }).on('offline', function() {
+                    showNetworkStatus('网络连接中断', 'warning');
+                });
+            }
+        });
+    }
+    
+    // 返回顶部按钮功能
+    function showBackToTop() {
+        if ($('#backToTopBtn').length === 0) {
+            $('body').append(`
+                <button id="backToTopBtn" class="btn btn-primary position-fixed" 
+                        style="bottom: 20px; right: 20px; z-index: 1000; border-radius: 50%; 
+                               width: 50px; height: 50px; display: none; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                    <i class="fas fa-chevron-up"></i>
+                </button>
+            `);
+            
+            $('#backToTopBtn').on('click', function() {
+                $('html, body').animate({ scrollTop: 0 }, 500);
+            });
+        }
+        $('#backToTopBtn').fadeIn(200);
+    }
+    
+    function hideBackToTop() {
+        $('#backToTopBtn').fadeOut(200);
+    }
+    
+    // 网络状态提示
+    function showNetworkStatus(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-warning';
+        const toast = $(`
+            <div class="alert ${alertClass} position-fixed top-0 start-50 translate-middle-x mt-3" 
+                 style="z-index: 9999; min-width: 250px; text-align: center;">
+                <i class="fas fa-${type === 'success' ? 'wifi' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+            </div>
+        `);
+        
+        $('body').append(toast);
+        
+        setTimeout(() => {
+            toast.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 3000);
+    }
+    
+    // 添加移动端触摸反馈CSS
+    $('<style>')
+        .prop('type', 'text/css')
+        .html(`
+            .mobile-touch-active {
+                opacity: 0.7 !important;
+                transform: scale(0.98) !important;
+                transition: all 0.1s ease !important;
+            }
+            
+            /* 防止iOS双击缩放 */
+            * {
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            
+            /* 允许输入框和文本选择 */
+            input, textarea, [contenteditable] {
+                -webkit-user-select: text !important;
+                -khtml-user-select: text !important;
+                -moz-user-select: text !important;
+                -ms-user-select: text !important;
+                user-select: text !important;
+            }
+            
+            /* 滚动条优化 */
+            ::-webkit-scrollbar {
+                width: 4px;
+                height: 4px;
+            }
+            
+            ::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 2px;
+            }
+            
+            ::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 2px;
+            }
+            
+            ::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+        `)
+        .appendTo('head');
+    </script>
+    
     {% block extra_js %}
     {% endblock %}
 </body>

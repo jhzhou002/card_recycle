@@ -29,14 +29,107 @@
     </div>
 </div>
 {% endif %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4><i class="fas fa-bottle"></i> 瓶盖二维码提交</h4>
-                <p class="mb-0 text-muted">上传瓶盖二维码和收款码，系统将自动添加用户ID水印</p>
-            </div>
-            <div class="card-body">
+
+<style>
+/* 移动端瓶盖提交页面优化 */
+@media (max-width: 768px) {
+    .card-header h4 {
+        font-size: 1.1rem;
+    }
+    
+    .card-header p {
+        font-size: 0.85rem;
+        margin-top: 0.5rem !important;
+    }
+    
+    .form-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .form-text {
+        font-size: 0.8rem;
+    }
+    
+    /* 上传区域优化 */
+    .upload-area .payment-code-click {
+        padding: 2rem 1rem !important;
+    }
+    
+    .upload-area i {
+        font-size: 2.5rem !important;
+    }
+    
+    /* 图片预览网格优化 */
+    .row [class*="col-"] {
+        margin-bottom: 1rem;
+    }
+    
+    /* 当前收款码优化 */
+    .current-payment-code img {
+        max-width: 150px !important;
+        max-height: 150px !important;
+    }
+    
+    /* 按钮优化 */
+    .btn {
+        min-height: 44px;
+        font-size: 16px;
+    }
+    
+    /* 预览图片优化 */
+    .preview-image {
+        max-width: 120px !important;
+        max-height: 120px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .card {
+        margin: 0.5rem;
+        border-radius: 0.75rem;
+    }
+    
+    .card-header, .card-body {
+        padding: 1rem;
+    }
+    
+    .upload-area .payment-code-click {
+        padding: 1.5rem 1rem !important;
+    }
+    
+    .upload-area i {
+        font-size: 2rem !important;
+    }
+    
+    /* 图片预览在小屏幕上每行显示3个 */
+    .qr-code-preview-item {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+}
+
+/* 添加触摸反馈 */
+@media (hover: none) and (pointer: coarse) {
+    .payment-code-click {
+        -webkit-tap-highlight-color: rgba(0, 123, 255, 0.1);
+    }
+    
+    .payment-code-click:active {
+        background-color: #e9ecef !important;
+    }
+}
+</style>
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-1"><i class="fas fa-bottle me-2"></i>瓶盖二维码提交</h4>
+                    <p class="mb-0 small opacity-75">上传瓶盖二维码和收款码，系统将自动添加用户ID水印</p>
+                </div>
+                <div class="card-body">
                 <form method="post" id="bottleCapForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     
