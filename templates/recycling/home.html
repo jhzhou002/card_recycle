@@ -3,36 +3,299 @@
 {% block title %}首页 - 卡券回收平台{% endblock %}
 
 {% block content %}
+<style>
+/* APP风格移动端英雄区域 */
+@media (max-width: 768px) {
+    .mobile-hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        margin: 0 -15px 2rem -15px;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+    
+    .hero-content {
+        padding: 3rem 2rem 3.5rem !important;
+        position: relative;
+    }
+    
+    .hero-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .hero-icon i {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .hero-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 1rem !important;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+        opacity: 0.95;
+        font-weight: 400;
+        line-height: 1.5;
+        margin-bottom: 2rem !important;
+    }
+    
+    .hero-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    
+    .btn-hero {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        min-height: 54px;
+        border: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-hero-primary {
+        background: rgba(255, 255, 255, 1);
+        color: #667eea !important;
+        box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
+    }
+    
+    .btn-hero-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
+        color: #667eea !important;
+    }
+    
+    .btn-hero-outline {
+        background: rgba(255, 255, 255, 0.1);
+        color: white !important;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-hero-outline:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-1px);
+        color: white !important;
+    }
+    
+    .btn-hero i {
+        margin-right: 0.5rem;
+    }
+    
+    /* 快捷功能区APP风格优化 */
+    .mobile-quick-actions {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .quick-actions-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .quick-actions-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #495057;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .quick-actions-title i {
+        color: #007bff;
+        margin-right: 0.5rem;
+    }
+    
+    .quick-actions-body {
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .quick-action-btn {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem 0.75rem;
+        text-decoration: none;
+        color: #495057;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 80px;
+        justify-content: center;
+    }
+    
+    .quick-action-btn:hover {
+        background: #e9ecef;
+        border-color: #007bff;
+        color: #007bff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+    }
+    
+    .quick-action-btn i {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .quick-action-btn small {
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+    
+    /* 平台优势APP风格 */
+    .mobile-advantages {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: none;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .advantages-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .advantages-body {
+        padding: 1.5rem;
+    }
+    
+    .advantage-item {
+        text-align: center;
+        padding: 1rem 0.5rem;
+    }
+    
+    .advantage-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border: 2px solid #e9ecef;
+    }
+    
+    .advantage-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .advantage-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    
+    .advantage-desc {
+        font-size: 0.8rem;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+}
+
+@media (max-width: 576px) {
+    .mobile-hero-section {
+        margin: 0 -10px 2rem -10px;
+    }
+    
+    .hero-content {
+        padding: 2.5rem 1.5rem 3rem !important;
+    }
+    
+    .hero-title {
+        font-size: 1.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 0.95rem;
+    }
+    
+    .quick-actions-body {
+        padding: 1rem 1.25rem;
+    }
+    
+    .advantages-body {
+        padding: 1.25rem;
+    }
+}
+</style>
 <div class="row">
     <div class="col-md-8">
-        <div class="jumbotron bg-primary text-white p-4 p-md-5 rounded">
+        <!-- 桌面端：保持原有设计 -->
+        <div class="jumbotron bg-primary text-white p-4 p-md-5 rounded d-none d-md-block">
             <h1 class="display-4">欢迎来到卡券回收平台</h1>
             <p class="lead">快速、安全、便捷的卡券回收服务</p>
-            <!-- 桌面端保持原有按钮布局，移动端优化布局 -->
-            <div class="d-none d-md-block">
-                {% if not user.is_authenticated %}
-                <a class="btn btn-light btn-lg me-2" href="{% url 'register' %}" role="button">立即注册</a>
-                {% else %}
-                <a class="btn btn-light btn-lg" href="{% url 'submit_card' %}" role="button">提交卡券</a>
-                {% endif %}
-            </div>
-            <!-- 移动端优化的按钮布局 -->
-            <div class="d-md-none">
-                <div class="d-flex flex-column flex-sm-row gap-2 mt-3">
+            {% if not user.is_authenticated %}
+            <a class="btn btn-light btn-lg me-2" href="{% url 'register' %}" role="button">立即注册</a>
+            {% else %}
+            <a class="btn btn-light btn-lg" href="{% url 'submit_card' %}" role="button">提交卡券</a>
+            {% endif %}
+        </div>
+        
+        <!-- 移动端：APP风格英雄区域 -->
+        <div class="d-md-none">
+            <div class="mobile-hero-section">
+                <div class="hero-content text-center text-white py-5">
+                    <div class="hero-icon mb-3">
+                        <i class="fas fa-recycle"></i>
+                    </div>
+                    <h1 class="hero-title mb-3">卡券回收平台</h1>
+                    <p class="hero-subtitle mb-4">快速、安全、便捷的卡券回收服务</p>
+                    
                     {% if not user.is_authenticated %}
-                    <a class="btn btn-light btn-lg flex-fill" href="{% url 'register' %}" role="button">
-                        <i class="fas fa-user-plus me-2"></i>立即注册
-                    </a>
-                    <a class="btn btn-outline-light btn-lg flex-fill" href="{% url 'login' %}" role="button">
-                        <i class="fas fa-sign-in-alt me-2"></i>用户登录
-                    </a>
+                    <div class="hero-actions">
+                        <a class="btn btn-hero btn-hero-primary mb-2" href="{% url 'register' %}" role="button">
+                            <i class="fas fa-user-plus me-2"></i>立即注册
+                        </a>
+                        <a class="btn btn-hero btn-hero-outline" href="{% url 'login' %}" role="button">
+                            <i class="fas fa-sign-in-alt me-2"></i>用户登录
+                        </a>
+                    </div>
                     {% else %}
-                    <a class="btn btn-light btn-lg flex-fill" href="{% url 'submit_card' %}" role="button">
-                        <i class="fas fa-credit-card me-2"></i>提交卡券
-                    </a>
-                    <a class="btn btn-outline-light btn-lg flex-fill" href="{% url 'submit_bottle_cap' %}" role="button">
-                        <i class="fas fa-image me-2"></i>瓶盖提交
-                    </a>
+                    <div class="hero-actions">
+                        <a class="btn btn-hero btn-hero-primary mb-2" href="{% url 'submit_card' %}" role="button">
+                            <i class="fas fa-credit-card me-2"></i>提交卡券
+                        </a>
+                        <a class="btn btn-hero btn-hero-outline" href="{% url 'submit_bottle_cap' %}" role="button">
+                            <i class="fas fa-image me-2"></i>瓶盖提交
+                        </a>
+                    </div>
                     {% endif %}
                 </div>
             </div>
@@ -59,21 +322,23 @@
 {% if user.is_authenticated %}
 <div class="row mb-4 d-md-none">
     <div class="col-12">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-3">
-                <h6 class="card-title mb-3">
-                    <i class="fas fa-tachometer-alt me-2 text-primary"></i>快捷操作
+        <div class="mobile-quick-actions">
+            <div class="quick-actions-header">
+                <h6 class="quick-actions-title">
+                    <i class="fas fa-tachometer-alt"></i>快捷操作
                 </h6>
-                <div class="row g-2">
+            </div>
+            <div class="quick-actions-body">
+                <div class="row g-3">
                     <div class="col-6">
-                        <a href="{% url 'my_submissions' %}" class="btn btn-outline-primary w-100 py-2">
-                            <i class="fas fa-list-alt d-block mb-1"></i>
+                        <a href="{% url 'my_submissions' %}" class="quick-action-btn w-100">
+                            <i class="fas fa-list-alt"></i>
                             <small>我的记录</small>
                         </a>
                     </div>
                     <div class="col-6">
-                        <a href="{% url 'tutorials' %}" class="btn btn-outline-success w-100 py-2">
-                            <i class="fas fa-book-open d-block mb-1"></i>
+                        <a href="{% url 'tutorials' %}" class="quick-action-btn w-100">
+                            <i class="fas fa-book-open"></i>
                             <small>卡券教程</small>
                         </a>
                     </div>
@@ -87,38 +352,46 @@
 <!-- 移动端平台优势展示 -->
 <div class="row mb-4 d-md-none">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
+        <div class="mobile-advantages">
+            <div class="advantages-header">
                 <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>平台优势</h5>
             </div>
-            <div class="card-body">
+            <div class="advantages-body">
                 <div class="row g-3">
                     <div class="col-6">
-                        <div class="text-center">
-                            <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
-                            <h6 class="small mb-1">安全可靠</h6>
-                            <small class="text-muted">专业团队审核</small>
+                        <div class="advantage-item">
+                            <div class="advantage-icon">
+                                <i class="fas fa-shield-alt text-success"></i>
+                            </div>
+                            <div class="advantage-title">安全可靠</div>
+                            <div class="advantage-desc">专业团队审核</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="text-center">
-                            <i class="fas fa-clock fa-2x text-primary mb-2"></i>
-                            <h6 class="small mb-1">快速处理</h6>
-                            <small class="text-muted">24小时内审核</small>
+                        <div class="advantage-item">
+                            <div class="advantage-icon">
+                                <i class="fas fa-clock text-primary"></i>
+                            </div>
+                            <div class="advantage-title">快速处理</div>
+                            <div class="advantage-desc">24小时内审核</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="text-center">
-                            <i class="fas fa-tags fa-2x text-warning mb-2"></i>
-                            <h6 class="small mb-1">多种卡券</h6>
-                            <small class="text-muted">支持各类卡券</small>
+                        <div class="advantage-item">
+                            <div class="advantage-icon">
+                                <i class="fas fa-tags text-warning"></i>
+                            </div>
+                            <div class="advantage-title">多种卡券</div>
+                            <div class="advantage-desc">支持各类卡券</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="text-center">
-                            <i class="fas fa-eye fa-2x text-info mb-2"></i>
-                            <h6 class="small mb-1">实时跟踪</h6>
-                            <small class="text-muted">状态实时更新</small>
+                        <div class="advantage-item">
+                            <div class="advantage-icon">
+                                <i class="fas fa-eye text-info"></i>
+                            </div>
+                            <div class="advantage-title">实时跟踪</div>
+                            <div class="advantage-desc">状态实时更新</div>
                         </div>
                     </div>
                 </div>

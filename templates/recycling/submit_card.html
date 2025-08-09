@@ -37,80 +37,235 @@
 {% endif %}
 
 <style>
-/* 移动端表单优化样式 */
+/* 移动端APP风格表单样式 */
 @media (max-width: 768px) {
-    .card-header h4 {
-        font-size: 1.1rem;
+    /* 主卡片APP风格 */
+    .card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
     }
     
+    .card-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        color: white;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .card-header h4 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+        text-align: center;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+        background: #ffffff;
+    }
+    
+    /* APP风格表单分区 */
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+    
+    .form-section-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-section-title i {
+        margin-right: 0.5rem;
+        color: #007bff;
+    }
+    
+    /* 标签优化 */
     .form-label {
         font-size: 0.9rem;
         font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
     }
     
+    /* 输入框APP风格 */
     .form-control, .form-select {
-        font-size: 16px; /* 防止iOS缩放 */
-        min-height: 44px;
+        font-size: 16px;
+        min-height: 48px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        background: white;
     }
     
     .form-text {
         font-size: 0.8rem;
+        margin-top: 0.25rem;
     }
     
-    /* 上传区域移动端优化 */
+    /* APP风格上传区域 */
     .upload-area {
-        padding: 2rem 1rem !important;
-        border-width: 2px !important;
+        padding: 2.5rem 1.5rem !important;
+        border: 2px dashed #cbd5e0 !important;
+        border-radius: 12px !important;
+        background: linear-gradient(45deg, #f8fafc, #f1f5f9);
+        transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover {
+        border-color: #007bff !important;
+        background: linear-gradient(45deg, #eff6ff, #dbeafe);
     }
     
     .upload-area i {
-        font-size: 2.5rem !important;
+        font-size: 3rem !important;
+        color: #007bff;
+        margin-bottom: 0.5rem;
     }
     
     .upload-area p {
-        font-size: 0.9rem;
-        margin-top: 1rem !important;
+        font-size: 1rem;
+        font-weight: 500;
+        color: #374151;
+        margin: 0.75rem 0 0.25rem !important;
     }
     
-    /* 图片预览优化 */
+    .upload-area small {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+    
+    /* 图片预览APP风格 */
+    #imagePreview {
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
     #imagePreview img {
-        max-width: 150px !important;
-        max-height: 150px !important;
+        max-width: 180px !important;
+        max-height: 180px !important;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
-    /* 按钮优化 */
+    /* 进度条APP风格 */
+    #uploadProgress .progress {
+        height: 6px;
+        border-radius: 3px;
+        background: #e9ecef;
+    }
+    
+    #uploadProgress .progress-bar {
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        border-radius: 3px;
+    }
+    
+    /* 按钮APP风格 */
     .btn {
-        min-height: 44px;
+        min-height: 48px;
         font-size: 16px;
+        font-weight: 600;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
+    }
+    
+    .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+        border-radius: 8px;
+        min-height: 36px;
+        font-size: 14px;
     }
     
     /* 表单分组间距 */
     .mb-3 {
-        margin-bottom: 1.5rem !important;
+        margin-bottom: 1.25rem !important;
+    }
+    
+    /* 响应式列优化 */
+    .row .col-12 {
+        margin-bottom: 0.5rem;
     }
 }
 
 @media (max-width: 576px) {
     .card {
-        margin: 0.5rem;
-        border-radius: 0.75rem;
+        margin: 0.75rem;
+        border-radius: 16px;
     }
     
-    .card-header, .card-body {
-        padding: 1rem;
+    .card-header {
+        padding: 1rem 1.25rem;
     }
     
-    /* 更紧凑的表单布局 */
-    .row > [class*="col-"] {
-        margin-bottom: 0.5rem;
+    .card-body {
+        padding: 1.25rem;
+    }
+    
+    .form-section {
+        padding: 0.875rem 1rem;
+        margin-bottom: 1.25rem;
     }
     
     .upload-area {
-        padding: 1.5rem 1rem !important;
+        padding: 2rem 1rem !important;
     }
     
     .upload-area i {
-        font-size: 2rem !important;
+        font-size: 2.5rem !important;
+    }
+}
+
+/* APP风格动画效果 */
+@media (max-width: 768px) {
+    .form-section {
+        animation: slideInUp 0.4s ease-out;
+    }
+    
+    .form-section:nth-child(1) { animation-delay: 0.1s; }
+    .form-section:nth-child(2) { animation-delay: 0.2s; }
+    .form-section:nth-child(3) { animation-delay: 0.3s; }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 }
 </style>
@@ -124,98 +279,209 @@
                 <div class="card-body">
                 <form method="post" id="submitForm" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-12 col-md-4">
-                            <div class="mb-3">
-                                <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
-                                {{ form.category }}
+                    
+                    <!-- APP风格表单分区：基本信息 -->
+                    <div class="form-section d-md-none">
+                        <div class="form-section-title">
+                            <i class="fas fa-info-circle"></i>
+                            基本信息
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
+                            {{ form.category }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
+                            {{ form.package }}
+                            <div class="form-text">
+                                <span id="commissionInfo" class="text-muted">请先选择类别</span>
                             </div>
                         </div>
-                        <div class="col-12 col-md-4">
-                            <div class="mb-3">
-                                <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
-                                {{ form.package }}
-                                <div class="form-text">
-                                    <span id="commissionInfo" class="text-muted">请先选择类别</span>
+                        <div class="mb-3">
+                            <label for="{{ form.store.id_for_label }}" class="form-label">适用门店</label>
+                            {{ form.store }}
+                            <div class="form-text">
+                                <span id="storeInfo" class="text-muted">请先选择套餐</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 桌面端：保持原有布局 -->
+                    <div class="d-none d-md-block">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
+                                    {{ form.category }}
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <div class="mb-3">
-                                <label for="{{ form.store.id_for_label }}" class="form-label">适用门店</label>
-                                {{ form.store }}
-                                <div class="form-text">
-                                    <span id="storeInfo" class="text-muted">请先选择套餐</span>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
+                                    {{ form.package }}
+                                    <div class="form-text">
+                                        <span id="commissionInfoDesktop" class="text-muted">请先选择类别</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.store.id_for_label }}" class="form-label">适用门店</label>
+                                    {{ form.store }}
+                                    <div class="form-text">
+                                        <span id="storeInfoDesktop" class="text-muted">请先选择套餐</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-12 col-md-4">
-                            <div class="mb-3">
-                                <label for="{{ form.card_number.id_for_label }}" class="form-label">卡号 <small class="text-muted">(可选)</small></label>
-                                {{ form.card_number }}
-                            </div>
+                    <!-- APP风格表单分区：卡券信息 -->
+                    <div class="form-section d-md-none">
+                        <div class="form-section-title">
+                            <i class="fas fa-credit-card"></i>
+                            卡券信息
                         </div>
-                        <div class="col-12 col-md-4">
-                            <div class="mb-3">
-                                <label for="{{ form.card_secret.id_for_label }}" class="form-label">密码 <small class="text-muted">(可选)</small></label>
-                                {{ form.card_secret }}
-                            </div>
+                        <div class="mb-3">
+                            <label for="{{ form.card_number.id_for_label }}" class="form-label">卡号 <small class="text-muted">(可选)</small></label>
+                            {{ form.card_number }}
                         </div>
-                        <div class="col-12 col-md-4">
-                            <div class="mb-3">
-                                <label for="{{ form.redemption_code.id_for_label }}" class="form-label">兑换码 <small class="text-muted">(可选)</small></label>
-                                {{ form.redemption_code }}
-                            </div>
+                        <div class="mb-3">
+                            <label for="{{ form.card_secret.id_for_label }}" class="form-label">密码 <small class="text-muted">(可选)</small></label>
+                            {{ form.card_secret }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.redemption_code.id_for_label }}" class="form-label">兑换码 <small class="text-muted">(可选)</small></label>
+                            {{ form.redemption_code }}
+                        </div>
+                        <div class="alert alert-info py-2 px-3 mb-0">
+                            <small><i class="fas fa-info-circle me-1"></i>卡号密码、兑换码和核销码图片至少需要提供一项</small>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="imageFile" class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
-                        <div class="form-text mb-2">
+                    <!-- 桌面端：卡券信息 -->
+                    <div class="d-none d-md-block">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.card_number.id_for_label }}" class="form-label">卡号 <small class="text-muted">(可选)</small></label>
+                                    {{ form.card_number }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.card_secret.id_for_label }}" class="form-label">密码 <small class="text-muted">(可选)</small></label>
+                                    {{ form.card_secret }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.redemption_code.id_for_label }}" class="form-label">兑换码 <small class="text-muted">(可选)</small></label>
+                                    {{ form.redemption_code }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mb-3">
                             <small class="text-info">注意：卡号密码、兑换码和核销码图片至少需要提供一项</small>
                         </div>
-                        {{ form.image }}
-                        <input type="file" class="form-control" id="imageFile" accept="image/jpeg,image/png,image/jpg" style="display: none;">
-                        <div class="upload-area border rounded p-3 text-center" style="cursor: pointer; border: 2px dashed #ccc;">
-                            <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
-                            <p class="mt-2 mb-0">点击选择图片或拖拽文件到此处</p>
-                            <small class="text-muted">支持JPG、PNG格式，最大10MB</small>
+                    </div>
+                    
+                    <!-- APP风格表单分区：图片上传 -->
+                    <div class="form-section d-md-none">
+                        <div class="form-section-title">
+                            <i class="fas fa-image"></i>
+                            核销码图片
                         </div>
-                        <div id="uploadProgress" class="mt-2" style="display: none;">
-                            <div class="progress">
-                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                        <div class="mb-3">
+                            <label for="imageFile" class="form-label">上传图片 <small class="text-muted">(可选)</small></label>
+                            {{ form.image }}
+                            <input type="file" class="form-control" id="imageFile" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+                            <div class="upload-area border rounded p-3 text-center" style="cursor: pointer;">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击选择图片或拖拽文件到此处</p>
+                                <small>支持JPG、PNG格式，最大10MB</small>
                             </div>
-                            <small class="text-muted">正在上传...</small>
-                        </div>
-                        <div id="imagePreview" class="mt-2" style="display: none;">
-                            <img id="previewImg" src="" alt="图片预览" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
-                            <div class="mt-1">
-                                <small class="text-success">上传成功</small>
-                                <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeImage">删除</button>
+                            <div id="uploadProgress" class="mt-3" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted mt-1 d-block">正在上传...</small>
+                            </div>
+                            <div id="imagePreview" class="mt-3" style="display: none;">
+                                <img id="previewImg" src="" alt="图片预览" class="img-thumbnail">
+                                <div class="mt-2">
+                                    <small class="text-success d-block mb-2">上传成功</small>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" id="removeImage">删除图片</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-12 col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
-                                {{ form.expire_date }}
+                    <!-- 桌面端：图片上传 -->
+                    <div class="d-none d-md-block">
+                        <div class="mb-3">
+                            <label for="imageFile" class="form-label">核销码图片 <small class="text-muted">(可选)</small></label>
+                            {{ form.image }}
+                            <input type="file" class="form-control" id="imageFile" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+                            <div class="upload-area border rounded p-3 text-center" style="cursor: pointer; border: 2px dashed #ccc;">
+                                <i class="fas fa-cloud-upload-alt fa-2x text-muted"></i>
+                                <p class="mt-2 mb-0">点击选择图片或拖拽文件到此处</p>
+                                <small class="text-muted">支持JPG、PNG格式，最大10MB</small>
+                            </div>
+                            <div id="uploadProgress" class="mt-2" style="display: none;">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted">正在上传...</small>
+                            </div>
+                            <div id="imagePreview" class="mt-2" style="display: none;">
+                                <img id="previewImg" src="" alt="图片预览" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                <div class="mt-1">
+                                    <small class="text-success">上传成功</small>
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-2" id="removeImage">删除</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-12 col-md-6">
-                            <div class="mb-3">
-                                <label for="{{ form.telephone.id_for_label }}" class="form-label">联系电话</label>
-                                {{ form.telephone }}
+                    </div>
+                    
+                    <!-- APP风格表单分区：联系信息 -->
+                    <div class="form-section d-md-none">
+                        <div class="form-section-title">
+                            <i class="fas fa-phone"></i>
+                            联系信息
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
+                            {{ form.expire_date }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.telephone.id_for_label }}" class="form-label">联系电话</label>
+                            {{ form.telephone }}
+                        </div>
+                    </div>
+                    
+                    <!-- 桌面端：联系信息 -->
+                    <div class="d-none d-md-block">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
+                                    {{ form.expire_date }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.telephone.id_for_label }}" class="form-label">联系电话</label>
+                                    {{ form.telephone }}
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">提交卡券</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>提交卡券
+                        </button>
                     </div>
                 </form>
             </div>
@@ -241,12 +507,15 @@ $(document).ready(function() {
             // 获取类别信息
             $.get('/api/categories/', {category_id: categoryId})
                 .done(function(categoryData) {
-                    // 控制门店字段显示
-                    var storeField = $('#store').closest('.col-12');
+                    // 控制门店字段显示（移动端和桌面端）
+                    var storeFieldMobile = $('#store').closest('.col-12');
+                    var storeFieldDesktop = $('#store').closest('.col-md-4');
                     if (categoryData.show_store_field) {
-                        storeField.show();
+                        storeFieldMobile.show();
+                        storeFieldDesktop.show();
                     } else {
-                        storeField.hide();
+                        storeFieldMobile.hide();
+                        storeFieldDesktop.hide();
                         $('#store').val(''); // 清空门店选择
                     }
                 })
@@ -270,9 +539,9 @@ $(document).ready(function() {
                 });
         } else {
             $('#package').empty().append('<option value="">请先选择类别</option>');
-            $('#commissionInfo').text('请先选择类别');
+            $('#commissionInfo, #commissionInfoDesktop').text('请先选择类别');
             // 显示门店字段（默认显示）
-            $('#store').closest('.col-12').show();
+            $('#store').closest('.col-12, .col-md-4').show();
         }
     });
     
@@ -286,11 +555,11 @@ $(document).ready(function() {
                 .done(function(data) {
                     var selectedPackage = data.find(function(p) { return p.id == packageId; });
                     if (selectedPackage) {
-                        $('#commissionInfo').text('佣金：￥' + selectedPackage.commission);
+                        $('#commissionInfo, #commissionInfoDesktop').text('佣金：￥' + selectedPackage.commission);
                     }
                 })
                 .fail(function() {
-                    $('#commissionInfo').text('获取佣金信息失败');
+                    $('#commissionInfo, #commissionInfoDesktop').text('获取佣金信息失败');
                 });
             
             // 加载适用门店
@@ -305,18 +574,18 @@ $(document).ready(function() {
                     });
                     
                     if (data.length === 0) {
-                        $('#storeInfo').text('该套餐暂无可用门店');
+                        $('#storeInfo, #storeInfoDesktop').text('该套餐暂无可用门店');
                     } else {
-                        $('#storeInfo').text('共' + data.length + '个门店可选');
+                        $('#storeInfo, #storeInfoDesktop').text('共' + data.length + '个门店可选');
                     }
                 })
                 .fail(function() {
-                    $('#storeInfo').text('获取门店列表失败');
+                    $('#storeInfo, #storeInfoDesktop').text('获取门店列表失败');
                 });
         } else {
-            $('#commissionInfo').text('请先选择套餐');
+            $('#commissionInfo, #commissionInfoDesktop').text('请先选择套餐');
             $('#store').empty().append('<option value="">请先选择套餐</option>');
-            $('#storeInfo').text('请先选择套餐');
+            $('#storeInfo, #storeInfoDesktop').text('请先选择套餐');
         }
     });
     
@@ -325,9 +594,9 @@ $(document).ready(function() {
         var storeId = $(this).val();
         if (storeId) {
             var selectedText = $(this).find('option:selected').text();
-            $('#storeInfo').text('已选择：' + selectedText);
+            $('#storeInfo, #storeInfoDesktop').text('已选择：' + selectedText);
         } else {
-            $('#storeInfo').text('请选择门店');
+            $('#storeInfo, #storeInfoDesktop').text('请选择门店');
         }
     });
     

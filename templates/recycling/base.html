@@ -250,6 +250,135 @@
                 animation: none;
             }
         }
+
+        /* APP风格移动端底部导航栏 */
+        .mobile-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-top: 1px solid #e9ecef;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: env(safe-area-inset-bottom) 0 0 0;
+        }
+
+        .bottom-nav-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 12px 12px;
+            max-width: 100%;
+        }
+
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 4px;
+            border-radius: 12px;
+            min-width: 60px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav-item i {
+            font-size: 20px;
+            margin-bottom: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav-item span {
+            line-height: 1;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav-item:hover {
+            color: #495057;
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        .bottom-nav-item.active {
+            color: #007bff;
+            background: rgba(0, 123, 255, 0.08);
+        }
+
+        .bottom-nav-item.active i {
+            color: #007bff;
+            transform: scale(1.1);
+        }
+
+        .bottom-nav-item.disabled {
+            color: #adb5bd;
+            cursor: not-allowed;
+        }
+
+        .bottom-nav-item.disabled:hover {
+            transform: none;
+        }
+
+        /* 为移动端主要内容区域留出底部导航空间 */
+        @media (max-width: 768px) {
+            .main-content {
+                padding-bottom: 90px; /* 为底部导航留出空间 */
+            }
+            
+            /* 隐藏移动端顶部导航的部分元素 */
+            .navbar-nav .nav-item {
+                display: none;
+            }
+            
+            .navbar-nav .nav-item.dropdown {
+                display: block;
+            }
+            
+            /* 简化移动端顶部导航 */
+            .navbar {
+                padding: 0.5rem 1rem;
+                background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+            }
+            
+            .navbar-brand {
+                font-size: 1rem;
+                font-weight: 600;
+            }
+            
+            /* 移动端footer调整 */
+            footer {
+                margin-bottom: 90px; /* 为底部导航留出空间 */
+            }
+        }
+
+        /* APP风格的页面切换效果 */
+        @media (max-width: 768px) {
+            .main-content {
+                animation: slideInUp 0.3s ease;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0.8;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 底部导航的触摸反馈 */
+        @media (hover: none) and (pointer: coarse) {
+            .bottom-nav-item:active {
+                transform: scale(0.95);
+                background: rgba(0, 123, 255, 0.15);
+            }
+        }
     </style>
 </head>
 <body>
@@ -316,21 +445,69 @@
         </div>
     </nav>
 
-    <main class="container mt-4">
-        {% if messages %}
-        <div class="alerts-container">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- 移动端APP风格主要内容区域 -->
+    <main class="main-content">
+        <div class="container mt-4">
+            {% if messages %}
+            <div class="alerts-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+            {% endif %}
 
-        {% block content %}
-        {% endblock %}
+            {% block content %}
+            {% endblock %}
+        </div>
     </main>
+
+    <!-- 移动端底部导航栏 -->
+    <nav class="mobile-bottom-nav d-md-none">
+        <div class="bottom-nav-container">
+            <a href="{% url 'home' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>首页</span>
+            </a>
+            {% if user.is_authenticated and not user.is_staff %}
+            <a href="{% url 'submit_card' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'submit_card' %}active{% endif %}">
+                <i class="fas fa-plus-circle"></i>
+                <span>提交</span>
+            </a>
+            <a href="{% url 'my_submissions' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'my_submissions' %}active{% endif %}">
+                <i class="fas fa-list-alt"></i>
+                <span>记录</span>
+            </a>
+            <a href="{% url 'tutorials' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'tutorials' %}active{% endif %}">
+                <i class="fas fa-book-open"></i>
+                <span>教程</span>
+            </a>
+            <a href="{% url 'profile' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+                <i class="fas fa-user"></i>
+                <span>我的</span>
+            </a>
+            {% else %}
+            <a href="{% url 'login' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span>登录</span>
+            </a>
+            <a href="{% url 'register' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'register' %}active{% endif %}">
+                <i class="fas fa-user-plus"></i>
+                <span>注册</span>
+            </a>
+            <div class="bottom-nav-item disabled">
+                <i class="fas fa-lock text-muted"></i>
+                <span class="text-muted">敬请期待</span>
+            </div>
+            <div class="bottom-nav-item disabled">
+                <i class="fas fa-ellipsis-h text-muted"></i>
+                <span class="text-muted">更多</span>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
 
     <footer class="bg-light mt-5 py-4">
         <div class="container text-center">
