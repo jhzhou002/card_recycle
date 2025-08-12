@@ -444,6 +444,36 @@
                         </div>
                     </div>
                     
+                    <!-- APP风格表单分区：收款码 -->
+                    <div class="form-section d-md-none">
+                        <div class="form-section-title">
+                            <i class="fas fa-qrcode"></i>
+                            收款码
+                        </div>
+                        {% if existing_payment_code %}
+                        <div class="alert alert-info py-2 px-3 mb-3">
+                            <small><i class="fas fa-info-circle me-1"></i>已自动加载您的收款码，如需更换请重新上传</small>
+                        </div>
+                        <div id="mobile-existing-payment" class="mb-3">
+                            <img src="{{ existing_payment_code }}" alt="收款码" class="img-thumbnail" style="max-height: 100px;">
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="mobile-change-payment">更换收款码</button>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="mb-3" id="mobile-payment-upload" {% if existing_payment_code %}style="display: none;"{% endif %}>
+                            <label class="form-label">上传收款码</label>
+                            <input type="file" class="form-control" id="mobile-payment-code" accept="image/jpeg,image/png,image/jpg" style="display: none;">
+                            <input type="hidden" id="mobile-payment-code-url" name="payment_code" value="{{ existing_payment_code|default:'' }}">
+                            <div class="upload-area border rounded p-3 text-center" style="cursor: pointer;" id="mobile-payment-upload-area">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p>点击上传收款码</p>
+                                <small>支持JPG、PNG格式</small>
+                            </div>
+                            <div id="mobile-payment-preview" class="mt-2"></div>
+                        </div>
+                    </div>
+                    
                     <!-- APP风格表单分区：联系信息 -->
                     <div class="form-section d-md-none">
                         <div class="form-section-title">
@@ -500,6 +530,29 @@ if (typeof $ === 'undefined') {
 }
 
 $(document).ready(function() {
+    // 移动端支付码上传功能
+    $('#mobile-payment-upload-area').click(function() {
+        $('#mobile-payment-code').click();
+    });
+    
+    $('#mobile-payment-code').change(function() {
+        const file = this.files[0];
+        if (file) {
+            uploadToQiniu(file, 'payment_code', function(url) {
+                $('#mobile-payment-code-url').val(url);
+                $('#mobile-payment-preview').html('<img src="' + url + '" alt="收款码" class="img-thumbnail" style="max-height: 100px;">');
+                $('#mobile-existing-payment').hide();
+                $('#mobile-payment-upload').show();
+            });
+        }
+    });
+    
+    // 更换收款码按钮
+    $('#mobile-change-payment').click(function() {
+        $('#mobile-existing-payment').hide();
+        $('#mobile-payment-upload').show();
+    });
+    
     // 类别选择变化时更新套餐和门店字段可见性
     $('#category').change(function() {
         var categoryId = $(this).val();
@@ -766,6 +819,13 @@ $(document).ready(function() {
             return false;
         }
         
+        // 验证收款码（移动端必须）
+        if (window.innerWidth <= 768 && !$('#mobile-payment-code-url').val()) {
+            alert('请上传收款码');
+            e.preventDefault();
+            return false;
+        }
+        
         // 验证卡号密码、兑换码和图片至少一项
         var hasCardInfo = $('#id_card_number').val().trim() || $('#id_card_secret').val().trim();
         var hasRedemptionCode = $('#id_redemption_code').val().trim();
@@ -774,6 +834,54 @@ $(document).ready(function() {
         if (!hasCardInfo && !hasRedemptionCode && !hasImage) {
             alert('请至少填写卡号密码、兑换码或上传核销码图片');
             e.preventDefault();
+            return false;
+        }
+        
+        // 移动端使用AJAX提交
+        if (window.innerWidth <= 768) {
+            e.preventDefault();
+            
+            const formData = {
+                category: $('#category').val(),
+                package: $('#package').val(),
+                store: $('#store').val(),
+                card_number: $('#id_card_number').val(),
+                card_secret: $('#id_card_secret').val(),
+                redemption_code: $('#id_redemption_code').val(),
+                image: $('#id_image').val(),
+                expire_date: $('#id_expire_date').val(),
+                telephone: $('#id_telephone').val(),
+                payment_code: $('#mobile-payment-code-url').val(),
+                csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+            };
+            
+            // 显示提交按钮加载状态
+            var submitBtn = $('.btn-primary');
+            var originalText = submitBtn.html();
+            submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>提交中...').prop('disabled', true);
+            
+            $.ajax({
+                url: '{% url "submit_card" %}',
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('提交成功！');
+                        window.location.href = '{% url "my_submissions" %}';
+                    } else {
+                        alert('提交失败：' + (response.error || '未知错误'));
+                        submitBtn.html(originalText).prop('disabled', false);
+                    }
+                },
+                error: function() {
+                    alert('网络错误，请稍后重试');
+                    submitBtn.html(originalText).prop('disabled', false);
+                }
+            });
+            
             return false;
         }
     });

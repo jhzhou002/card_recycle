@@ -530,47 +530,12 @@ $(document).ready(function() {
 // 选择套餐功能
 function selectPackage(packageId) {
     {% if user.is_authenticated %}
-        // 显示选择弹窗：卡券提交 或 瓶盖提交
-        showPackageOptions(packageId);
+        // 直接跳转到卡券提交页面，并预填充套餐信息
+        window.location.href = '{% url "submit_card" %}?package=' + packageId;
     {% else %}
         // 未登录用户跳转到登录页
         window.location.href = '{% url "login" %}';
     {% endif %}
-}
-
-function showPackageOptions(packageId) {
-    // 创建选择弹窗
-    const modal = `
-        <div class="modal fade" id="packageOptionsModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">选择提交方式</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="d-grid gap-3">
-                            <a href="{% url 'submit_card' %}?package=${packageId}" class="btn btn-primary btn-lg">
-                                <i class="fas fa-credit-card me-2"></i>提交卡券信息
-                            </a>
-                            <a href="{% url 'submit_bottle_cap' %}" class="btn btn-success btn-lg">
-                                <i class="fas fa-camera me-2"></i>提交瓶盖照片
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // 移除已存在的模态框
-    $('#packageOptionsModal').remove();
-    
-    // 添加新的模态框
-    $('body').append(modal);
-    
-    // 显示模态框
-    $('#packageOptionsModal').modal('show');
 }
 
 {% if user.is_authenticated and notifications %}

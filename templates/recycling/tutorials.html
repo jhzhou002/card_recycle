@@ -51,29 +51,134 @@
 
 /* 移动端教程页面优化 */
 @media (max-width: 768px) {
-    .tutorial-card {
-        border-radius: 8px;
-        margin-bottom: 0.75rem;
+    /* 页面标题移动端优化 */
+    .d-flex.align-items-center {
+        flex-direction: column;
+        text-align: center;
+        margin-bottom: 1.5rem;
     }
     
-    .tutorial-card .card-body {
+    .d-flex.align-items-center i {
+        margin-bottom: 0.5rem;
+        margin-right: 0 !important;
+    }
+    
+    .d-flex.align-items-center h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* 筛选器移动端优化 */
+    .col-md-8, .col-md-4 {
+        margin-bottom: 1rem;
+    }
+    
+    .col-md-4.text-end {
+        text-align: center !important;
+    }
+    
+    .d-flex.align-items-center .form-select {
+        width: 140px !important;
+        font-size: 0.9rem;
+    }
+    
+    /* 推荐教程移动端布局 */
+    .col-md-6.col-lg-4 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .h-100.border-warning .card-img-top {
+        height: 160px !important;
+    }
+    
+    .h-100.border-warning .card-body {
         padding: 1rem;
     }
     
-    .tutorial-card .card-title {
+    .h-100.border-warning .card-title {
         font-size: 1rem;
         line-height: 1.4;
     }
     
-    .tutorial-card .card-text {
+    .h-100.border-warning .card-text {
         font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* 教程卡片移动端优化 */
+    .tutorial-card {
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .tutorial-card .row.g-0 {
+        flex-direction: column;
+    }
+    
+    .tutorial-card .col-md-3 {
+        order: 1;
+    }
+    
+    .tutorial-card .col-md-9 {
+        order: 2;
+    }
+    
+    .tutorial-card .col-md-3 .position-relative {
+        min-height: 200px !important;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .tutorial-card .col-md-3 img {
+        border-radius: 12px 12px 0 0 !important;
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .tutorial-card .col-md-3 .bg-light {
+        border-radius: 12px 12px 0 0 !important;
+        min-height: 200px;
+    }
+    
+    .tutorial-card .card-body {
+        padding: 1.25rem;
+        border-radius: 0 0 12px 12px;
+    }
+    
+    .tutorial-card .card-title {
+        font-size: 1.1rem;
+        line-height: 1.4;
+        margin-bottom: 0.75rem;
+    }
+    
+    .tutorial-card .card-text {
+        font-size: 0.95rem;
         line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+    
+    .tutorial-card .d-flex.align-items-start.justify-content-between {
+        flex-direction: column;
+        align-items: flex-start !important;
+        margin-bottom: 1rem;
+    }
+    
+    .tutorial-card .d-flex.align-items-start.justify-content-between .badge {
+        margin-bottom: 0.5rem;
+    }
+    
+    .tutorial-card .d-flex.justify-content-end {
+        justify-content: flex-start !important;
+    }
+    
+    .tutorial-card small {
+        font-size: 0.85rem;
     }
     
     /* 移动端取消hover效果，优化点击体验 */
     .tutorial-card:hover {
         transform: none;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     }
     
     .tutorial-card:hover .card-body::after {
@@ -86,14 +191,28 @@
         transition: transform 0.1s ease;
     }
     
-    /* 教程元信息优化 */
-    .tutorial-meta {
-        font-size: 0.8rem;
+    /* 分页移动端优化 */
+    .pagination {
+        justify-content: center;
+        margin-bottom: 1rem;
     }
     
-    .tutorial-meta .badge {
-        font-size: 0.7rem;
-        padding: 0.25em 0.5em;
+    .page-link {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* 空状态移动端优化 */
+    .text-center.py-5 {
+        padding: 2rem 1rem !important;
+    }
+    
+    .text-center.py-5 i {
+        font-size: 2.5rem !important;
+    }
+    
+    .text-center.py-5 h5 {
+        font-size: 1.1rem;
     }
 }
 

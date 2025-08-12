@@ -136,26 +136,104 @@ def register(request):
 def submit_card(request):
     """提交卡券"""
     categories = Category.objects.all()
+    
+    # 获取预选择的套餐ID
+    package_id = request.GET.get('package')
+    selected_package = None
+    if package_id:
+        try:
+            selected_package = Package.objects.get(id=package_id)
+        except Package.DoesNotExist:
+            pass
+    
+    # 获取用户历史收款码
+    existing_payment_code = None
+    # 先查找瓶盖提交记录的收款码
+    last_bottle_cap = BottleCapSubmission.objects.filter(user=request.user).order_by('-submitted_at').first()
+    if last_bottle_cap and last_bottle_cap.payment_code:
+        existing_payment_code = last_bottle_cap.payment_code
+    
     if request.method == 'POST':
-        form = SubmissionForm(request.POST)
-        if form.is_valid():
+        # 检查是否是AJAX请求（前端上传）
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             try:
-                submission = form.save(commit=False)
-                submission.user = request.user
-                submission.save()
-                messages.success(request, '卡券提交成功！')
-                return redirect('my_submissions')
+                # 获取前端上传的数据
+                form_data = {
+                    'category': request.POST.get('category'),
+                    'package': request.POST.get('package'),
+                    'store': request.POST.get('store'),
+                    'card_number': request.POST.get('card_number', ''),
+                    'card_secret': request.POST.get('card_secret', ''),
+                    'redemption_code': request.POST.get('redemption_code', ''),
+                    'image': request.POST.get('image', ''),
+                    'expire_date': request.POST.get('expire_date'),
+                    'telephone': request.POST.get('telephone'),
+                }
+                
+                # 处理收款码
+                payment_code_url = request.POST.get('payment_code')
+                final_payment_code = payment_code_url if payment_code_url else existing_payment_code
+                
+                if not final_payment_code:
+                    return JsonResponse({'error': '请上传收款码图片'}, status=400)
+                
+                # 验证必填字段
+                if not all([form_data['category'], form_data['package'], form_data['store'], 
+                           form_data['expire_date'], form_data['telephone']]):
+                    return JsonResponse({'error': '请填写所有必填字段'}, status=400)
+                
+                # 验证至少提供一项卡券信息
+                has_card_info = form_data['card_number'] or form_data['card_secret']
+                has_redemption_code = form_data['redemption_code']
+                has_image = form_data['image']
+                
+                if not (has_card_info or has_redemption_code or has_image):
+                    return JsonResponse({'error': '请至少填写卡号密码、兑换码或上传核销码图片'}, status=400)
+                
+                # 创建提交记录
+                submission = Submission.objects.create(
+                    user=request.user,
+                    category_id=form_data['category'],
+                    package_id=form_data['package'],
+                    store_id=form_data['store'],
+                    commission=Package.objects.get(id=form_data['package']).commission,
+                    card_number=form_data['card_number'],
+                    card_secret=form_data['card_secret'],
+                    redemption_code=form_data['redemption_code'],
+                    image=form_data['image'],
+                    expire_date=form_data['expire_date'],
+                    telephone=form_data['telephone']
+                )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': '卡券提交成功！',
+                    'submission_id': submission.id
+                })
+                
             except Exception as e:
-                messages.error(request, f'提交失败：{str(e)}')
+                return JsonResponse({'error': f'提交失败：{str(e)}'}, status=500)
         else:
-            # 显示表单错误
-            for field, errors in form.errors.items():
-                for error in errors:
-                    if field == '__all__':
-                        messages.error(request, f'{error}')
-                    else:
-                        field_name = form.fields.get(field, {}).label or field
-                        messages.error(request, f'{field_name}: {error}')
+            # 传统表单提交
+            form = SubmissionForm(request.POST)
+            if form.is_valid():
+                try:
+                    submission = form.save(commit=False)
+                    submission.user = request.user
+                    submission.save()
+                    messages.success(request, '卡券提交成功！')
+                    return redirect('my_submissions')
+                except Exception as e:
+                    messages.error(request, f'提交失败：{str(e)}')
+            else:
+                # 显示表单错误
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        if field == '__all__':
+                            messages.error(request, f'{error}')
+                        else:
+                            field_name = form.fields.get(field, {}).label or field
+                            messages.error(request, f'{field_name}: {error}')
     else:
         form = SubmissionForm()
     
@@ -168,7 +246,9 @@ def submit_card(request):
     return render(request, 'recycling/submit_card.html', {
         'form': form,
         'categories': categories,
-        'notifications': notifications
+        'notifications': notifications,
+        'selected_package': selected_package,
+        'existing_payment_code': existing_payment_code
     })
 
 
