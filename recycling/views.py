@@ -18,15 +18,55 @@ import base64
 
 
 def home(request):
-    """首页"""
+    """首页 - 电商化布局"""
     # 获取首页通知
     notifications = Notification.objects.filter(
         is_active=True,
         target_page__in=['home', 'all_pages']
     ).order_by('-updated_at')
     
+    # 获取所有卡券类别（用于左侧分类菜单）
+    categories = Category.objects.all()
+    
+    # 获取当前选中的分类
+    selected_category_id = request.GET.get('category')
+    selected_category = None
+    
+    # 获取搜索关键词
+    search_query = request.GET.get('search', '').strip()
+    
+    # 获取套餐列表（用于右侧商品展示）
+    packages = Package.objects.all()
+    
+    # 根据分类过滤
+    if selected_category_id:
+        try:
+            selected_category = Category.objects.get(id=selected_category_id)
+            packages = packages.filter(category=selected_category)
+        except Category.DoesNotExist:
+            pass
+    
+    # 根据搜索关键词过滤
+    if search_query:
+        packages = packages.filter(
+            Q(name__icontains=search_query) | 
+            Q(category__name__icontains=search_query)
+        )
+    
+    # 添加分页功能
+    from django.core.paginator import Paginator
+    paginator = Paginator(packages, 20)  # 每页显示20个套餐
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     context = {
-        'notifications': notifications
+        'notifications': notifications,
+        'categories': categories,
+        'selected_category': selected_category,
+        'selected_category_id': int(selected_category_id) if selected_category_id else None,
+        'search_query': search_query,
+        'packages': page_obj,
+        'total_packages': packages.count(),
     }
     return render(request, 'recycling/home.html', context)
 

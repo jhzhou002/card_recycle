@@ -472,17 +472,17 @@
                 <span>首页</span>
             </a>
             {% if user.is_authenticated and not user.is_staff %}
-            <a href="{% url 'submit_bottle_cap' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'submit_bottle_cap' %}active{% endif %}">
-                <i class="fas fa-plus-circle"></i>
-                <span>提交</span>
-            </a>
+            <div class="bottom-nav-item disabled">
+                <i class="fas fa-bullhorn text-muted"></i>
+                <span class="text-muted">公告</span>
+            </div>
+            <div class="bottom-nav-item disabled">
+                <i class="fas fa-chart-bar text-muted"></i>
+                <span class="text-muted">统计</span>
+            </div>
             <a href="{% url 'my_submissions' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'my_submissions' %}active{% endif %}">
                 <i class="fas fa-list-alt"></i>
-                <span>记录</span>
-            </a>
-            <a href="{% url 'tutorials' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'tutorials' %}active{% endif %}">
-                <i class="fas fa-book-open"></i>
-                <span>教程</span>
+                <span>订单</span>
             </a>
             <a href="{% url 'profile' %}" class="bottom-nav-item {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                 <i class="fas fa-user"></i>

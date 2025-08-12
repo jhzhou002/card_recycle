@@ -4,460 +4,475 @@
 
 {% block content %}
 <style>
-/* APP风格移动端英雄区域 */
+/* 电商风格移动端布局 */
 @media (max-width: 768px) {
-    .mobile-hero-section {
+    /* 顶部搜索栏 */
+    .mobile-search-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
-        margin: 0 -15px 2rem -15px;
-        overflow: hidden;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        padding: 1rem;
+        margin: -1rem -15px 1rem -15px;
     }
     
-    .hero-content {
-        padding: 3rem 2rem 3.5rem !important;
+    .search-input-group {
         position: relative;
-    }
-    
-    .hero-icon {
-        width: 80px;
-        height: 80px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin: 0 auto 1.5rem;
-        backdrop-filter: blur(10px);
-        border: 2px solid rgba(255, 255, 255, 0.1);
+        background: white;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
     
-    .hero-icon i {
-        font-size: 2.5rem;
+    .search-input-group i {
+        color: #999;
+        margin-right: 0.5rem;
+    }
+    
+    .search-input {
+        border: none;
+        outline: none;
+        flex: 1;
+        font-size: 16px;
+        background: transparent;
+    }
+    
+    .search-input::placeholder {
+        color: #999;
+    }
+    
+    /* 电商主要布局 */
+    .ecommerce-layout {
+        display: flex;
+        gap: 0;
+        min-height: 70vh;
+    }
+    
+    /* 左侧分类菜单 */
+    .category-sidebar {
+        width: 100px;
+        background: #f8f9fa;
+        border-right: 1px solid #e9ecef;
+        padding: 0;
+        position: sticky;
+        top: 0;
+        height: fit-content;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .category-item {
+        display: block;
+        padding: 1rem 0.5rem;
+        text-align: center;
+        color: #666;
+        text-decoration: none;
+        border-bottom: 1px solid #e9ecef;
+        font-size: 0.85rem;
+        line-height: 1.3;
+        transition: all 0.2s ease;
+        min-height: 70px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .category-item:hover {
+        background: #e3f2fd;
+        color: #1976d2;
+        text-decoration: none;
+    }
+    
+    .category-item.active {
+        background: #1976d2;
         color: white;
     }
     
-    .hero-title {
-        font-size: 1.75rem;
-        font-weight: 700;
-        margin-bottom: 1rem !important;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    .category-item.bottle-cap {
+        background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+        color: white;
     }
     
-    .hero-subtitle {
-        font-size: 1rem;
-        opacity: 0.95;
-        font-weight: 400;
-        line-height: 1.5;
-        margin-bottom: 2rem !important;
+    .category-item.bottle-cap:hover {
+        background: linear-gradient(135deg, #ff5252, #ff7979);
     }
     
-    .hero-actions {
+    /* 右侧商品列表 */
+    .products-content {
+        flex: 1;
+        padding: 1rem;
+        background: white;
+    }
+    
+    .products-grid {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
-        max-width: 300px;
-        margin: 0 auto;
+        gap: 1rem;
     }
     
-    .btn-hero {
-        padding: 1rem 2rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 50px;
-        min-height: 54px;
-        border: none;
-        transition: all 0.3s ease;
+    /* 商品卡片 */
+    .product-card {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .btn-hero-primary {
-        background: rgba(255, 255, 255, 1);
-        color: #667eea !important;
-        box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
-    }
-    
-    .btn-hero-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 255, 255, 0.4);
-        color: #667eea !important;
-    }
-    
-    .btn-hero-outline {
-        background: rgba(255, 255, 255, 0.1);
-        color: white !important;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
-    }
-    
-    .btn-hero-outline:hover {
-        background: rgba(255, 255, 255, 0.2);
-        border-color: rgba(255, 255, 255, 0.5);
-        transform: translateY(-1px);
-        color: white !important;
-    }
-    
-    .btn-hero i {
-        margin-right: 0.5rem;
-    }
-    
-    /* 快捷功能区APP风格优化 */
-    .mobile-quick-actions {
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        border: none;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-    }
-    
-    .quick-actions-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
-    .quick-actions-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #495057;
-        margin: 0;
-        display: flex;
-        align-items: center;
-    }
-    
-    .quick-actions-title i {
-        color: #007bff;
-        margin-right: 0.5rem;
-    }
-    
-    .quick-actions-body {
-        padding: 1.25rem 1.5rem;
-    }
-    
-    .quick-action-btn {
-        background: #f8f9fa;
+        background: white;
         border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1rem 0.75rem;
-        text-decoration: none;
-        color: #495057;
+        border-radius: 8px;
+        padding: 1rem;
         transition: all 0.2s ease;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 80px;
-        justify-content: center;
+        cursor: pointer;
     }
     
-    .quick-action-btn:hover {
-        background: #e9ecef;
-        border-color: #007bff;
-        color: #007bff;
+    .product-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
     }
     
-    .quick-action-btn i {
-        font-size: 1.5rem;
-        margin-bottom: 0.5rem;
-        display: block;
-    }
-    
-    .quick-action-btn small {
-        font-weight: 500;
-        font-size: 0.875rem;
-    }
-    
-    /* 平台优势APP风格 */
-    .mobile-advantages {
-        background: #ffffff;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        border: none;
-        overflow: hidden;
-        margin-bottom: 1.5rem;
-    }
-    
-    .advantages-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid #e9ecef;
-    }
-    
-    .advantages-body {
-        padding: 1.5rem;
-    }
-    
-    .advantage-item {
-        text-align: center;
-        padding: 1rem 0.5rem;
-    }
-    
-    .advantage-icon {
+    .product-image {
         width: 60px;
         height: 60px;
-        border-radius: 50%;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 0.75rem;
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        border: 2px solid #e9ecef;
+        margin-right: 1rem;
+        flex-shrink: 0;
     }
     
-    .advantage-icon i {
+    .product-image i {
         font-size: 1.5rem;
+        color: #666;
     }
     
-    .advantage-title {
+    .product-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .product-title {
         font-size: 0.9rem;
         font-weight: 600;
-        color: #495057;
-        margin-bottom: 0.25rem;
+        color: #333;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
     }
     
-    .advantage-desc {
-        font-size: 0.8rem;
+    .product-price {
+        color: #ff4757;
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .product-meta {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .product-tag {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        border: 1px solid #bbdefb;
+    }
+    
+    .product-tag.commission {
+        background: #f3e5f5;
+        color: #7b1fa2;
+        border-color: #ce93d8;
+    }
+    
+    /* 空状态 */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #666;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    /* 加载状态 */
+    .loading-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #666;
+    }
+    
+    /* 分页 */
+    .pagination-wrapper {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .pagination {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .page-btn {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 1px solid #dee2e6;
         color: #6c757d;
-        line-height: 1.4;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+    
+    .page-btn:hover {
+        background: #e9ecef;
+        text-decoration: none;
+        color: #495057;
+    }
+    
+    .page-btn.active {
+        background: #1976d2;
+        color: white;
+        border-color: #1976d2;
+    }
+    
+    .page-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+}
+
+/* 桌面端保持原有设计 */
+@media (min-width: 769px) {
+    .mobile-ecommerce-layout {
+        display: none;
+    }
+    
+    .desktop-layout {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .desktop-layout {
+        display: none;
+    }
+    
+    .mobile-ecommerce-layout {
+        display: block;
     }
 }
 
 @media (max-width: 576px) {
-    .mobile-hero-section {
-        margin: 0 -10px 2rem -10px;
+    .category-sidebar {
+        width: 85px;
     }
     
-    .hero-content {
-        padding: 2.5rem 1.5rem 3rem !important;
+    .category-item {
+        padding: 0.75rem 0.25rem;
+        font-size: 0.8rem;
     }
     
-    .hero-title {
-        font-size: 1.5rem;
+    .products-content {
+        padding: 0.75rem;
     }
     
-    .hero-subtitle {
-        font-size: 0.95rem;
+    .product-card {
+        padding: 0.75rem;
     }
     
-    .quick-actions-body {
-        padding: 1rem 1.25rem;
-    }
-    
-    .advantages-body {
-        padding: 1.25rem;
+    .product-image {
+        width: 50px;
+        height: 50px;
     }
 }
 </style>
-<div class="row">
-    <div class="col-md-8">
-        <!-- 桌面端：保持原有设计 -->
-        <div class="jumbotron bg-primary text-white p-4 p-md-5 rounded d-none d-md-block">
-            <h1 class="display-4">欢迎来到卡券回收平台</h1>
-            <p class="lead">快速、安全、便捷的卡券回收服务</p>
-            {% if not user.is_authenticated %}
-            <a class="btn btn-light btn-lg me-2" href="{% url 'register' %}" role="button">立即注册</a>
+
+<!-- 桌面端：保持原有设计 -->
+<div class="desktop-layout">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="jumbotron bg-primary text-white p-4 p-md-5 rounded">
+                <h1 class="display-4">欢迎来到卡券回收平台</h1>
+                <p class="lead">快速、安全、便捷的卡券回收服务</p>
+                {% if not user.is_authenticated %}
+                <a class="btn btn-light btn-lg me-2" href="{% url 'register' %}" role="button">立即注册</a>
+                {% else %}
+                <a class="btn btn-light btn-lg" href="{% url 'submit_card' %}" role="button">提交卡券</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> 平台说明</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> 支持多种卡券类型</li>
+                        <li><i class="fas fa-check text-success"></i> 快速审核处理</li>
+                        <li><i class="fas fa-check text-success"></i> 安全可靠的交易</li>
+                        <li><i class="fas fa-check text-success"></i> 实时状态跟踪</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-upload fa-3x text-primary mb-3"></i>
+                    <h5>提交卡券</h5>
+                    <p class="text-muted">上传您的闲置卡券信息，包括卡号、密码和核销码图片</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-search fa-3x text-success mb-3"></i>
+                    <h5>审核处理</h5>
+                    <p class="text-muted">我们的专业团队会快速审核您的提交内容</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-money-bill-wave fa-3x text-warning mb-3"></i>
+                    <h5>获得收益</h5>
+                    <p class="text-muted">审核通过后，您将获得相应的佣金收益</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 客服联系 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary mb-3">
+                        <i class="fas fa-headset me-2"></i>需要帮助？联系客服
+                    </h5>
+                    <p class="card-text mb-3">如有任何问题，欢迎联系我们的客服团队</p>
+                    <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
+                        <div class="d-flex align-items-center">
+                            <i class="fab fa-weixin fa-2x text-success me-2"></i>
+                            <div class="text-start">
+                                <strong class="d-block">客服微信</strong>
+                                <code class="bg-light text-success px-2 py-1 rounded fs-6">AaLG66888</code>
+                            </div>
+                        </div>
+                        <small class="text-muted text-center">
+                            <i class="fas fa-clock me-1"></i>工作时间：周一至周日 9:00-18:00
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 移动端：电商风格布局 -->
+<div class="mobile-ecommerce-layout">
+    <!-- 顶部搜索栏 -->
+    <div class="mobile-search-header">
+        <form method="get" action="{% url 'home' %}">
+            <div class="search-input-group">
+                <i class="fas fa-search"></i>
+                <input type="text" class="search-input" name="search" 
+                       placeholder="请输入商品名称或关键字" 
+                       value="{{ search_query }}" autocomplete="off">
+                {% if selected_category_id %}
+                <input type="hidden" name="category" value="{{ selected_category_id }}">
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- 主要电商布局 -->
+    <div class="ecommerce-layout">
+        <!-- 左侧分类菜单 -->
+        <div class="category-sidebar">
+            <!-- 全部分类 -->
+            <a href="{% url 'home' %}?{% if search_query %}search={{ search_query }}{% endif %}" 
+               class="category-item {% if not selected_category %}active{% endif %}">
+                推荐
+            </a>
+            
+            <!-- 卡券分类 -->
+            {% for category in categories %}
+            <a href="{% url 'home' %}?category={{ category.id }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="category-item {% if selected_category.id == category.id %}active{% endif %}">
+                {{ category.name }}
+            </a>
+            {% endfor %}
+            
+            <!-- 瓶盖分类 -->
+            <a href="{% url 'submit_bottle_cap' %}" class="category-item bottle-cap">
+                瓶盖
+            </a>
+        </div>
+
+        <!-- 右侧商品列表 -->
+        <div class="products-content">
+            {% if packages %}
+                <div class="products-grid" id="productsGrid">
+                    {% for package in packages %}
+                    <div class="product-card" onclick="selectPackage({{ package.id }})">
+                        <div class="product-image">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-title">{{ package.name }}</div>
+                            <div class="product-price">￥{{ package.commission }}</div>
+                            <div class="product-meta">
+                                <span class="product-tag">{{ package.category.name }}</span>
+                                <span class="product-tag commission">佣金:{{ package.commission }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- 分页 -->
+                {% if packages.has_other_pages %}
+                <div class="pagination-wrapper">
+                    <div class="pagination">
+                        {% if packages.has_previous %}
+                        <a href="?page={{ packages.previous_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="page-btn">上一页</a>
+                        {% endif %}
+                        
+                        {% for num in packages.paginator.page_range %}
+                            {% if num == packages.number %}
+                            <span class="page-btn active">{{ num }}</span>
+                            {% elif num > packages.number|add:'-3' and num < packages.number|add:'3' %}
+                            <a href="?page={{ num }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                               class="page-btn">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if packages.has_next %}
+                        <a href="?page={{ packages.next_page_number }}{% if selected_category_id %}&category={{ selected_category_id }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="page-btn">下一页</a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             {% else %}
-            <a class="btn btn-light btn-lg" href="{% url 'submit_card' %}" role="button">提交卡券</a>
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h5>暂无相关商品</h5>
+                    <p>请尝试搜索其他关键词或选择其他分类</p>
+                </div>
             {% endif %}
-        </div>
-        
-        <!-- 移动端：APP风格英雄区域 -->
-        <div class="d-md-none">
-            <div class="mobile-hero-section">
-                <div class="hero-content text-center text-white py-5">
-                    <div class="hero-icon mb-3">
-                        <i class="fas fa-recycle"></i>
-                    </div>
-                    <h1 class="hero-title mb-3">卡券回收平台</h1>
-                    <p class="hero-subtitle mb-4">快速、安全、便捷的卡券回收服务</p>
-                    
-                    {% if not user.is_authenticated %}
-                    <div class="hero-actions">
-                        <a class="btn btn-hero btn-hero-primary mb-2" href="{% url 'register' %}" role="button">
-                            <i class="fas fa-user-plus me-2"></i>立即注册
-                        </a>
-                        <a class="btn btn-hero btn-hero-outline" href="{% url 'login' %}" role="button">
-                            <i class="fas fa-sign-in-alt me-2"></i>用户登录
-                        </a>
-                    </div>
-                    {% else %}
-                    <div class="hero-actions">
-                        <a class="btn btn-hero btn-hero-primary mb-2" href="{% url 'submit_card' %}" role="button">
-                            <i class="fas fa-credit-card me-2"></i>提交卡券
-                        </a>
-                        <a class="btn btn-hero btn-hero-outline" href="{% url 'submit_bottle_cap' %}" role="button">
-                            <i class="fas fa-image me-2"></i>瓶盖提交
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 d-none d-md-block">
-        <div class="card">
-            <div class="card-header">
-                <h5><i class="fas fa-info-circle"></i> 平台说明</h5>
-            </div>
-            <div class="card-body">
-                <ul class="list-unstyled">
-                    <li><i class="fas fa-check text-success"></i> 支持多种卡券类型</li>
-                    <li><i class="fas fa-check text-success"></i> 快速审核处理</li>
-                    <li><i class="fas fa-check text-success"></i> 安全可靠的交易</li>
-                    <li><i class="fas fa-check text-success"></i> 实时状态跟踪</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 移动端快捷功能区 -->
-{% if user.is_authenticated %}
-<div class="row mb-4 d-md-none">
-    <div class="col-12">
-        <div class="mobile-quick-actions">
-            <div class="quick-actions-header">
-                <h6 class="quick-actions-title">
-                    <i class="fas fa-tachometer-alt"></i>快捷操作
-                </h6>
-            </div>
-            <div class="quick-actions-body">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <a href="{% url 'my_submissions' %}" class="quick-action-btn w-100">
-                            <i class="fas fa-list-alt"></i>
-                            <small>我的记录</small>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a href="{% url 'tutorials' %}" class="quick-action-btn w-100">
-                            <i class="fas fa-book-open"></i>
-                            <small>卡券教程</small>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-
-<!-- 移动端平台优势展示 -->
-<div class="row mb-4 d-md-none">
-    <div class="col-12">
-        <div class="mobile-advantages">
-            <div class="advantages-header">
-                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>平台优势</h5>
-            </div>
-            <div class="advantages-body">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <div class="advantage-item">
-                            <div class="advantage-icon">
-                                <i class="fas fa-shield-alt text-success"></i>
-                            </div>
-                            <div class="advantage-title">安全可靠</div>
-                            <div class="advantage-desc">专业团队审核</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="advantage-item">
-                            <div class="advantage-icon">
-                                <i class="fas fa-clock text-primary"></i>
-                            </div>
-                            <div class="advantage-title">快速处理</div>
-                            <div class="advantage-desc">24小时内审核</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="advantage-item">
-                            <div class="advantage-icon">
-                                <i class="fas fa-tags text-warning"></i>
-                            </div>
-                            <div class="advantage-title">多种卡券</div>
-                            <div class="advantage-desc">支持各类卡券</div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="advantage-item">
-                            <div class="advantage-icon">
-                                <i class="fas fa-eye text-info"></i>
-                            </div>
-                            <div class="advantage-title">实时跟踪</div>
-                            <div class="advantage-desc">状态实时更新</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mt-5">
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-upload fa-3x text-primary mb-3"></i>
-                <h5>提交卡券</h5>
-                <p class="text-muted">上传您的闲置卡券信息，包括卡号、密码和核销码图片</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-search fa-3x text-success mb-3"></i>
-                <h5>审核处理</h5>
-                <p class="text-muted">我们的专业团队会快速审核您的提交内容</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-money-bill-wave fa-3x text-warning mb-3"></i>
-                <h5>获得收益</h5>
-                <p class="text-muted">审核通过后，您将获得相应的佣金收益</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 客服联系 - 移动端优化 -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card border-primary">
-            <div class="card-body text-center">
-                <h5 class="card-title text-primary mb-3">
-                    <i class="fas fa-headset me-2"></i>需要帮助？联系客服
-                </h5>
-                <p class="card-text mb-3">如有任何问题，欢迎联系我们的客服团队</p>
-                <div class="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3">
-                    <div class="d-flex align-items-center">
-                        <i class="fab fa-weixin fa-2x text-success me-2"></i>
-                        <div class="text-start">
-                            <strong class="d-block">客服微信</strong>
-                            <code class="bg-light text-success px-2 py-1 rounded fs-6">AaLG66888</code>
-                        </div>
-                    </div>
-                    <small class="text-muted text-center">
-                        <i class="fas fa-clock me-1"></i>工作时间：周一至周日 9:00-18:00
-                    </small>
-                </div>
-                <!-- 移动端一键复制按钮 -->
-                <div class="mt-3 d-md-none">
-                    <button class="btn btn-outline-success btn-sm" onclick="copyWechat()">
-                        <i class="fas fa-copy me-1"></i>复制微信号
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -496,8 +511,70 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if user.is_authenticated and notifications %}
 <script>
+$(document).ready(function() {
+    // 搜索表单提交
+    $('.search-input').on('keypress', function(e) {
+        if (e.which == 13) {
+            $(this).closest('form').submit();
+        }
+    });
+    
+    // 分类切换动画
+    $('.category-item').on('click', function(e) {
+        $('.category-item').removeClass('active');
+        $(this).addClass('active');
+    });
+});
+
+// 选择套餐功能
+function selectPackage(packageId) {
+    {% if user.is_authenticated %}
+        // 显示选择弹窗：卡券提交 或 瓶盖提交
+        showPackageOptions(packageId);
+    {% else %}
+        // 未登录用户跳转到登录页
+        window.location.href = '{% url "login" %}';
+    {% endif %}
+}
+
+function showPackageOptions(packageId) {
+    // 创建选择弹窗
+    const modal = `
+        <div class="modal fade" id="packageOptionsModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">选择提交方式</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="d-grid gap-3">
+                            <a href="{% url 'submit_card' %}?package=${packageId}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-credit-card me-2"></i>提交卡券信息
+                            </a>
+                            <a href="{% url 'submit_bottle_cap' %}" class="btn btn-success btn-lg">
+                                <i class="fas fa-camera me-2"></i>提交瓶盖照片
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 移除已存在的模态框
+    $('#packageOptionsModal').remove();
+    
+    // 添加新的模态框
+    $('body').append(modal);
+    
+    // 显示模态框
+    $('#packageOptionsModal').modal('show');
+}
+
+{% if user.is_authenticated and notifications %}
+// 通知相关脚本
 $(document).ready(function() {
     // 获取该用户已关闭的通知列表（与用户ID绑定）
     let storageKey = 'dismissedNotifications_{{ user.id }}';
@@ -544,59 +621,6 @@ function dismissNotification(notificationId) {
     }
     $('#notificationModal' + notificationId).modal('hide');
 }
-
-// 复制微信号功能（移动端）
-function copyWechat() {
-    const wechatId = 'AaLG66888';
-    if (navigator.clipboard && window.isSecureContext) {
-        // 现代浏览器
-        navigator.clipboard.writeText(wechatId).then(() => {
-            showToast('微信号已复制到剪贴板');
-        }).catch(() => {
-            fallbackCopy(wechatId);
-        });
-    } else {
-        // 兼容旧浏览器
-        fallbackCopy(wechatId);
-    }
-}
-
-// 兼容性复制方法
-function fallbackCopy(text) {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    
-    try {
-        document.execCommand('copy');
-        showToast('微信号已复制到剪贴板');
-    } catch (err) {
-        showToast('复制失败，请手动复制微信号：' + text);
-    }
-    
-    document.body.removeChild(textarea);
-}
-
-// 显示提示信息
-function showToast(message) {
-    // 创建临时提示元素
-    const toast = document.createElement('div');
-    toast.className = 'position-fixed top-50 start-50 translate-middle bg-dark text-white px-3 py-2 rounded';
-    toast.style.zIndex = '9999';
-    toast.textContent = message;
-    
-    document.body.appendChild(toast);
-    
-    // 2秒后移除
-    setTimeout(() => {
-        if (document.body.contains(toast)) {
-            document.body.removeChild(toast);
-        }
-    }, 2000);
-}
-</script>
 {% endif %}
+</script>
 {% endblock %}
