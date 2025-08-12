@@ -6,14 +6,15 @@
 <style>
 /* 电商风格移动端布局 */
 @media (max-width: 768px) {
-    /* 顶部搜索栏 */
+    /* 固定搜索栏 */
     .mobile-search-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 1rem;
-        margin: -1rem -15px 0 -15px;
-        position: sticky;
-        top: 0;
-        z-index: 200;
+        position: fixed;
+        top: 56px; /* 顶部导航栏高度 */
+        left: 100px; /* 左侧菜单宽度 */
+        right: 0;
+        z-index: 150;
     }
     
     .search-input-group {
@@ -47,7 +48,7 @@
     .ecommerce-layout {
         display: flex;
         gap: 0;
-        height: calc(100vh - 130px); /* 固定高度，减去顶部导航和底部导航的高度 */
+        height: calc(100vh - 90px); /* 固定高度，减去顶部导航和底部导航的高度 */
         overflow: hidden; /* 防止整体页面滚动 */
     }
     
@@ -59,8 +60,8 @@
         padding: 0;
         position: fixed; /* 固定位置 */
         left: 0;
-        top: 76px; /* 顶部导航栏高度 */
-        height: calc(100vh - 166px); /* 减去顶部和底部导航的高度 */
+        top: 56px; /* 顶部导航栏高度 */
+        height: calc(100vh - 146px); /* 减去顶部和底部导航的高度 */
         overflow-y: auto;
         z-index: 100;
         -webkit-overflow-scrolling: touch; /* iOS滚动优化 */
@@ -107,17 +108,20 @@
     .products-content {
         flex: 1;
         margin-left: 100px; /* 为固定的左侧菜单留出空间 */
-        padding: 1rem;
+        margin-top: 84px; /* 为固定搜索框留出空间 */
+        padding: 0;
         background: white;
-        height: calc(100vh - 130px); /* 固定高度 */
+        height: calc(100vh - 174px); /* 固定高度，减去搜索框高度 */
         overflow-y: auto; /* 允许滚动 */
         -webkit-overflow-scrolling: touch; /* iOS滚动优化 */
     }
     
+    /* 商品网格区域 */
     .products-grid {
         display: flex;
         flex-direction: column;
         gap: 1rem;
+        padding: 1rem;
     }
     
     /* 商品卡片 */
@@ -391,21 +395,6 @@
 
 <!-- 移动端：电商风格布局 -->
 <div class="mobile-ecommerce-layout">
-    <!-- 顶部搜索栏 -->
-    <div class="mobile-search-header">
-        <form method="get" action="{% url 'home' %}">
-            <div class="search-input-group">
-                <i class="fas fa-search"></i>
-                <input type="text" class="search-input" name="search" 
-                       placeholder="请输入商品名称或关键字" 
-                       value="{{ search_query }}" autocomplete="off">
-                {% if selected_category_id %}
-                <input type="hidden" name="category" value="{{ selected_category_id }}">
-                {% endif %}
-            </div>
-        </form>
-    </div>
-
     <!-- 主要电商布局 -->
     <div class="ecommerce-layout">
         <!-- 左侧分类菜单 -->
@@ -430,6 +419,21 @@
             </a>
         </div>
 
+        <!-- 固定搜索栏 -->
+        <div class="mobile-search-header">
+            <form method="get" action="{% url 'home' %}">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="search-input" name="search" 
+                           placeholder="请输入商品名称或关键字" 
+                           value="{{ search_query }}" autocomplete="off">
+                    {% if selected_category_id %}
+                    <input type="hidden" name="category" value="{{ selected_category_id }}">
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+        
         <!-- 右侧商品列表 -->
         <div class="products-content">
             {% if packages %}

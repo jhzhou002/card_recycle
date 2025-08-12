@@ -280,45 +280,22 @@
                 <form method="post" id="submitForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <!-- APP风格表单分区：基本信息 -->
-                    <div class="form-section d-md-none">
-                        <div class="form-section-title">
-                            <i class="fas fa-info-circle"></i>
-                            基本信息
-                        </div>
-                        <div class="mb-3">
-                            <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
-                            {{ form.category }}
-                        </div>
-                        <div class="mb-3">
-                            <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
-                            {{ form.package }}
-                            <div class="form-text">
-                                <span id="commissionInfo" class="text-muted">请先选择类别</span>
-                            </div>
-                        </div>
+                    <!-- 隐藏的基本信息字段，由URL参数自动填充 -->
+                    <div style="display: none;">
+                        {{ form.category }}
+                        {{ form.package }}
                     </div>
                     
-                    <!-- 桌面端：保持原有布局 -->
-                    <div class="d-none d-md-block">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
-                                    {{ form.category }}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
-                                    {{ form.package }}
-                                    <div class="form-text">
-                                        <span id="commissionInfoDesktop" class="text-muted">请先选择类别</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- 显示选中的套餐信息 -->
+                    {% if selected_package %}
+                    <div class="alert alert-info mb-4">
+                        <h5><i class="fas fa-gift me-2"></i>{{ selected_package.name }}</h5>
+                        <p class="mb-0">
+                            <span class="badge bg-primary me-2">{{ selected_package.category.name }}</span>
+                            <span class="text-muted">佣金: ￥{{ selected_package.commission }}</span>
+                        </p>
                     </div>
+                    {% endif %}
                     
                     <!-- APP风格表单分区：卡券信息 -->
                     <div class="form-section d-md-none">
@@ -458,35 +435,25 @@
                         </div>
                     </div>
                     
-                    <!-- APP风格表单分区：联系信息 -->
+                    <!-- APP风格表单分区：其他信息 -->
                     <div class="form-section d-md-none">
                         <div class="form-section-title">
-                            <i class="fas fa-phone"></i>
-                            联系信息
+                            <i class="fas fa-calendar"></i>
+                            其他信息
                         </div>
                         <div class="mb-3">
                             <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
                             {{ form.expire_date }}
                         </div>
-                        <div class="mb-3">
-                            <label for="{{ form.telephone.id_for_label }}" class="form-label">联系电话</label>
-                            {{ form.telephone }}
-                        </div>
                     </div>
                     
-                    <!-- 桌面端：联系信息 -->
+                    <!-- 桌面端：其他信息 -->
                     <div class="d-none d-md-block">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
                                     {{ form.expire_date }}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.telephone.id_for_label }}" class="form-label">联系电话</label>
-                                    {{ form.telephone }}
                                 </div>
                             </div>
                         </div>
@@ -536,6 +503,12 @@ $(document).ready(function() {
         $('#mobile-existing-payment').hide();
         $('#mobile-payment-upload').show();
     });
+    
+    // 初始化预选套餐
+    {% if selected_package %}
+    $('#category').val('{{ selected_package.category.id }}');
+    $('#package').val('{{ selected_package.id }}');
+    {% endif %}
     
     // 类别选择变化时更新套餐
     $('#category').change(function() {
@@ -737,11 +710,6 @@ $(document).ready(function() {
             return false;
         }
         
-        if (!$('#id_telephone').val().trim()) {
-            alert('请输入联系电话');
-            e.preventDefault();
-            return false;
-        }
         
         // 验证收款码（移动端必须）
         if (window.innerWidth <= 768 && !$('#mobile-payment-code-url').val()) {
@@ -773,7 +741,7 @@ $(document).ready(function() {
                 redemption_code: $('#id_redemption_code').val(),
                 image: $('#id_image').val(),
                 expire_date: $('#id_expire_date').val(),
-                telephone: $('#id_telephone').val(),
+                telephone: '',  // 不再需要联系电话
                 payment_code: $('#mobile-payment-code-url').val(),
                 csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
             };

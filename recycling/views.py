@@ -178,7 +178,7 @@ def submit_card(request):
                 
                 # 验证必填字段
                 if not all([form_data['category'], form_data['package'], 
-                           form_data['expire_date'], form_data['telephone']]):
+                           form_data['expire_date']]):
                     return JsonResponse({'error': '请填写所有必填字段'}, status=400)
                 
                 # 验证至少提供一项卡券信息
@@ -201,7 +201,7 @@ def submit_card(request):
                     redemption_code=form_data['redemption_code'],
                     image=form_data['image'],
                     expire_date=form_data['expire_date'],
-                    telephone=form_data['telephone']
+                    telephone=''  # 不再需要联系电话
                 )
                 
                 return JsonResponse({
