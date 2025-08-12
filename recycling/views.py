@@ -161,7 +161,6 @@ def submit_card(request):
                 form_data = {
                     'category': request.POST.get('category'),
                     'package': request.POST.get('package'),
-                    'store': request.POST.get('store'),
                     'card_number': request.POST.get('card_number', ''),
                     'card_secret': request.POST.get('card_secret', ''),
                     'redemption_code': request.POST.get('redemption_code', ''),
@@ -178,7 +177,7 @@ def submit_card(request):
                     return JsonResponse({'error': '请上传收款码图片'}, status=400)
                 
                 # 验证必填字段
-                if not all([form_data['category'], form_data['package'], form_data['store'], 
+                if not all([form_data['category'], form_data['package'], 
                            form_data['expire_date'], form_data['telephone']]):
                     return JsonResponse({'error': '请填写所有必填字段'}, status=400)
                 
@@ -195,7 +194,7 @@ def submit_card(request):
                     user=request.user,
                     category_id=form_data['category'],
                     package_id=form_data['package'],
-                    store_id=form_data['store'],
+                    store=None,  # 不再使用门店字段
                     commission=Package.objects.get(id=form_data['package']).commission,
                     card_number=form_data['card_number'],
                     card_secret=form_data['card_secret'],

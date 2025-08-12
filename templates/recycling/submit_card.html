@@ -297,39 +297,23 @@
                                 <span id="commissionInfo" class="text-muted">请先选择类别</span>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="{{ form.store.id_for_label }}" class="form-label">适用门店</label>
-                            {{ form.store }}
-                            <div class="form-text">
-                                <span id="storeInfo" class="text-muted">请先选择套餐</span>
-                            </div>
-                        </div>
                     </div>
                     
                     <!-- 桌面端：保持原有布局 -->
                     <div class="d-none d-md-block">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
                                     {{ form.category }}
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
                                     {{ form.package }}
                                     <div class="form-text">
                                         <span id="commissionInfoDesktop" class="text-muted">请先选择类别</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="{{ form.store.id_for_label }}" class="form-label">适用门店</label>
-                                    {{ form.store }}
-                                    <div class="form-text">
-                                        <span id="storeInfoDesktop" class="text-muted">请先选择套餐</span>
                                     </div>
                                 </div>
                             </div>
@@ -553,29 +537,10 @@ $(document).ready(function() {
         $('#mobile-payment-upload').show();
     });
     
-    // 类别选择变化时更新套餐和门店字段可见性
+    // 类别选择变化时更新套餐
     $('#category').change(function() {
         var categoryId = $(this).val();
         if (categoryId) {
-            // 获取类别信息
-            $.get('/api/categories/', {category_id: categoryId})
-                .done(function(categoryData) {
-                    // 控制门店字段显示（移动端和桌面端）
-                    var storeFieldMobile = $('#store').closest('.col-12');
-                    var storeFieldDesktop = $('#store').closest('.col-md-4');
-                    if (categoryData.show_store_field) {
-                        storeFieldMobile.show();
-                        storeFieldDesktop.show();
-                    } else {
-                        storeFieldMobile.hide();
-                        storeFieldDesktop.hide();
-                        $('#store').val(''); // 清空门店选择
-                    }
-                })
-                .fail(function() {
-                    console.error('获取类别信息失败');
-                });
-            
             // 加载套餐
             $.get('/api/packages/', {category_id: categoryId})
                 .done(function(data) {
@@ -593,12 +558,10 @@ $(document).ready(function() {
         } else {
             $('#package').empty().append('<option value="">请先选择类别</option>');
             $('#commissionInfo, #commissionInfoDesktop').text('请先选择类别');
-            // 显示门店字段（默认显示）
-            $('#store').closest('.col-12, .col-md-4').show();
         }
     });
     
-    // 套餐选择变化时显示佣金和加载门店
+    // 套餐选择变化时显示佣金
     $('#package').change(function() {
         var packageId = $(this).val();
         if (packageId) {
@@ -614,42 +577,8 @@ $(document).ready(function() {
                 .fail(function() {
                     $('#commissionInfo, #commissionInfoDesktop').text('获取佣金信息失败');
                 });
-            
-            // 加载适用门店
-            $.get('/api/stores/', {package_id: packageId})
-                .done(function(data) {
-                    var storeSelect = $('#store');
-                    storeSelect.empty();
-                    storeSelect.append('<option value="">请选择门店</option>');
-                    
-                    $.each(data, function(index, store) {
-                        storeSelect.append('<option value="' + store.id + '">' + store.name + '</option>');
-                    });
-                    
-                    if (data.length === 0) {
-                        $('#storeInfo, #storeInfoDesktop').text('该套餐暂无可用门店');
-                    } else {
-                        $('#storeInfo, #storeInfoDesktop').text('共' + data.length + '个门店可选');
-                    }
-                })
-                .fail(function() {
-                    $('#storeInfo, #storeInfoDesktop').text('获取门店列表失败');
-                });
         } else {
             $('#commissionInfo, #commissionInfoDesktop').text('请先选择套餐');
-            $('#store').empty().append('<option value="">请先选择套餐</option>');
-            $('#storeInfo, #storeInfoDesktop').text('请先选择套餐');
-        }
-    });
-    
-    // 门店选择变化时显示门店信息
-    $('#store').change(function() {
-        var storeId = $(this).val();
-        if (storeId) {
-            var selectedText = $(this).find('option:selected').text();
-            $('#storeInfo, #storeInfoDesktop').text('已选择：' + selectedText);
-        } else {
-            $('#storeInfo, #storeInfoDesktop').text('请选择门店');
         }
     });
     
@@ -801,11 +730,6 @@ $(document).ready(function() {
             return false;
         }
         
-        if (!$('#store').val()) {
-            alert('请选择适用门店');
-            e.preventDefault();
-            return false;
-        }
         
         if (!$('#id_expire_date').val()) {
             alert('请选择过期时间');
@@ -844,7 +768,6 @@ $(document).ready(function() {
             const formData = {
                 category: $('#category').val(),
                 package: $('#package').val(),
-                store: $('#store').val(),
                 card_number: $('#id_card_number').val(),
                 card_secret: $('#id_card_secret').val(),
                 redemption_code: $('#id_redemption_code').val(),
