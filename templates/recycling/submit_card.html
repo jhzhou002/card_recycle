@@ -492,8 +492,170 @@ if (typeof $ === 'undefined') {
     alert('页面加载异常，请刷新重试');
 }
 
+// 生成UUID - 复用瓶盖功能
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+// 更新上传状态显示 - 复用瓶盖功能
+function updateUploadStatus(message) {
+    console.log('上传状态:', message);
+}
+
+// 网络状态检测 - 复用瓶盖功能
+function checkNetworkStatus() {
+    if (!navigator.onLine) {
+        updateUploadStatus('网络连接已断开，请检查网络连接');
+        return false;
+    }
+    return true;
+}
+
+// 添加上传前的环境检查 - 复用瓶盖功能
+function preUploadCheck() {
+    // 检查网络状态
+    if (!checkNetworkStatus()) {
+        alert('网络连接异常，请检查网络后重试');
+        return false;
+    }
+    
+    // 检查是否支持七牛云SDK
+    if (typeof qiniu === 'undefined') {
+        alert('上传组件加载失败，请刷新页面重试');
+        return false;
+    }
+    
+    return true;
+}
+
+// 上传单个图片到七牛云 - 复用瓶盖功能（增强版，支持重试和超时）
+function uploadSingleImage(file, folder, progressCallback, retryCount) {
+    retryCount = retryCount || 0;
+    const maxRetries = 3;
+    const timeout = 30000; // 30秒超时
+    
+    return new Promise(function(resolve, reject) {
+        // 更新状态显示
+        updateUploadStatus('正在获取上传凭证...');
+        
+        // 设置超时定时器
+        var timeoutId = setTimeout(function() {
+            console.error('上传超时');
+            if (retryCount < maxRetries) {
+                console.log(`第${retryCount + 1}次重试上传: ${file.name}`);
+                updateUploadStatus(`上传超时，正在重试 (${retryCount + 1}/${maxRetries})...`);
+                uploadSingleImage(file, folder, progressCallback, retryCount + 1)
+                    .then(resolve)
+                    .catch(reject);
+            } else {
+                updateUploadStatus('上传失败：多次重试后仍然超时');
+                reject(new Error('上传超时，已重试' + maxRetries + '次'));
+            }
+        }, timeout);
+        
+        // 获取上传token
+        $.ajax({
+            url: '/api/qiniu-token/',
+            method: 'GET',
+            timeout: 10000, // 10秒获取token超时
+            success: function(data) {
+                if (data.token) {
+                    updateUploadStatus('正在上传图片...');
+                    
+                    // 生成唯一文件名，添加用户ID作为前缀
+                    var filename = folder + '/user{{ user.id }}_' + generateUUID() + '.' + file.name.split('.').pop();
+                    
+                    // 配置七牛云上传
+                    var config = {
+                        useCdnDomain: true,
+                        region: qiniu.region.z0,  // 华东区域
+                        retryCount: 2,  // 七牛云内部重试
+                        concurrentRequestLimit: 3
+                    };
+                    
+                    var putExtra = {
+                        fname: filename,
+                        params: {},
+                        mimeType: ["image/png", "image/jpeg", "image/jpg", "image/gif", "image/bmp"]
+                    };
+                    
+                    try {
+                        // 创建上传任务
+                        var observable = qiniu.upload(file, filename, data.token, putExtra, config);
+                        
+                        // 监听上传进度
+                        var subscription = observable.subscribe({
+                            next: function(res) {
+                                if (res.total && res.total.percent) {
+                                    updateUploadStatus(`上传进度: ${Math.round(res.total.percent)}%`);
+                                }
+                                if (progressCallback) {
+                                    progressCallback();
+                                }
+                            },
+                            error: function(err) {
+                                clearTimeout(timeoutId);
+                                console.error('七牛云上传失败:', err);
+                                
+                                if (retryCount < maxRetries) {
+                                    console.log(`第${retryCount + 1}次重试上传: ${file.name}`);
+                                    updateUploadStatus(`上传失败，正在重试 (${retryCount + 1}/${maxRetries})...`);
+                                    setTimeout(function() {
+                                        uploadSingleImage(file, folder, progressCallback, retryCount + 1)
+                                            .then(resolve)
+                                            .catch(reject);
+                                    }, 2000); // 等待2秒后重试
+                                } else {
+                                    updateUploadStatus('上传失败：已达到最大重试次数');
+                                    reject(new Error('上传失败: ' + (err.message || '未知错误')));
+                                }
+                            },
+                            complete: function(res) {
+                                clearTimeout(timeoutId);
+                                // 上传成功
+                                var imageUrl = 'https://guangpan.lingjing235.cn/' + res.key;
+                                console.log('图片上传成功:', imageUrl);
+                                updateUploadStatus('上传成功！');
+                                resolve(imageUrl);
+                            }
+                        });
+                    } catch (error) {
+                        clearTimeout(timeoutId);
+                        console.error('创建上传任务失败:', error);
+                        reject(new Error('创建上传任务失败: ' + error.message));
+                    }
+                } else {
+                    clearTimeout(timeoutId);
+                    updateUploadStatus('获取上传凭证失败');
+                    reject(new Error('获取上传凭证失败'));
+                }
+            },
+            error: function(xhr, status, error) {
+                clearTimeout(timeoutId);
+                console.error('获取上传凭证失败:', error);
+                
+                if (retryCount < maxRetries) {
+                    console.log(`第${retryCount + 1}次重试获取凭证`);
+                    updateUploadStatus(`获取凭证失败，正在重试 (${retryCount + 1}/${maxRetries})...`);
+                    setTimeout(function() {
+                        uploadSingleImage(file, folder, progressCallback, retryCount + 1)
+                            .then(resolve)
+                            .catch(reject);
+                    }, 1000);
+                } else {
+                    updateUploadStatus('获取上传凭证失败');
+                    reject(new Error('获取上传凭证失败: ' + error));
+                }
+            }
+        });
+    });
+}
+
 $(document).ready(function() {
-    // 移动端支付码上传功能
+    // 移动端支付码上传功能 - 使用新的上传函数
     $('#mobile-payment-upload-area').click(function() {
         $('#mobile-payment-code').click();
     });
@@ -501,12 +663,23 @@ $(document).ready(function() {
     $('#mobile-payment-code').change(function() {
         const file = this.files[0];
         if (file) {
-            uploadToQiniu(file, 'payment_code', function(url) {
-                $('#mobile-payment-code-url').val(url);
-                $('#mobile-payment-preview').html('<img src="' + url + '" alt="收款码" class="img-thumbnail" style="max-height: 100px;">');
-                $('#mobile-existing-payment').hide();
-                $('#mobile-payment-upload').show();
-            });
+            // 使用瓶盖功能的上传函数
+            if (!preUploadCheck()) {
+                return;
+            }
+            
+            uploadSingleImage(file, 'collection_code')
+                .then(function(url) {
+                    $('#mobile-payment-code-url').val(url);
+                    $('#mobile-payment-preview').html('<img src="' + url + '" alt="收款码" class="img-thumbnail" style="max-height: 100px;">');
+                    $('#mobile-existing-payment').hide();
+                    $('#mobile-payment-upload').show();
+                    alert('收款码上传成功');
+                })
+                .catch(function(error) {
+                    console.error('收款码上传失败:', error);
+                    alert('收款码上传失败：' + error.message);
+                });
         }
     });
     
@@ -576,7 +749,7 @@ $(document).ready(function() {
         }
     });
     
-    // 图片上传功能
+    // 核销码图片上传功能 - 使用新的上传函数
     var uploadedImageUrl = '';
     
     // 点击上传区域
@@ -588,7 +761,7 @@ $(document).ready(function() {
     $('#imageFile').change(function() {
         var file = this.files[0];
         if (file) {
-            uploadToQiniu(file);
+            handleVerificationImageUpload(file);
         }
     });
     
@@ -608,27 +781,12 @@ $(document).ready(function() {
         $(this).removeClass('border-primary');
         var files = e.originalEvent.dataTransfer.files;
         if (files.length > 0) {
-            uploadToQiniu(files[0]);
+            handleVerificationImageUpload(files[0]);
         }
     });
     
-    // 删除图片
-    $(document).on('click', '#removeImage', function() {
-        uploadedImageUrl = '';
-        $('#id_image').val('');
-        $('#imagePreview').hide();
-        $('.upload-area').show();
-        $('#imageFile').val('');
-        console.log('图片已删除，重置上传状态');
-    });
-    
-    // 上传到七牛云 - 支持不同类型和回调
-    function uploadToQiniu(file, type, callback) {
-        // 如果没有传入type和callback，表示是核销码图片上传（旧版本兼容）
-        if (typeof type === 'undefined') {
-            type = 'verification';
-        }
-        
+    // 处理核销码图片上传
+    function handleVerificationImageUpload(file) {
         // 验证文件
         if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
             alert('请选择JPG或PNG格式的图片');
@@ -640,107 +798,55 @@ $(document).ready(function() {
             return;
         }
         
-        // 根据类型显示不同的进度条
-        var progressBar;
-        if (type === 'payment_code') {
-            // 收款码上传暂时不显示进度条，直接上传
-        } else {
-            // 核销码图片上传
-            $('.upload-area').hide();
-            $('#uploadProgress').show();
-            progressBar = $('#uploadProgress .progress-bar');
+        if (!preUploadCheck()) {
+            return;
         }
         
-        // 获取上传token
-        $.get('/api/qiniu-token/')
-            .done(function(data) {
-                if (data.token) {
-                    // 生成唯一文件名
-                    var filename = 'card_recycle/' + type + '_' + generateUUID() + '.' + file.name.split('.').pop();
-                    
-                    // 配置七牛云上传
-                    var config = {
-                        useCdnDomain: true,
-                        region: qiniu.region.z0  // 华东区域
-                    };
-                    
-                    var putExtra = {
-                        fname: filename,
-                        params: {},
-                        mimeType: ["image/png", "image/jpeg", "image/jpg"]
-                    };
-                    
-                    // 创建上传任务
-                    var observable = qiniu.upload(file, filename, data.token, putExtra, config);
-                    
-                    // 监听上传进度
-                    var subscription = observable.subscribe({
-                        next: function(res) {
-                            if (progressBar) {
-                                var percent = Math.floor(res.total.percent);
-                                progressBar.css('width', percent + '%');
-                            }
-                        },
-                        error: function(err) {
-                            console.error('上传失败:', err);
-                            alert('图片上传失败，请重试');
-                            if (type === 'verification') {
-                                resetUploadArea();
-                            }
-                        },
-                        complete: function(res) {
-                            // 上传成功
-                            var imageUrl = 'https://guangpan.lingjing235.cn/' + res.key;
-                            console.log('图片上传成功:', imageUrl);
-                            
-                            if (type === 'payment_code' && callback) {
-                                // 收款码上传完成
-                                callback(imageUrl);
-                            } else {
-                                // 核销码图片上传完成
-                                uploadedImageUrl = imageUrl;
-                                $('#id_image').val(uploadedImageUrl);
-                                
-                                // 隐藏上传区域和进度条
-                                $('.upload-area').hide();
-                                $('#uploadProgress').hide();
-                                
-                                // 显示预览
-                                $('#previewImg').attr('src', uploadedImageUrl);
-                                $('#imagePreview').show();
-                                
-                                console.log('图片预览设置完成');
-                            }
-                        }
-                    });
-                } else {
-                    alert('获取上传凭证失败');
-                    if (type === 'verification') {
-                        resetUploadArea();
-                    }
-                }
+        // 隐藏上传区域，显示进度条
+        $('.upload-area').hide();
+        $('#uploadProgress').show();
+        var progressBar = $('#uploadProgress .progress-bar');
+        
+        // 使用瓶盖功能的上传函数
+        uploadSingleImage(file, 'card_recycle', function() {
+            // 进度回调
+            progressBar.css('width', '50%');
+        })
+            .then(function(url) {
+                uploadedImageUrl = url;
+                $('#id_image').val(uploadedImageUrl);
+                
+                // 隐藏进度条，显示预览
+                $('#uploadProgress').hide();
+                $('#previewImg').attr('src', uploadedImageUrl);
+                $('#imagePreview').show();
+                
+                console.log('核销码图片上传成功:', uploadedImageUrl);
             })
-            .fail(function() {
-                alert('获取上传凭证失败');
-                if (type === 'verification') {
-                    resetUploadArea();
-                }
+            .catch(function(error) {
+                console.error('核销码图片上传失败:', error);
+                alert('核销码图片上传失败：' + error.message);
+                
+                // 重置状态
+                resetUploadArea();
             });
     }
+    
+    // 删除图片
+    $(document).on('click', '#removeImage', function() {
+        uploadedImageUrl = '';
+        $('#id_image').val('');
+        $('#imagePreview').hide();
+        $('.upload-area').show();
+        $('#imageFile').val('');
+        console.log('图片已删除，重置上传状态');
+    });
     
     // 重置上传区域
     function resetUploadArea() {
         $('#uploadProgress').hide();
         $('.upload-area').show();
         $('#uploadProgress .progress-bar').css('width', '0%');
-    }
-    
-    // 生成UUID
-    function generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
     }
     
     // 表单提交验证
