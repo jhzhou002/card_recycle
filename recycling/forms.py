@@ -24,6 +24,8 @@ class SubmissionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['package'].queryset = Package.objects.none()
         self.fields['store'].queryset = Store.objects.none()
+        self.fields['store'].required = False  # 门店字段改为可选
+        self.fields['telephone'].required = False  # 电话字段改为可选
         
         if 'category' in self.data:
             try:
