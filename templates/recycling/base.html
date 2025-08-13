@@ -326,6 +326,7 @@
         @media (max-width: 768px) {
             .main-content {
                 padding-bottom: 90px; /* 为底部导航留出空间 */
+                padding-top: 56px; /* 为固定的顶部导航留出空间 */
             }
             
             /* 隐藏移动端顶部导航的部分元素 */
@@ -341,6 +342,11 @@
             .navbar {
                 padding: 0.5rem 1rem;
                 background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+                position: fixed !important;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1030;
             }
             
             .navbar-brand {

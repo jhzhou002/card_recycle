@@ -454,26 +454,19 @@
                         </div>
                     </div>
                     
-                    <!-- APP风格表单分区：其他信息 -->
+                    <!-- 过期时间字段：响应式布局 -->
                     <div class="form-section d-md-none">
                         <div class="form-section-title">
                             <i class="fas fa-calendar"></i>
                             其他信息
                         </div>
-                        <div class="mb-3">
-                            <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
-                            {{ form.expire_date }}
-                        </div>
                     </div>
                     
-                    <!-- 桌面端：其他信息 -->
-                    <div class="d-none d-md-block">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
-                                    {{ form.expire_date }}
-                                </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.expire_date.id_for_label }}" class="form-label">过期时间</label>
+                                {{ form.expire_date }}
                             </div>
                         </div>
                     </div>
@@ -628,8 +621,13 @@ $(document).ready(function() {
         $('#imageFile').val('');
     });
     
-    // 上传到七牛云
-    function uploadToQiniu(file) {
+    // 上传到七牛云 - 支持不同类型和回调
+    function uploadToQiniu(file, type, callback) {
+        // 如果没有传入type和callback，表示是核销码图片上传（旧版本兼容）
+        if (typeof type === 'undefined') {
+            type = 'verification';
+        }
+        
         // 验证文件
         if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
             alert('请选择JPG或PNG格式的图片');
@@ -641,17 +639,23 @@ $(document).ready(function() {
             return;
         }
         
-        // 显示上传进度
-        $('.upload-area').hide();
-        $('#uploadProgress').show();
-        var progressBar = $('#uploadProgress .progress-bar');
+        // 根据类型显示不同的进度条
+        var progressBar;
+        if (type === 'payment_code') {
+            // 收款码上传暂时不显示进度条，直接上传
+        } else {
+            // 核销码图片上传
+            $('.upload-area').hide();
+            $('#uploadProgress').show();
+            progressBar = $('#uploadProgress .progress-bar');
+        }
         
         // 获取上传token
         $.get('/api/qiniu-token/')
             .done(function(data) {
                 if (data.token) {
                     // 生成唯一文件名
-                    var filename = 'card_recycle/' + generateUUID() + '.' + file.name.split('.').pop();
+                    var filename = 'card_recycle/' + type + '_' + generateUUID() + '.' + file.name.split('.').pop();
                     
                     // 配置七牛云上传
                     var config = {
@@ -671,33 +675,49 @@ $(document).ready(function() {
                     // 监听上传进度
                     var subscription = observable.subscribe({
                         next: function(res) {
-                            var percent = Math.floor(res.total.percent);
-                            progressBar.css('width', percent + '%');
+                            if (progressBar) {
+                                var percent = Math.floor(res.total.percent);
+                                progressBar.css('width', percent + '%');
+                            }
                         },
                         error: function(err) {
                             console.error('上传失败:', err);
                             alert('图片上传失败，请重试');
-                            resetUploadArea();
+                            if (type === 'verification') {
+                                resetUploadArea();
+                            }
                         },
                         complete: function(res) {
                             // 上传成功
-                            uploadedImageUrl = 'https://guangpan.lingjing235.cn/' + res.key;
-                            $('#id_image').val(uploadedImageUrl);
+                            var imageUrl = 'https://guangpan.lingjing235.cn/' + res.key;
                             
-                            // 显示预览
-                            $('#previewImg').attr('src', uploadedImageUrl);
-                            $('#uploadProgress').hide();
-                            $('#imagePreview').show();
+                            if (type === 'payment_code' && callback) {
+                                // 收款码上传完成
+                                callback(imageUrl);
+                            } else {
+                                // 核销码图片上传完成
+                                uploadedImageUrl = imageUrl;
+                                $('#id_image').val(uploadedImageUrl);
+                                
+                                // 显示预览
+                                $('#previewImg').attr('src', uploadedImageUrl);
+                                $('#uploadProgress').hide();
+                                $('#imagePreview').show();
+                            }
                         }
                     });
                 } else {
                     alert('获取上传凭证失败');
-                    resetUploadArea();
+                    if (type === 'verification') {
+                        resetUploadArea();
+                    }
                 }
             })
             .fail(function() {
                 alert('获取上传凭证失败');
-                resetUploadArea();
+                if (type === 'verification') {
+                    resetUploadArea();
+                }
             });
     }
     
