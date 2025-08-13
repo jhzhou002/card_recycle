@@ -280,20 +280,39 @@
                 <form method="post" id="submitForm" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <!-- 隐藏的基本信息字段，由URL参数自动填充 -->
+                    {% if selected_package %}
+                    <!-- 有预选套餐时隐藏选择字段 -->
                     <div style="display: none;">
                         {{ form.category }}
                         {{ form.package }}
                     </div>
                     
                     <!-- 显示选中的套餐信息 -->
-                    {% if selected_package %}
                     <div class="alert alert-info mb-4">
                         <h5><i class="fas fa-gift me-2"></i>{{ selected_package.name }}</h5>
                         <p class="mb-0">
                             <span class="badge bg-primary me-2">{{ selected_package.category.name }}</span>
                             <span class="text-muted">佣金: ￥{{ selected_package.commission }}</span>
                         </p>
+                    </div>
+                    {% else %}
+                    <!-- 没有预选套餐时显示选择字段 -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">卡券类别</label>
+                                {{ form.category }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.package.id_for_label }}" class="form-label">选择套餐</label>
+                                {{ form.package }}
+                                <div class="form-text">
+                                    <span id="commissionInfo" class="text-muted">请先选择类别</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     {% endif %}
                     
@@ -506,8 +525,17 @@ $(document).ready(function() {
     
     // 初始化预选套餐
     {% if selected_package %}
+    console.log('Setting category to: {{ selected_package.category.id }}');
     $('#category').val('{{ selected_package.category.id }}');
+    
+    // 为套餐字段添加选项
+    var packageSelect = $('#package');
+    packageSelect.empty();
+    packageSelect.append('<option value="{{ selected_package.id }}" selected>{{ selected_package.name }}</option>');
     $('#package').val('{{ selected_package.id }}');
+    
+    console.log('Category value after set:', $('#category').val());
+    console.log('Package value after set:', $('#package').val());
     {% endif %}
     
     // 类别选择变化时更新套餐
@@ -690,7 +718,8 @@ $(document).ready(function() {
     
     // 表单提交验证
     $('#submitForm').submit(function(e) {
-        // 验证必填字段
+        // 如果没有预选套餐，验证必填字段
+        {% if not selected_package %}
         if (!$('#category').val()) {
             alert('请选择卡券类别');
             e.preventDefault();
@@ -702,6 +731,7 @@ $(document).ready(function() {
             e.preventDefault();
             return false;
         }
+        {% endif %}
         
         
         if (!$('#id_expire_date').val()) {
@@ -729,52 +759,53 @@ $(document).ready(function() {
             return false;
         }
         
-        // 移动端使用AJAX提交
-        if (window.innerWidth <= 768) {
-            e.preventDefault();
-            
-            const formData = {
-                category: $('#category').val(),
-                package: $('#package').val(),
-                card_number: $('#id_card_number').val(),
-                card_secret: $('#id_card_secret').val(),
-                redemption_code: $('#id_redemption_code').val(),
-                image: $('#id_image').val(),
-                expire_date: $('#id_expire_date').val(),
-                telephone: '',  // 不再需要联系电话
-                payment_code: $('#mobile-payment-code-url').val(),
-                csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
-            };
-            
-            // 显示提交按钮加载状态
-            var submitBtn = $('.btn-primary');
-            var originalText = submitBtn.html();
-            submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>提交中...').prop('disabled', true);
-            
-            $.ajax({
-                url: '{% url "submit_card" %}',
-                type: 'POST',
-                data: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert('提交成功！');
-                        window.location.href = '{% url "my_submissions" %}';
-                    } else {
-                        alert('提交失败：' + (response.error || '未知错误'));
-                        submitBtn.html(originalText).prop('disabled', false);
-                    }
-                },
-                error: function() {
-                    alert('网络错误，请稍后重试');
+        // 所有提交都使用AJAX
+        e.preventDefault();
+        
+        const formData = {
+            category: $('#category').val(),
+            package: $('#package').val(),
+            card_number: $('#id_card_number').val(),
+            card_secret: $('#id_card_secret').val(),
+            redemption_code: $('#id_redemption_code').val(),
+            image: $('#id_image').val(),
+            expire_date: $('#id_expire_date').val(),
+            telephone: '',  // 不再需要联系电话
+            payment_code: $('#mobile-payment-code-url').val() || '',  // 桌面端可能没有收款码
+            is_mobile: window.innerWidth <= 768 ? '1' : '0',  // 标记是否为移动端
+            csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+        };
+        
+        console.log('Form data to submit:', formData);
+        
+        // 显示提交按钮加载状态
+        var submitBtn = $('.btn-primary');
+        var originalText = submitBtn.html();
+        submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>提交中...').prop('disabled', true);
+        
+        $.ajax({
+            url: '{% url "submit_card" %}',
+            type: 'POST',
+            data: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('提交成功！');
+                    window.location.href = '{% url "my_submissions" %}';
+                } else {
+                    alert('提交失败：' + (response.error || '未知错误'));
                     submitBtn.html(originalText).prop('disabled', false);
                 }
-            });
-            
-            return false;
-        }
+            },
+            error: function() {
+                alert('网络错误，请稍后重试');
+                submitBtn.html(originalText).prop('disabled', false);
+            }
+        });
+        
+        return false;
     });
     
     // 显示系统通知

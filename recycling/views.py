@@ -173,7 +173,9 @@ def submit_card(request):
                 payment_code_url = request.POST.get('payment_code')
                 final_payment_code = payment_code_url if payment_code_url else existing_payment_code
                 
-                if not final_payment_code:
+                # 移动端要求收款码，桌面端可选
+                is_mobile = request.POST.get('is_mobile') == '1'
+                if not final_payment_code and is_mobile:
                     return JsonResponse({'error': '请上传收款码图片'}, status=400)
                 
                 # 验证必填字段
