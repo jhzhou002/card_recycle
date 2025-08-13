@@ -192,12 +192,18 @@ def submit_card(request):
                     return JsonResponse({'error': '请至少填写卡号密码、兑换码或上传核销码图片'}, status=400)
                 
                 # 创建提交记录
+                try:
+                    package = Package.objects.get(id=form_data['package'])
+                    commission = package.commission
+                except Package.DoesNotExist:
+                    return JsonResponse({'error': '选择的套餐不存在'}, status=400)
+                
                 submission = Submission.objects.create(
                     user=request.user,
                     category_id=form_data['category'],
                     package_id=form_data['package'],
                     store=None,  # 不再使用门店字段
-                    commission=Package.objects.get(id=form_data['package']).commission,
+                    commission=commission,
                     card_number=form_data['card_number'],
                     card_secret=form_data['card_secret'],
                     redemption_code=form_data['redemption_code'],

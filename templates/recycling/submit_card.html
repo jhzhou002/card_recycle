@@ -613,12 +613,13 @@ $(document).ready(function() {
     });
     
     // 删除图片
-    $('#removeImage').click(function() {
+    $(document).on('click', '#removeImage', function() {
         uploadedImageUrl = '';
         $('#id_image').val('');
         $('#imagePreview').hide();
         $('.upload-area').show();
         $('#imageFile').val('');
+        console.log('图片已删除，重置上传状态');
     });
     
     // 上传到七牛云 - 支持不同类型和回调
@@ -690,6 +691,7 @@ $(document).ready(function() {
                         complete: function(res) {
                             // 上传成功
                             var imageUrl = 'https://guangpan.lingjing235.cn/' + res.key;
+                            console.log('图片上传成功:', imageUrl);
                             
                             if (type === 'payment_code' && callback) {
                                 // 收款码上传完成
@@ -699,10 +701,15 @@ $(document).ready(function() {
                                 uploadedImageUrl = imageUrl;
                                 $('#id_image').val(uploadedImageUrl);
                                 
+                                // 隐藏上传区域和进度条
+                                $('.upload-area').hide();
+                                $('#uploadProgress').hide();
+                                
                                 // 显示预览
                                 $('#previewImg').attr('src', uploadedImageUrl);
-                                $('#uploadProgress').hide();
                                 $('#imagePreview').show();
+                                
+                                console.log('图片预览设置完成');
                             }
                         }
                     });
@@ -811,6 +818,7 @@ $(document).ready(function() {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             success: function(response) {
+                console.log('AJAX响应:', response);
                 if (response.success) {
                     alert('提交成功！');
                     window.location.href = '{% url "my_submissions" %}';
@@ -819,8 +827,28 @@ $(document).ready(function() {
                     submitBtn.html(originalText).prop('disabled', false);
                 }
             },
-            error: function() {
-                alert('网络错误，请稍后重试');
+            error: function(xhr, status, error) {
+                console.error('AJAX错误:', xhr, status, error);
+                console.error('响应文本:', xhr.responseText);
+                
+                let errorMessage = '网络错误，请稍后重试';
+                
+                // 尝试解析错误响应
+                try {
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    } else if (xhr.status === 500) {
+                        errorMessage = '服务器内部错误，请联系管理员';
+                    } else if (xhr.status === 404) {
+                        errorMessage = '请求地址不存在';
+                    } else if (xhr.status === 403) {
+                        errorMessage = '没有权限执行此操作';
+                    }
+                } catch (e) {
+                    console.error('解析错误响应失败:', e);
+                }
+                
+                alert(errorMessage);
                 submitBtn.html(originalText).prop('disabled', false);
             }
         });
